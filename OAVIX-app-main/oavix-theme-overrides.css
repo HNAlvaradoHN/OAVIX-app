@@ -1,0 +1,41 @@
+/* OAVIX — Superficies de información con tinte moderado del color elegido.
+ * Solo modifica la superficie visual; no aplica opacity al contenido interno.
+ */
+
+/* Tarjetas/ventanas principales de información */
+.animated-glass-card {
+  background: color-mix(in srgb, var(--bg-dynamic) 12%, #0f172a 88%) !important;
+  border-color: color-mix(in srgb, var(--border-neon) 55%, #64748b 45%) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.32),
+              0 0 18px -8px var(--border-neon) !important;
+}
+
+/* En modo claro conservamos una superficie clara y solo dejamos entrar
+   una pequeña cantidad del color personalizado. */
+.light-theme .animated-glass-card {
+  background: color-mix(in srgb, var(--bg-dynamic) 9%, #ffffff 91%) !important;
+  border-color: color-mix(in srgb, var(--border-neon) 48%, #94a3b8 52%) !important;
+  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
+              0 0 16px -10px var(--border-neon) !important;
+}
+
+/* Ventanas modales que no dependan de animated-glass-card */
+div[id^="modal-"] > div {
+  background-color: color-mix(in srgb, var(--bg-dynamic) 10%, #0f172a 90%) !important;
+  border-color: color-mix(in srgb, var(--border-neon) 48%, #475569 52%) !important;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.45),
+              0 0 20px -12px var(--border-neon) !important;
+}
+
+.light-theme div[id^="modal-"] > div {
+  background-color: color-mix(in srgb, var(--bg-dynamic) 7%, #ffffff 93%) !important;
+  border-color: color-mix(in srgb, var(--border-neon) 42%, #94a3b8 58%) !important;
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.22),
+              0 0 18px -12px var(--border-neon) !important;
+}
+
+/* La alarma crítica conserva deliberadamente su tratamiento rojo propio. */
+#modal-continuous-alarm > div {
+  background-color: rgba(2, 6, 23, 0.95) !important;
+  border-color: rgba(244, 63, 94, 0.9) !important;
+}

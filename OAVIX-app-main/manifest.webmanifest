@@ -1,0 +1,18 @@
+{
+  "name": "OAVIX - Gestión Inteligente Vehicular",
+  "short_name": "OAVIX",
+  "description": "Gestión inteligente vehicular con sincronización privada en Google Drive.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/OAVIX-app/?source=pwa",
+  "scope": "/OAVIX-app/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
