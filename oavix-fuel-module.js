@@ -351,7 +351,10 @@
     // 📥 Importar precios desde JSON
     importPrices: function(jsonData){
       try{
-        if(jsonData && jsonData.data && jsonData.data.prices){
+        if(!jsonData || typeof jsonData !== 'object'){
+          throw new TypeError('Snapshot de precios inválido');
+        }
+        if(jsonData.data && jsonData.data.prices){
           return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
         }
         return false;

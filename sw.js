@@ -32,7 +32,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (response.ok && response.type === 'basic') {
+        if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
         }
