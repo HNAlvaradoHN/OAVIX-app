@@ -8,10 +8,16 @@ const APP_SHELL = [
   './icon.svg'
 ];
 
-/* Cachea cada recurso por separado: un 404 en un archivo opcional no debe
-   abortar la instalación completa del service worker sin dejar rastro. */
+/* Si addAll falla (un 404 en un archivo opcional aborta el lote completo),
+   se cachea recurso por recurso para instalar el resto y registrar los fallos. */
 async function precacheAppShell() {
   const cache = await caches.open(CACHE);
+  try {
+    await cache.addAll(APP_SHELL);
+    return;
+  } catch (err) {
+    console.warn('[OAVIX SW] Precacheo en lote fallido, se reintenta recurso por recurso.', err);
+  }
   const results = await Promise.allSettled(APP_SHELL.map(url => cache.add(url)));
   results.forEach((result, i) => {
     if (result.status === 'rejected') {

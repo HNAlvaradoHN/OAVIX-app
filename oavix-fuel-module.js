@@ -89,16 +89,16 @@
     try{
       // Primero, intentar obtener datos reales del SEN vía proxy (opcional).
       // Un fallo aquí solo debe degradar a los precios por defecto, no cancelar la carga.
-      if(typeof window.fetchRealSENData === 'function'){
+      if(typeof fetchRealSENData === 'function'){
         try{
-          const senPrices = await window.fetchRealSENData();
+          const senPrices = await fetchRealSENData();
           if(senPrices) return senPrices;
         }catch(e){
           console.warn('[OAVIX Fuel] No se pudo consultar el SEN, se usarán los precios por defecto.', e);
         }
       }
 
-      // Datos por defecto (estructura lista para datos reales)
+      // Si falla, usar datos por defecto (estructura lista para datos reales)
       const mockData = {
         date: new Date().toISOString(),
         prices: {
@@ -307,7 +307,7 @@
     updatePricesManually: function(pricesObject, date = null){
       try{
         if(!pricesObject || typeof pricesObject !== 'object' || Array.isArray(pricesObject)){
-          console.error('[OAVIX Fuel] Formato inválido para precios', pricesObject);
+          console.error('[OAVIX Fuel] Formato inválido para precios');
           toast('⚠ Formato inválido', 'Los precios deben ser un objeto de ciudades.', 'red');
           return false;
         }
@@ -350,12 +350,18 @@
 
     // 📥 Importar precios desde JSON
     importPrices: function(jsonData){
-      if(!jsonData || typeof jsonData !== 'object' || !jsonData.data || !jsonData.data.prices){
-        console.error('[OAVIX Fuel Import] El JSON no contiene data.prices', jsonData);
-        toast('⚠ Formato inválido', 'El JSON importado no contiene "data.prices".', 'red');
+      try{
+        if(!jsonData.data || !jsonData.data.prices){
+          console.error('[OAVIX Fuel Import] El JSON no contiene data.prices');
+          toast('⚠ Formato inválido', 'El JSON importado no contiene "data.prices".', 'red');
+          return false;
+        }
+        return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
+      }catch(e){
+        console.error('[OAVIX Fuel Import]', e);
+        toast('⚠ Error', 'No se pudo importar el JSON de precios.', 'red');
         return false;
       }
-      return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
     }
   };
 
