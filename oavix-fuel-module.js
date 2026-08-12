@@ -133,5 +133,51 @@
   };
 
   loadFuelData();
-  document.addEventListener('DOMContentLoaded',()=>{ loadOfficialSEN().then(ok=>{if(!ok)fetchSENPrices();}); },{once:true});
+
+  // Navegación inferior estilo aplicación nativa.
+  // Se inyecta aquí para no alterar la estructura ni la lógica existente de OAVIX.
+  function applyBottomNavigationStyle(){
+    if(document.getElementById('oavix-bottom-nav-style')) return;
+    const style=document.createElement('style');
+    style.id='oavix-bottom-nav-style';
+    style.textContent=`
+      body.pt-20{padding-top:0 !important;padding-bottom:5.75rem !important;}
+      .floating-nav{
+        top:auto !important;
+        bottom:1rem !important;
+        left:50% !important;
+        right:auto !important;
+        transform:translateX(-50%) !important;
+        width:max-content;
+        max-width:calc(100vw - 2rem);
+        gap:.5rem;
+        padding:.55rem;
+        border-radius:1.5rem;
+        padding-bottom:max(.55rem, env(safe-area-inset-bottom));
+      }
+      .nav-btn{width:2.65rem;height:2.65rem;flex:0 0 auto;}
+      @media (max-width:640px){
+        body.pt-20{padding-bottom:5.5rem !important;}
+        .floating-nav{
+          width:calc(100vw - 1rem);
+          max-width:none;
+          bottom:max(.5rem, env(safe-area-inset-bottom)) !important;
+          justify-content:space-around;
+          gap:.15rem;
+          padding:.45rem;
+          border-radius:1.35rem;
+        }
+        .nav-btn{width:2.7rem;height:2.7rem;font-size:1rem;}
+      }
+      @media (min-width:641px) and (max-width:1024px){
+        .floating-nav{bottom:1.25rem !important;}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    applyBottomNavigationStyle();
+    loadOfficialSEN().then(ok=>{if(!ok)fetchSENPrices();});
+  },{once:true});
 })();
