@@ -75,7 +75,8 @@
   }
   async function loadOfficialSEN(){
     try{
-      const r=await fetch(SEN_DATA_URL,{cache:'no-store'});
+      const url=new URL(SEN_DATA_URL,window.location.href).href;
+      const r=await fetch(url,{cache:'no-store'});
       if(!r.ok) throw new Error('SEN data HTTP '+r.status);
       const data=await r.json();
       const prices=normalizePrices(data.prices);
@@ -133,5 +134,5 @@
   };
 
   loadFuelData();
-  document.addEventListener('DOMContentLoaded',()=>{ loadOfficialSEN().then(ok=>{if(!ok)fetchSENPrices();}); },{once:true});
+  document.addEventListener('DOMContentLoaded',()=>{ fetchSENPrices(); },{once:true});
 })();
