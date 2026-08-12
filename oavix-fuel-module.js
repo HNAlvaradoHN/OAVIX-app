@@ -73,6 +73,10 @@
     }
     return out;
   }
+  function renderPricesSafely(){
+    try{if(window.renderFuelPrices)window.renderFuelPrices();}
+    catch(e){console.error('[OAVIX Fuel Render]',e);}
+  }
   async function loadOfficialSEN(){
     try{
       const url=new URL(SEN_DATA_URL,window.location.href).href;
@@ -89,7 +93,7 @@
   }
   async function fetchSENPrices(){
     if(await loadOfficialSEN()){
-      if(window.renderFuelPrices) window.renderFuelPrices();
+      renderPricesSafely();
       return true;
     }
     // No se usa una tabla antigua como si fuera actual. Si el SEN no está disponible,
@@ -97,12 +101,12 @@
     if(fuelData.source==='official' && Object.keys(fuelData.prices||{}).length){
       fuelData.status='offline-cache';
       saveFuelData();
-      if(window.renderFuelPrices) window.renderFuelPrices();
+      renderPricesSafely();
       return true;
     }
     fuelData={...fuelData,source:'none',status:'unavailable',sourceUrl:SEN_SOURCE};
     saveFuelData();
-    if(window.renderFuelPrices) window.renderFuelPrices();
+    renderPricesSafely();
     return false;
   }
   window.FuelModule={
@@ -128,7 +132,7 @@
       const valid=fuelHistory.filter(r=>Number(r.gallons)>0);const avg=valid.length?valid.reduce((sum,r)=>sum+(Number(r.amountPaid)/Number(r.gallons)),0)/valid.length:0;
       return {totalGallons:g,totalKm:km,avgConsumption:g?km/g:0,avgPrice:avg.toFixed(2)};
     },
-    updatePricesManually(pricesObject,date=null){const prices=normalizePrices(pricesObject);if(!Object.keys(prices).length)return false;fuelData={...fuelData,prices,lastUpdate:date||new Date().toISOString(),source:'manual',status:'manual',sourceUrl:SEN_SOURCE,nextUpdate:nextFriday()};saveFuelData();if(window.renderFuelPrices)window.renderFuelPrices();return true;},
+    updatePricesManually(pricesObject,date=null){const prices=normalizePrices(pricesObject);if(!Object.keys(prices).length)return false;fuelData={...fuelData,prices,lastUpdate:date||new Date().toISOString(),source:'manual',status:'manual',sourceUrl:SEN_SOURCE,nextUpdate:nextFriday()};saveFuelData();renderPricesSafely();return true;},
     exportPrices(){return {timestamp:new Date().toISOString(),data:fuelData,version:'1.2'};},
     importPrices(json){return json?.data?.prices?this.updatePricesManually(json.data.prices,json.timestamp):false;}
   };
