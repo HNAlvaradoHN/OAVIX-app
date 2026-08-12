@@ -15,7 +15,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Placeholder until SEN data source is wired
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright
         run: |
-          echo "SEN automatic updater scaffold is ready."
-          echo "No values are generated or replaced until the official source parser is verified."
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Extract official SEN prices
+        run: node scripts/update-sen-prices.mjs
+
+      - name: Commit updated prices
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sen-prices.json
+          if git diff --cached --quiet; then
+            echo "No SEN price changes detected."
+          else
+            git commit -m "data(sen): update official fuel prices"
+            git push
+          fi
