@@ -70,7 +70,7 @@
   async function fetchSENPrices(){
     try{
       // Primero, intentar obtener datos reales del SEN vía proxy
-      const senPrices = await fetchRealSENData();
+      const senPrices = typeof fetchRealSENData === 'function' ? await fetchRealSENData() : null;
       if(senPrices) return senPrices;
       
       // Si falla, usar datos por defecto (estructura lista para datos reales)
