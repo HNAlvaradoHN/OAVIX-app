@@ -33,7 +33,7 @@ export function normalizeFuelName(name) {
 }
 
 function parsePrice(line) {
-  const match = String(line).match(/(?:L\.?\s*)?(\d{1,3}(?:[,.]\d{2}))/);
+  const match = String(line).match(/(?:^|\bL\.?\s*)(\d{1,3}(?:[,.]\d{2}))\b/);
   if (!match) return null;
   const value = Number(match[1].replace(',', '.'));
   return Number.isFinite(value) && value > 0 && value < 500 ? value : null;
