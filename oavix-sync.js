@@ -25,11 +25,15 @@
   const needsPullKey = email => accountKey(email, 'needs_pull');
   const session = () => { try { return JSON.parse(nativeGet(SESSION_KEY) || 'null'); } catch { return null; } };
 
+  /* Copias escritas antes de que estas claves se sincronizaran: no declaran `keys`,
+     así que no pueden borrarlas del dispositivo. */
+  const LEGACY_DATA_KEYS = DATA_KEYS.filter(k=>k!=='oavix_fuel_history'&&k!=='oavix_fuel_vehicle_config');
+  const coveredKeys = copy => Array.isArray(copy&&copy.keys) ? copy.keys : LEGACY_DATA_KEYS;
   function dataSnapshot(){ const d={}; DATA_KEYS.forEach(k=>{const v=nativeGet(k); if(v!==null)d[k]=v;}); return d; }
   function dataString(){ return JSON.stringify(dataSnapshot()); }
   function accountSnapshot(email){ try{return JSON.parse(nativeGet(metaKey(email))||'null');}catch{return null;} }
-  function saveAccountSnapshot(email, updatedAt){ if(!email)return; const snap={schemaVersion:5,updatedAt:updatedAt||new Date().toISOString(),data:dataSnapshot()}; nativeSet(metaKey(email),JSON.stringify(snap)); return snap; }
-  function restoreAccount(email){ const snap=accountSnapshot(email); if(!snap)return false; DATA_KEYS.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(snap.data||{},k)) nativeSet(k,snap.data[k]); else nativeRemove(k); }); nativeSet(localUpdatedKey(email),snap.updatedAt||new Date().toISOString()); nativeSet(LAST_SYNC_KEY,snap.updatedAt||''); nativeRemove(PENDING_KEY); return true; }
+  function saveAccountSnapshot(email, updatedAt){ if(!email)return; const snap={schemaVersion:5,updatedAt:updatedAt||new Date().toISOString(),keys:DATA_KEYS.slice(),data:dataSnapshot()}; nativeSet(metaKey(email),JSON.stringify(snap)); return snap; }
+  function restoreAccount(email){ const snap=accountSnapshot(email); if(!snap)return false; const covered=coveredKeys(snap); DATA_KEYS.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(snap.data||{},k)) nativeSet(k,snap.data[k]); else if(covered.includes(k)) nativeRemove(k); }); nativeSet(localUpdatedKey(email),snap.updatedAt||new Date().toISOString()); nativeSet(LAST_SYNC_KEY,snap.updatedAt||''); nativeRemove(PENDING_KEY); return true; }
   function clearActiveData(){ DATA_KEYS.forEach(k=>nativeRemove(k)); nativeRemove(LAST_SYNC_KEY); nativeRemove(PENDING_KEY); }
   function hasLegacyData(){ return DATA_KEYS.some(k=>nativeGet(k)!==null); }
   function legacyMigrationAllowed(){ return nativeGet('oavix_migration_v5')!=='done'; }
@@ -48,14 +52,16 @@
   async function findFile(){ const q="name='"+FILE_NAME+"' and 'appDataFolder' in parents and trashed=false"; const r=await drive('GET','https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&spaces=appDataFolder&fields=files(id,name,modifiedTime)',{interactive:false}); const j=await r.json(); return j.files&&j.files[0]||null; }
   async function readCloud(){ const f=await findFile(); if(!f)return null; fileId=f.id; const r=await drive('GET','https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'?alt=media',{interactive:false}); const p=await r.json(); p.updatedAt=p.updatedAt||f.modifiedTime; return p; }
   async function writeCloud(payload){ const body=JSON.stringify(payload); let f=fileId?{id:fileId}:await findFile(); if(!f){const boundary='oavix_'+Math.random().toString(16).slice(2);const meta={name:FILE_NAME,parents:['appDataFolder'],mimeType:'application/json'};const multipart='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+boundary+'--';const r=await drive('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime',{interactive:false,headers:{'Content-Type':'multipart/related; boundary='+boundary},body:multipart});f=await r.json();}else{fileId=f.id;await drive('PATCH','https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(f.id)+'?uploadType=media',{interactive:false,headers:{'Content-Type':'application/json'},body});}fileId=f.id; }
-  function payload(){ const snap=accountSnapshot(accountEmail); const updatedAt=nativeGet(localUpdatedKey(accountEmail)) || (snap&&snap.updatedAt) || new Date().toISOString(); saveAccountSnapshot(accountEmail,updatedAt); return {schemaVersion:5,app:'OAVIX',account:accountEmail,updatedAt,data:dataSnapshot()}; }
-  function applyCloud(p){ if(!p||!p.data)return; DATA_KEYS.forEach(k=>{if(Object.prototype.hasOwnProperty.call(p.data,k))nativeSet(k,p.data[k]);else nativeRemove(k);}); nativeSet(localUpdatedKey(accountEmail),p.updatedAt||new Date().toISOString()); saveAccountSnapshot(accountEmail,p.updatedAt||new Date().toISOString());nativeSet(LAST_SYNC_KEY,p.updatedAt||'');nativeRemove(PENDING_KEY);nativeRemove(needsPullKey(accountEmail)); }
+  function payload(){ const snap=accountSnapshot(accountEmail); const updatedAt=nativeGet(localUpdatedKey(accountEmail)) || (snap&&snap.updatedAt) || new Date().toISOString(); saveAccountSnapshot(accountEmail,updatedAt); return {schemaVersion:5,app:'OAVIX',account:accountEmail,updatedAt,keys:DATA_KEYS.slice(),data:dataSnapshot()}; }
+  function applyCloud(p){ if(!p||!p.data)return false; const covered=coveredKeys(p); DATA_KEYS.forEach(k=>{if(Object.prototype.hasOwnProperty.call(p.data,k))nativeSet(k,p.data[k]);else if(covered.includes(k))nativeRemove(k);}); nativeSet(localUpdatedKey(accountEmail),p.updatedAt||new Date().toISOString()); saveAccountSnapshot(accountEmail,p.updatedAt||new Date().toISOString());nativeSet(LAST_SYNC_KEY,p.updatedAt||'');nativeRemove(PENDING_KEY);nativeRemove(needsPullKey(accountEmail)); return true; }
   /* Un dispositivo que aún no conoce la cuenta debe traer los datos de Drive:
      nunca subir su copia vacía, que borraría el historial de la nube. */
   function mustPullFromCloud(){ return nativeGet(needsPullKey(accountEmail))==='true' || !nativeGet(localUpdatedKey(accountEmail)); }
   async function syncNow(interactive){
     if(busy||!accountEmail)return;
-    if(!navigator.onLine){nativeSet(PENDING_KEY,'true');toast('✓ Guardado localmente','Se sincronizará automáticamente al conectarse a Internet.','amber');return;}
+    /* Sin conexión solo avisamos si de verdad hay algo por subir: el sync
+       automático de cada carga no debe marcar cambios pendientes. */
+    if(!navigator.onLine){if(interactive||nativeGet(PENDING_KEY)==='true'){nativeSet(PENDING_KEY,'true');toast('✓ Guardado localmente','Se sincronizará automáticamente al conectarse a Internet.','amber');}return;}
     busy=true;
     try{
       toast('☁️ Sincronizando','Sincronizando con Google Drive…','cyan');
@@ -68,8 +74,7 @@
         toast('✓ Sincronizado correctamente','Los datos están guardados en Google Drive.','emerald');
         return;
       }
-      if(pullOnly){
-        applyCloud(cloud);
+      if(pullOnly&&applyCloud(cloud)){
         toast('✓ Datos restaurados','Se descargaron los datos de tu cuenta desde Google Drive.','emerald');
         setTimeout(()=>{window.location.reload();},600);
         return;
@@ -78,20 +83,19 @@
       const localChanged=dataString()!==JSON.stringify(cloud.data||{});
       if(!localChanged){
         saveAccountSnapshot(accountEmail,cloud.updatedAt);
-        nativeSet(localUpdatedKey(accountEmail),cloud.updatedAt||local.updatedAt);nativeRemove(PENDING_KEY);
+        nativeSet(localUpdatedKey(accountEmail),cloud.updatedAt||local.updatedAt);nativeRemove(PENDING_KEY);nativeRemove(needsPullKey(accountEmail));
         toast('✓ Sincronizado correctamente','Todos los datos están actualizados.','emerald');
         return;
       }
       if(localUpdated>=cloudUpdated){
         await writeCloud(local);
-        nativeSet(LAST_SYNC_KEY,local.updatedAt);nativeRemove(PENDING_KEY);
+        nativeSet(LAST_SYNC_KEY,local.updatedAt);nativeRemove(PENDING_KEY);nativeRemove(needsPullKey(accountEmail));
         toast('✓ Sincronizado correctamente','Se conservaron los cambios más recientes.','emerald');
       }else{
         /* index.html lee localStorage al cargar, así que recargamos para
            mostrar los datos que acaba de traer el otro dispositivo. */
-        applyCloud(cloud);
+        if(applyCloud(cloud))setTimeout(()=>{window.location.reload();},600);
         toast('✓ Sincronizado correctamente','Se conservaron los cambios más recientes.','emerald');
-        setTimeout(()=>{window.location.reload();},600);
       }
     }catch(e){
       console.error('[OAVIX]',e);
