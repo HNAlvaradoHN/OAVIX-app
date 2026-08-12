@@ -7,7 +7,7 @@
   const CFG = window.OAVIX_GOOGLE_CLIENT_ID || '';
   const FILE_NAME = 'oavix-data.json';
   const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
-  const DATA_KEYS = ['oavix_auto_records','oavix_auto_mileage','oavix_auto_categories','oavix_auto_unit','oavix_custom_bg','oavix_custom_neon','oavix_is_light','oavix_triggered_alarms'];
+  const DATA_KEYS = ['oavix_auto_records','oavix_auto_mileage','oavix_auto_categories','oavix_auto_unit','oavix_custom_bg','oavix_custom_neon','oavix_is_light','oavix_triggered_alarms','oavix_fuel_history','oavix_fuel_vehicle_config'];
   const SESSION_KEY = 'oavix_google_session';
   const ACCOUNT_PREFIX = 'oavix_account_';
   const META_SUFFIX = '__meta';
@@ -22,6 +22,7 @@
   const accountKey = (email, key) => ACCOUNT_PREFIX + encodeURIComponent(email.toLowerCase()) + '__' + key;
   const metaKey = email => accountKey(email, META_SUFFIX);
   const localUpdatedKey = email => accountKey(email, 'local_updated');
+  const needsPullKey = email => accountKey(email, 'needs_pull');
   const session = () => { try { return JSON.parse(nativeGet(SESSION_KEY) || 'null'); } catch { return null; } };
 
   function dataSnapshot(){ const d={}; DATA_KEYS.forEach(k=>{const v=nativeGet(k); if(v!==null)d[k]=v;}); return d; }
@@ -48,14 +49,62 @@
   async function readCloud(){ const f=await findFile(); if(!f)return null; fileId=f.id; const r=await drive('GET','https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(f.id)+'?alt=media',{interactive:false}); const p=await r.json(); p.updatedAt=p.updatedAt||f.modifiedTime; return p; }
   async function writeCloud(payload){ const body=JSON.stringify(payload); let f=fileId?{id:fileId}:await findFile(); if(!f){const boundary='oavix_'+Math.random().toString(16).slice(2);const meta={name:FILE_NAME,parents:['appDataFolder'],mimeType:'application/json'};const multipart='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+boundary+'--';const r=await drive('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime',{interactive:false,headers:{'Content-Type':'multipart/related; boundary='+boundary},body:multipart});f=await r.json();}else{fileId=f.id;await drive('PATCH','https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(f.id)+'?uploadType=media',{interactive:false,headers:{'Content-Type':'application/json'},body});}fileId=f.id; }
   function payload(){ const snap=accountSnapshot(accountEmail); const updatedAt=nativeGet(localUpdatedKey(accountEmail)) || (snap&&snap.updatedAt) || new Date().toISOString(); saveAccountSnapshot(accountEmail,updatedAt); return {schemaVersion:5,app:'OAVIX',account:accountEmail,updatedAt,data:dataSnapshot()}; }
-  function applyCloud(p){ if(!p||!p.data)return; DATA_KEYS.forEach(k=>{if(Object.prototype.hasOwnProperty.call(p.data,k))nativeSet(k,p.data[k]);else nativeRemove(k);}); nativeSet(localUpdatedKey(accountEmail),p.updatedAt||new Date().toISOString()); saveAccountSnapshot(accountEmail,p.updatedAt||new Date().toISOString());nativeSet(LAST_SYNC_KEY,p.updatedAt||'');nativeRemove(PENDING_KEY); }
-  async function syncNow(interactive){ if(busy||!accountEmail)return; if(!navigator.onLine){nativeSet(PENDING_KEY,'true');toast('✓ Guardado localmente','Se sincronizará automáticamente al conectarse a Internet.','amber');return;}busy=true;try{toast('☁️ Sincronizando','Sincronizando con Google Drive…','cyan');const cloud=await readCloud();const local=payload();if(!cloud){await writeCloud(local);nativeSet(LAST_SYNC_KEY,local.updatedAt);nativeRemove(PENDING_KEY);toast('✓ Sincronizado correctamente','Los datos están guardados en Google Drive.','emerald');return;}const localUpdated=Date.parse(local.updatedAt)||0,cloudUpdated=Date.parse(cloud.updatedAt)||Date.parse(cloud.modifiedTime)||0;const localChanged=dataString()!==JSON.stringify(cloud.data||{});if(!localChanged){saveAccountSnapshot(accountEmail,cloud.updatedAt);nativeSet(localUpdatedKey(accountEmail),cloud.updatedAt||local.updatedAt);nativeRemove(PENDING_KEY);toast('✓ Sincronizado correctamente','Todos los datos están actualizados.','emerald');return;}if(localUpdated>=cloudUpdated){await writeCloud(local);nativeSet(LAST_SYNC_KEY,local.updatedAt);nativeRemove(PENDING_KEY);toast('✓ Sincronizado correctamente','Se conservaron los cambios más recientes.','emerald');}else{applyCloud(cloud);toast('✓ Sincronizado correctamente','Se conservaron los cambios más recientes.','emerald');}}catch(e){console.error('[OAVIX]',e);nativeSet(PENDING_KEY,'true');toast('⚠ Guardado localmente','Se intentará sincronizar automáticamente cuando haya conexión.','amber');}finally{busy=false;} }
+  function applyCloud(p){ if(!p||!p.data)return; DATA_KEYS.forEach(k=>{if(Object.prototype.hasOwnProperty.call(p.data,k))nativeSet(k,p.data[k]);else nativeRemove(k);}); nativeSet(localUpdatedKey(accountEmail),p.updatedAt||new Date().toISOString()); saveAccountSnapshot(accountEmail,p.updatedAt||new Date().toISOString());nativeSet(LAST_SYNC_KEY,p.updatedAt||'');nativeRemove(PENDING_KEY);nativeRemove(needsPullKey(accountEmail)); }
+  /* Un dispositivo que aún no conoce la cuenta debe traer los datos de Drive:
+     nunca subir su copia vacía, que borraría el historial de la nube. */
+  function mustPullFromCloud(){ return nativeGet(needsPullKey(accountEmail))==='true' || !nativeGet(localUpdatedKey(accountEmail)); }
+  async function syncNow(interactive){
+    if(busy||!accountEmail)return;
+    if(!navigator.onLine){nativeSet(PENDING_KEY,'true');toast('✓ Guardado localmente','Se sincronizará automáticamente al conectarse a Internet.','amber');return;}
+    busy=true;
+    try{
+      toast('☁️ Sincronizando','Sincronizando con Google Drive…','cyan');
+      const pullOnly=mustPullFromCloud();
+      const cloud=await readCloud();
+      const local=payload();
+      if(!cloud){
+        await writeCloud(local);
+        nativeSet(LAST_SYNC_KEY,local.updatedAt);nativeRemove(PENDING_KEY);nativeRemove(needsPullKey(accountEmail));
+        toast('✓ Sincronizado correctamente','Los datos están guardados en Google Drive.','emerald');
+        return;
+      }
+      if(pullOnly){
+        applyCloud(cloud);
+        toast('✓ Datos restaurados','Se descargaron los datos de tu cuenta desde Google Drive.','emerald');
+        setTimeout(()=>{window.location.reload();},600);
+        return;
+      }
+      const localUpdated=Date.parse(local.updatedAt)||0,cloudUpdated=Date.parse(cloud.updatedAt)||Date.parse(cloud.modifiedTime)||0;
+      const localChanged=dataString()!==JSON.stringify(cloud.data||{});
+      if(!localChanged){
+        saveAccountSnapshot(accountEmail,cloud.updatedAt);
+        nativeSet(localUpdatedKey(accountEmail),cloud.updatedAt||local.updatedAt);nativeRemove(PENDING_KEY);
+        toast('✓ Sincronizado correctamente','Todos los datos están actualizados.','emerald');
+        return;
+      }
+      if(localUpdated>=cloudUpdated){
+        await writeCloud(local);
+        nativeSet(LAST_SYNC_KEY,local.updatedAt);nativeRemove(PENDING_KEY);
+        toast('✓ Sincronizado correctamente','Se conservaron los cambios más recientes.','emerald');
+      }else{
+        /* index.html lee localStorage al cargar, así que recargamos para
+           mostrar los datos que acaba de traer el otro dispositivo. */
+        applyCloud(cloud);
+        toast('✓ Sincronizado correctamente','Se conservaron los cambios más recientes.','emerald');
+        setTimeout(()=>{window.location.reload();},600);
+      }
+    }catch(e){
+      console.error('[OAVIX]',e);
+      nativeSet(PENDING_KEY,'true');
+      toast('⚠ Guardado localmente','Se intentará sincronizar automáticamente cuando haya conexión.','amber');
+    }finally{busy=false;}
+  }
   function schedule(){clearTimeout(timer);timer=setTimeout(()=>syncNow(false),DEBOUNCE);}
 
   localStorage.setItem=function(k,v){nativeSet(k,v);if(accountEmail&&DATA_KEYS.includes(k)){const t=new Date().toISOString();nativeSet(localUpdatedKey(accountEmail),t);saveAccountSnapshot(accountEmail,t);nativeSet(PENDING_KEY,'true');schedule();}};
   localStorage.removeItem=function(k){nativeRemove(k);if(accountEmail&&DATA_KEYS.includes(k)){const t=new Date().toISOString();nativeSet(localUpdatedKey(accountEmail),t);saveAccountSnapshot(accountEmail,t);nativeSet(PENDING_KEY,'true');schedule();}};
 
-  async function loginWithGoogle(){ if(authInProgress)return;authInProgress=true;try{if(!CFG)throw new Error('Falta configurar el Client ID de Google.');await loadGIS();initTokenClient();await requestToken(true,'');const me=await aboutMe();const email=me.user&&me.user.emailAddress;if(!email)throw new Error('Google no devolvió el correo de la cuenta.');const oldEmail=accountEmail;const firstMigration=!oldEmail&&legacyMigrationAllowed()&&hasLegacyData();if(firstMigration){const t=new Date().toISOString();nativeSet(localUpdatedKey(email),t);saveAccountSnapshot(email,t);nativeSet('oavix_migration_v5','done');}else if(accountSnapshot(email))restoreAccount(email);else clearActiveData();accountEmail=email;nativeSet(SESSION_KEY,JSON.stringify({email,displayName:(me.user&&me.user.displayName)||email}));nativeSet('oavix_current_user_name',email);nativeRemove('oavix_current_user_pin');location.reload();}catch(e){console.error('[OAVIX login]',e);toast('No se pudo iniciar sesión',e.message||'Google canceló el acceso.','rose');}finally{authInProgress=false;} }
+  async function loginWithGoogle(){ if(authInProgress)return;authInProgress=true;try{if(!CFG)throw new Error('Falta configurar el Client ID de Google.');await loadGIS();initTokenClient();await requestToken(true,'');const me=await aboutMe();const email=me.user&&me.user.emailAddress;if(!email)throw new Error('Google no devolvió el correo de la cuenta.');const oldEmail=accountEmail;const firstMigration=!oldEmail&&legacyMigrationAllowed()&&hasLegacyData();if(firstMigration){const t=new Date().toISOString();nativeSet(localUpdatedKey(email),t);saveAccountSnapshot(email,t);nativeSet('oavix_migration_v5','done');}else if(accountSnapshot(email))restoreAccount(email);else{clearActiveData();nativeRemove(localUpdatedKey(email));nativeSet(needsPullKey(email),'true');}accountEmail=email;nativeSet(SESSION_KEY,JSON.stringify({email,displayName:(me.user&&me.user.displayName)||email}));nativeSet('oavix_current_user_name',email);nativeRemove('oavix_current_user_pin');location.reload();}catch(e){console.error('[OAVIX login]',e);toast('No se pudo iniciar sesión',e.message||'Google canceló el acceso.','rose');}finally{authInProgress=false;} }
   function logoutSessionV5(){if(accountEmail){const snap=accountSnapshot(accountEmail);saveAccountSnapshot(accountEmail,nativeGet(localUpdatedKey(accountEmail))||(snap&&snap.updatedAt)||new Date().toISOString());}accessToken=null;tokenExpiresAt=0;fileId=null;nativeRemove(SESSION_KEY);nativeRemove('oavix_current_user_name');nativeRemove('oavix_current_user_pin');clearActiveData();accountEmail='';setTimeout(()=>{window.location.reload();},100);}
   function buildLogin(){let modal=document.getElementById('modal-login');if(!modal){const container=document.createElement('div');container.id='modal-login';container.className='fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur';document.body.appendChild(container);modal=container;}modal.innerHTML='<div class="animated-glass-card rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-5 border border-cyan-500/50 text-center"><div class="mx-auto w-16 h-16 rounded-2xl bg-slate-900 border border-cyan-500/40 flex items-center justify-center"><i class="fa-solid fa-cloud text-cyan-400 text-2xl"></i></div><div><h3 class="text-2xl font-black text-white">Bienvenido a OAVIX</h3><p class="text-sm text-slate-300 font-bold mt-2">Inicia sesión con tu cuenta de Google para sincronizar tus datos.</p></div><button id="oavix-google-login" type="button" class="w-full py-3 px-4 rounded-2xl bg-white text-slate-900 font-black flex items-center justify-center gap-3 hover:bg-slate-100 transition"><span class="text-lg font-black">G</span><span>Continuar con Google</span></button><p class="text-[11px] text-slate-400">Tus datos de OAVIX se guardan en el espacio privado de la cuenta seleccionada.</p></div>';modal.classList.remove('hidden');modal.style.display='flex';document.getElementById('oavix-google-login').onclick=loginWithGoogle;}
   function hideLogin(){const m=document.getElementById('modal-login');if(m){m.classList.add('hidden');m.style.display='none';}}
@@ -67,7 +116,7 @@
   window.OAVIXDriveSync={syncNow:()=>syncNow(true),loginWithGoogle,logoutSession:logoutSessionV5};
   window.addEventListener('online',()=>{if(accountEmail&&nativeGet(PENDING_KEY)==='true')setTimeout(()=>syncNow(false),400);});
   window.addEventListener('beforeunload',()=>{if(accountEmail)saveAccountSnapshot(accountEmail,nativeGet(localUpdatedKey(accountEmail))||(accountSnapshot(accountEmail)||{}).updatedAt||new Date().toISOString());});
-  document.addEventListener('DOMContentLoaded',()=>{setTimeout(initUI,0);if(accountEmail&&navigator.onLine&&nativeGet(PENDING_KEY)==='true')setTimeout(()=>syncNow(false),900);},{once:true});
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(initUI,0);if(accountEmail&&navigator.onLine)setTimeout(()=>syncNow(false),900);},{once:true});
 })();
 
 /* OAVIX — ajustes puntuales de mantenimiento y calendario. */
