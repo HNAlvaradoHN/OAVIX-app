@@ -1,84 +1,137 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
+import {
+  extractPrices,
+  validateOfficialPayload,
+  isAllowedSource
+} from './sen-price-adapter.mjs';
 
-const SOURCE = 'https://sen.hn/';
-const OUTPUT = 'data/sen-prices.json';
-const CITY_NAMES = [
-  'Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Choloma',
-  'Danlí', 'Danli', 'Juticalpa', 'Comayagua', 'Trujillo'
+const OFFICIAL_PAGES = [
+  'https://sen.hn/',
+  'https://sen.hn/prueba-sc/'
 ];
-const FUEL_NAMES = ['Gasolina Súper', 'Gasolina Superior', 'Gasolina Regular', 'Diésel', 'Diesel', 'Kerosene', 'GLP'];
+const OUTPUT = 'data/sen-prices.json';
+const TEMP_OUTPUT = `${OUTPUT}.tmp`;
 
-function normalize(s) {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+async function collectSourceLinks(page) {
+  const links = await page.locator('a[href]').evaluateAll(anchors =>
+    anchors.map(anchor => ({
+      href: anchor.href,
+      text: (anchor.textContent || '').trim()
+    }))
+  );
+
+  return links
+    .map(link => link.href)
+    .filter(url => isAllowedSource(url))
+    .filter((url, index, list) => list.indexOf(url) === index);
 }
 
-function extractPrices(text) {
-  const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const prices = {};
-  let currentCity = null;
+async function collectText(page) {
+  await page.waitForTimeout(12000);
 
-  for (const line of lines) {
-    const city = CITY_NAMES.find(c => normalize(line).includes(normalize(c)));
-    if (city) {
-      currentCity = normalize(city).replaceAll(' ', '_');
-      if (!prices[currentCity]) prices[currentCity] = {};
-      continue;
+  const texts = [];
+  for (const frame of page.frames()) {
+    try {
+      const text = await frame.locator('body').innerText({ timeout: 7000 });
+      if (text && /combustible|gasolina|diesel|di[eé]sel/i.test(text)) {
+        texts.push(text);
+      }
+    } catch {
+      // Un frame puede bloquear lectura por cross-origin; no invalida los demás.
     }
-    if (!currentCity) continue;
-
-    const fuel = FUEL_NAMES.find(f => normalize(line).includes(normalize(f)));
-    if (!fuel) continue;
-
-    const match = line.match(/(?:L\.?\s*)?(\d{1,3}(?:[,.]\d{2}))/);
-    if (!match) continue;
-    const value = Number(match[1].replace(',', '.'));
-    if (!Number.isFinite(value) || value <= 0) continue;
-
-    let key = fuel;
-    if (normalize(fuel).includes('superior')) key = 'Gasolina Súper';
-    if (normalize(fuel) === 'diesel') key = 'Diésel';
-    prices[currentCity][key] = value;
   }
 
-  return prices;
+  return texts.join('\n');
 }
 
 const browser = await chromium.launch({ headless: true });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  await page.goto(SOURCE, { waitUntil: 'domcontentloaded', timeout: 90000 });
-  await page.waitForTimeout(15000);
+  let best = null;
 
-  const frames = page.frames();
-  const texts = [];
-  for (const frame of frames) {
+  for (const sourcePage of OFFICIAL_PAGES) {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     try {
-      const text = await frame.locator('body').innerText({ timeout: 5000 });
-      if (text && /combustible|gasolina|diesel|di[eé]sel/i.test(text)) texts.push(text);
-    } catch {}
+      await page.goto(sourcePage, {
+        waitUntil: 'domcontentloaded',
+        timeout: 90000
+      });
+
+      const discoveredLinks = await collectSourceLinks(page);
+      const candidates = [sourcePage, ...discoveredLinks];
+
+      for (const candidate of candidates) {
+        if (!isAllowedSource(candidate)) continue;
+
+        const target = candidate === sourcePage
+          ? page
+          : await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+
+        try {
+          if (target !== page) {
+            await target.goto(candidate, {
+              waitUntil: 'domcontentloaded',
+              timeout: 90000
+            });
+          }
+
+          const text = await collectText(target);
+          const prices = extractPrices(text);
+
+          try {
+            const stats = validateOfficialPayload(prices);
+            best = {
+              prices,
+              sourceUrl: candidate,
+              ...stats
+            };
+            break;
+          } catch {
+            // Esta fuente no tiene suficientes datos. Probamos la siguiente.
+          }
+        } finally {
+          if (target !== page) await target.close();
+        }
+      }
+    } catch (error) {
+      console.warn(`No se pudo consultar ${sourcePage}: ${error.message}`);
+    } finally {
+      await page.close();
+    }
+
+    if (best) break;
   }
 
-  const combined = texts.join('\n');
-  const prices = extractPrices(combined);
-  const cityCount = Object.keys(prices).length;
-  const valueCount = Object.values(prices).reduce((n, city) => n + Object.keys(city).length, 0);
-
-  if (cityCount === 0 || valueCount < 5) {
-    throw new Error(`No se pudieron extraer datos suficientes del tablero oficial (ciudades=${cityCount}, valores=${valueCount}). Se conserva el archivo anterior.`);
+  if (!best) {
+    throw new Error(
+      'No se pudo validar una fuente oficial de precios SEN. Se conserva data/sen-prices.json sin modificar.'
+    );
   }
 
   const payload = {
+    schemaVersion: 1,
     source: 'Secretaría de Energía de Honduras (SEN)',
-    sourceUrl: SOURCE,
+    sourceUrl: best.sourceUrl,
+    checkedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     status: 'official',
-    prices,
-    extraction: 'Power BI público de SEN mediante Playwright; el workflow falla si no obtiene datos suficientes.'
+    prices: best.prices,
+    validation: {
+      cities: best.cityCount,
+      values: best.valueCount,
+      fuelTypes: best.fuelTypeCount
+    },
+    extraction: 'Datos publicados por SEN obtenidos mediante Playwright. Si cambia la estructura o los datos no pasan validación, el archivo anterior se conserva.'
   };
 
-  await fs.writeFile(OUTPUT, JSON.stringify(payload, null, 2) + '\n');
-  console.log(`SEN actualizado: ${cityCount} ciudades, ${valueCount} valores.`);
+  // Escritura atómica: nunca dejamos un JSON parcialmente escrito.
+  await fs.writeFile(TEMP_OUTPUT, JSON.stringify(payload, null, 2) + '\n', 'utf8');
+  await fs.rename(TEMP_OUTPUT, OUTPUT);
+
+  console.log(
+    `SEN actualizado correctamente: ${best.cityCount} ciudades, ${best.valueCount} valores, fuente=${best.sourceUrl}`
+  );
 } finally {
   await browser.close();
+  try { await fs.unlink(TEMP_OUTPUT); } catch {}
 }
