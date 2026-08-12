@@ -3,14 +3,22 @@ name: Update SEN fuel prices
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 5'
+    # Dos comprobaciones diarias. Si SEN cambia el horario de publicación,
+    # OAVIX no depende de una única hora exacta.
+    - cron: '0 6,18 * * *'
 
 permissions:
   contents: write
 
+concurrency:
+  group: sen-price-update
+  cancel-in-progress: true
+
 jobs:
   update-sen-prices:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,14 +27,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install Playwright
         run: |
-          npm init -y
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
-      - name: Extract official SEN prices
+      - name: Extract and validate official SEN prices
         run: node scripts/update-sen-prices.mjs
 
       - name: Commit updated prices
