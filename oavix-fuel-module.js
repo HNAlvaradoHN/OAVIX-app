@@ -101,8 +101,11 @@
   // 🌐 Consultar API de precios SEN Honduras - CON DATOS REALES
   async function fetchSENPrices(){
     try{
-      // Datos por defecto: el SEN no expone una API pública, los precios reales
-      // se cargan desde el panel de administración (updatePricesManually).
+      // Fuente externa opcional; el SEN no expone una API pública, así que
+      // normalmente se usan los precios por defecto y el panel de administración.
+      const senPrices = typeof fetchRealSENData === 'function' ? await fetchRealSENData() : null;
+      if(senPrices) return senPrices;
+
       const mockData = {
         date: new Date().toISOString(),
         prices: {
