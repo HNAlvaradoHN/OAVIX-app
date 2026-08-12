@@ -370,6 +370,183 @@ describe('syncNow', () => {
   });
 });
 
+describe('cross-device pull', () => {
+  const needsPullKey = email => accountKey(email, 'needs_pull');
+
+  it('downloads the account data on a device that has no local copy', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    const calls = driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2025-04-09T00:00:00.000Z' }],
+      content: { schemaVersion: 5, updatedAt: '2025-04-09T00:00:00.000Z', data: { oavix_auto_records: '[{"id":9}]' } }
+    });
+    const sync = await loadSync();
+
+    await sync.syncNow();
+
+    // Nunca se sube la copia vacía del dispositivo nuevo.
+    expect(calls.some(c => c.url.includes('uploadType='))).toBe(false);
+    expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
+    expect(localStorage.getItem(localUpdatedKey(EMAIL))).toBe('2025-04-09T00:00:00.000Z');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(reload).toHaveBeenCalled();
+  });
+
+  it('still pulls first when the user edited something before the sync ran', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    localStorage.setItem(needsPullKey(EMAIL), 'true');
+    const calls = driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2025-04-09T00:00:00.000Z' }],
+      content: { schemaVersion: 5, updatedAt: '2025-04-09T00:00:00.000Z', data: { oavix_auto_records: '[{"id":9}]' } }
+    });
+    const sync = await loadSync();
+    localStorage.setItem('oavix_auto_records', '[{"id":100}]');
+
+    await sync.syncNow();
+
+    expect(calls.some(c => c.url.includes('uploadType='))).toBe(false);
+    expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
+    expect(localStorage.getItem(needsPullKey(EMAIL))).toBeNull();
+  });
+
+  it('uploads on a device with no local copy when Drive has no file yet', async () => {
+    seedSession();
+    localStorage.setItem('oavix_auto_records', '[{"id":1}]');
+    const calls = driveBackend({ files: [] });
+    const sync = await loadSync();
+
+    await sync.syncNow();
+
+    expect(calls.some(c => c.url.includes('uploadType=multipart'))).toBe(true);
+    expect(localStorage.getItem(needsPullKey(EMAIL))).toBeNull();
+  });
+
+  it('reloads after adopting newer data from another device', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, { oavix_auto_records: '[{"id":1}]' }, '2025-04-01T00:00:00.000Z');
+    driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2025-04-09T00:00:00.000Z' }],
+      content: { schemaVersion: 5, updatedAt: '2025-04-09T00:00:00.000Z', data: { oavix_auto_records: '[{"id":9}]' } }
+    });
+    const sync = await loadSync();
+
+    await sync.syncNow();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
+    expect(reload).toHaveBeenCalled();
+  });
+
+  it('syncs on load for a signed-in account even without pending changes', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, { oavix_auto_records: '[{"id":1}]' }, '2025-04-01T00:00:00.000Z');
+    driveBackend({ files: [] });
+    await loadSync();
+
+    document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('marks a newly signed-in account so its data is pulled from Drive', async () => {
+    localStorage.setItem('oavix_migration_v5', 'done');
+    driveBackend();
+    const sync = await loadSync();
+
+    await sync.loginWithGoogle();
+
+    expect(localStorage.getItem(needsPullKey(EMAIL))).toBe('true');
+  });
+
+  it('keeps fuel data that older snapshots never tracked', async () => {
+    seedSession();
+    const snapshot = { schemaVersion: 5, updatedAt: '2025-04-01T00:00:00.000Z', data: { oavix_auto_records: '[{"id":1}]' } };
+    localStorage.setItem(metaKey(EMAIL), JSON.stringify(snapshot));
+    localStorage.setItem('oavix_fuel_history', '[{"id":"1"}]');
+
+    await loadSync();
+
+    expect(localStorage.getItem('oavix_fuel_history')).toBe('[{"id":"1"}]');
+  });
+
+  it('keeps fuel data that an older Drive file never tracked', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, { oavix_auto_records: '[{"id":1}]' }, '2025-04-01T00:00:00.000Z');
+    localStorage.setItem('oavix_fuel_history', '[{"id":"1"}]');
+    driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2025-04-09T00:00:00.000Z' }],
+      content: { schemaVersion: 5, updatedAt: '2025-04-09T00:00:00.000Z', data: { oavix_auto_records: '[{"id":9}]' } }
+    });
+    const sync = await loadSync();
+
+    await sync.syncNow();
+
+    expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
+    expect(localStorage.getItem('oavix_fuel_history')).toBe('[{"id":"1"}]');
+  });
+
+  it('does not flag pending changes when opening the app offline', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, { oavix_auto_records: '[{"id":1}]', [CATEGORY_KEY]: '["Frenos"]' }, '2025-04-01T00:00:00.000Z');
+    await loadSync();
+    window.showToast.mockClear();
+    setOnline(false);
+
+    document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(localStorage.getItem(PENDING_KEY)).toBeNull();
+    expect(window.showToast).not.toHaveBeenCalledWith(expect.stringContaining('Guardado localmente'), expect.anything(), expect.anything());
+  });
+
+  it('warns about unsent changes when the user syncs by hand while offline', async () => {
+    seedSession();
+    seedAccountSnapshot(EMAIL, { oavix_auto_records: '[{"id":1}]', [CATEGORY_KEY]: '["Frenos"]' }, '2025-04-01T00:00:00.000Z');
+    const sync = await loadSync();
+    setOnline(false);
+
+    await sync.syncNow();
+
+    expect(localStorage.getItem(PENDING_KEY)).toBe('true');
+  });
+
+  it('does not reload in a loop when the Drive file has no data', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2025-04-09T00:00:00.000Z' }],
+      content: { schemaVersion: 5, updatedAt: '2025-04-09T00:00:00.000Z' }
+    });
+    const sync = await loadSync();
+
+    await sync.syncNow();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(reload).not.toHaveBeenCalled();
+    expect(localStorage.getItem(needsPullKey(EMAIL))).toBeNull();
+  });
+
+  it('keeps the fuel history and vehicle setup per account', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, {}, '2025-04-01T00:00:00.000Z');
+    await loadSync();
+    setOnline(false);
+
+    localStorage.setItem('oavix_fuel_history', '[{"id":"1","gallons":5}]');
+
+    expect(localStorage.getItem(PENDING_KEY)).toBe('true');
+    const snapshot = JSON.parse(localStorage.getItem(metaKey(EMAIL)));
+    expect(snapshot.data.oavix_fuel_history).toBe('[{"id":"1","gallons":5}]');
+  });
+});
+
 describe('sign in and sign out', () => {
   it('stores the session for the Google account and reloads', async () => {
     driveBackend({ about: { user: { emailAddress: 'Nueva@OAVIX.hn', displayName: 'Nueva' } } });
