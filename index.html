@@ -848,6 +848,37 @@
       return (num < 0 ? '-' : '') + sym + formatted;
     }
 
+    function reportError(context, error, title, body) {
+      console.error(`[OAVIX ${context}]`, error);
+      try {
+        if (title) showToast(title, body || (error && error.message) || 'Error inesperado.', 'red');
+      } catch (toastError) {
+        console.error('[OAVIX Toast]', toastError);
+      }
+    }
+
+    function readStoredJSON(key, fallback) {
+      const raw = localStorage.getItem(key);
+      if (raw === null) return fallback;
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed === null ? fallback : parsed;
+      } catch (e) {
+        reportError('Storage', e, '⚠ Datos dañados', `No se pudo leer "${key}". Se usará el valor por defecto.`);
+        return fallback;
+      }
+    }
+
+    function writeStored(key, value) {
+      try {
+        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+        return true;
+      } catch (e) {
+        reportError('Storage', e, '⚠ No se pudo guardar', 'El navegador rechazó el guardado (almacenamiento lleno o modo privado).');
+        return false;
+      }
+    }
+
     let currentUserName = localStorage.getItem('oavix_current_user_name') || '';
     let currentUserPIN = localStorage.getItem('oavix_current_user_pin') || '';
     let currentUnit = localStorage.getItem('oavix_auto_unit') || 'km';
@@ -855,10 +886,10 @@
     let globalLikes = Number(localStorage.getItem('oavix_global_likes')) || 142;
     let hasLikedApp = localStorage.getItem('oavix_has_liked') === 'true';
 
-    let autoCategories = JSON.parse(localStorage.getItem('oavix_auto_categories')) || [
+    let autoCategories = readStoredJSON('oavix_auto_categories', null) || [
       'Mantenimiento General', 'Cambio de Aceite', 'Llantas / Frenos', 'Combustible', 'Reparaciones'
     ];
-    let autoRecords = JSON.parse(localStorage.getItem('oavix_auto_records')) || [];
+    let autoRecords = readStoredJSON('oavix_auto_records', null) || [];
     let isAlarmRinging = false;
     let alarmAudioInterval = null;
     let currentBase64Image = '';
@@ -938,8 +969,8 @@
 
       currentUserName = user;
       currentUserPIN = pin;
-      localStorage.setItem('oavix_current_user_name', user);
-      localStorage.setItem('oavix_current_user_pin', pin);
+      writeStored('oavix_current_user_name', user);
+      writeStored('oavix_current_user_pin', pin);
 
       checkLoginState();
       showToast('Sesión Iniciada', `Bienvenido ${user}. Recuerda guardar tu PIN en un lugar seguro.`, 'emerald');
@@ -961,8 +992,8 @@
       }
       globalLikes++;
       hasLikedApp = true;
-      localStorage.setItem('oavix_global_likes', globalLikes);
-      localStorage.setItem('oavix_has_liked', 'true');
+      writeStored('oavix_global_likes', globalLikes);
+      writeStored('oavix_has_liked', 'true');
       updateLikesUI();
       showToast('¡Gracias!', 'Has dado Like a OAVIX.', 'emerald');
     }
@@ -973,7 +1004,7 @@
 
     function setDistanceUnit(u) {
       currentUnit = u;
-      localStorage.setItem('oavix_auto_unit', u);
+      writeStored('oavix_auto_unit', u);
       updateUnitUI();
       renderMileageComparison();
     }
@@ -989,7 +1020,7 @@
       const raw = elem.value.replace(/,/g, '');
       const val = Number(raw || 0);
       currentVehicleMileage = val;
-      localStorage.setItem('oavix_auto_mileage', currentVehicleMileage);
+      writeStored('oavix_auto_mileage', currentVehicleMileage);
       renderMileageComparison();
       renderStats();
     }
@@ -1043,7 +1074,7 @@
       if (!val) return;
       if (!autoCategories.includes(val)) {
         autoCategories.push(val);
-        localStorage.setItem('oavix_auto_categories', JSON.stringify(autoCategories));
+        writeStored('oavix_auto_categories', autoCategories);
       }
       input.value = '';
       renderCategoryManageList();
@@ -1052,7 +1083,7 @@
 
     function deleteCategory(idx) {
       autoCategories.splice(idx, 1);
-      localStorage.setItem('oavix_auto_categories', JSON.stringify(autoCategories));
+      writeStored('oavix_auto_categories', autoCategories);
       renderCategoryManageList();
       setupCategoryDropdowns();
     }
@@ -1095,6 +1126,8 @@
         if (permission === 'granted') {
           showToast('Alertas Activas', 'Recibirás notificaciones flotantes en segundo plano.', 'emerald');
         }
+      }).catch(e => {
+        reportError('Notification', e, '⚠ Alertas no disponibles', 'El navegador no concedió el permiso de notificaciones.');
       });
     }
 
@@ -1113,7 +1146,7 @@
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const currentTimeStr = `${hours}:${minutes}`;
 
-      let triggeredAlarms = JSON.parse(localStorage.getItem('oavix_triggered_alarms')) || [];
+      let triggeredAlarms = readStoredJSON('oavix_triggered_alarms', null) || [];
 
       autoRecords.forEach(r => {
         if (r.validated || !r.alertDate) return;
@@ -1126,7 +1159,7 @@
 
         if (isPastDate || (isToday && isTimeReached)) {
           triggeredAlarms.push(alarmKey);
-          localStorage.setItem('oavix_triggered_alarms', JSON.stringify(triggeredAlarms));
+          writeStored('oavix_triggered_alarms', triggeredAlarms);
 
           startContinuousAlarm(`¡Servicio Pendiente!: ${r.title}`, `Mantenimiento programado para hoy. Categoría: ${r.category}`);
 
@@ -1179,7 +1212,9 @@
         playT(880, 0, 0.15);
         playT(880, 0.2, 0.15);
         playT(1174.66, 0.4, 0.25);
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[OAVIX Alarm] No se pudo reproducir el tono de alarma.', e);
+      }
     }
 
     function stopContinuousAlarm() {
@@ -1227,8 +1262,8 @@
       const bg = document.getElementById('picker-bg-color').value;
       const neon = document.getElementById('picker-border-color').value;
       applyCustomThemeColors(bg, neon);
-      localStorage.setItem('oavix_custom_bg', bg);
-      localStorage.setItem('oavix_custom_neon', neon);
+      writeStored('oavix_custom_bg', bg);
+      writeStored('oavix_custom_neon', neon);
     }
 
     function applyCustomThemeColors(bg, neon) {
@@ -1248,8 +1283,8 @@
       document.getElementById('picker-bg-color').value = defBg;
       document.getElementById('picker-border-color').value = defNeon;
       applyCustomThemeColors(defBg, defNeon);
-      localStorage.setItem('oavix_custom_bg', defBg);
-      localStorage.setItem('oavix_custom_neon', defNeon);
+      writeStored('oavix_custom_bg', defBg);
+      writeStored('oavix_custom_neon', defNeon);
       showToast('Tema Restablecido', 'Se aplicó el diseño perfecto.', 'cyan');
     }
 
@@ -1257,7 +1292,7 @@
       const isDark = document.documentElement.classList.toggle('dark');
       document.documentElement.classList.toggle('light-theme', !isDark);
       document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-moon text-xs' : 'fa-solid fa-sun text-xs text-amber-400';
-      localStorage.setItem('oavix_is_light', !isDark);
+      writeStored('oavix_is_light', !isDark);
       resetDefaultTheme();
     }
 
@@ -1269,7 +1304,7 @@
     }
 
     function saveAll() {
-      localStorage.setItem('oavix_auto_records', JSON.stringify(autoRecords));
+      return writeStored('oavix_auto_records', autoRecords);
     }
 
     function renderMileageComparison() {
@@ -1609,7 +1644,7 @@
         fuelType: document.getElementById('fuel-type-select').value || 'Gasolina Regular',
         avgConsumption: parseFloat(document.getElementById('fuel-avg-consumption').value) || 8
       };
-      window.FuelModule.updateVehicleConfig(config);
+      if(!window.FuelModule.updateVehicleConfig(config)) return;
       renderFuelPrices();
     }
 
@@ -1750,6 +1785,8 @@
         } else {
           showToast('⚠ Error', 'No se pudieron obtener los precios.', 'amber');
         }
+      }).catch(e => {
+        reportError('Fuel Refresh', e, '⚠ Error', 'Falló la actualización de precios: ' + ((e && e.message) || 'error desconocido'));
       });
     }
 
@@ -1825,7 +1862,8 @@
         // Copiar al portapapeles automáticamente
         navigator.clipboard.writeText(jsonStr).then(() => {
           showToast('✅ Copiado', 'JSON en el portapapeles', 'emerald');
-        }).catch(() => {
+        }).catch(e => {
+          console.warn('[OAVIX Admin Export] Portapapeles no disponible.', e);
           showToast('ℹ Info', 'Copia manualmente desde el textarea', 'blue');
         });
       } catch(e) {

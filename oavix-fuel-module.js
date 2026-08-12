@@ -39,20 +39,35 @@
 
   let fuelHistory = [];
 
+  function toast(title, body, tone){
+    if(typeof window.showToast === 'function'){
+      try{ window.showToast(title, body, tone); }
+      catch(e){ console.error('[OAVIX Fuel Toast]', e); }
+    }
+  }
+
+  // 🔄 Leer una clave sin que un dato corrupto arrastre a las demás
+  function readKey(key, fallback){
+    const stored = localStorage.getItem(key);
+    if(!stored) return fallback;
+    try{
+      const parsed = JSON.parse(stored);
+      return parsed === null ? fallback : parsed;
+    }catch(e){
+      console.error('[OAVIX Fuel] Dato corrupto en ' + key + ', se usará el valor por defecto.', e);
+      toast('⚠ Datos dañados', 'Los datos de combustible en "' + key + '" no se pudieron leer.', 'amber');
+      return fallback;
+    }
+  }
+
   // 🔄 Cargar datos del localStorage
   function loadFuelData(){
-    try{
-      const stored = localStorage.getItem(FUEL_STORAGE_KEY);
-      if(stored) fuelData = JSON.parse(stored);
-      
-      const storedVehicle = localStorage.getItem(FUEL_VEHICLE_KEY);
-      if(storedVehicle) vehicleConfig = JSON.parse(storedVehicle);
-      
-      const storedHistory = localStorage.getItem(FUEL_HISTORY_KEY);
-      if(storedHistory) fuelHistory = JSON.parse(storedHistory);
-    }catch(e){
-      console.error('[OAVIX Fuel]', e);
-    }
+    fuelData = readKey(FUEL_STORAGE_KEY, fuelData);
+    vehicleConfig = readKey(FUEL_VEHICLE_KEY, vehicleConfig);
+    fuelHistory = readKey(FUEL_HISTORY_KEY, fuelHistory);
+    if(!fuelData || typeof fuelData !== 'object') fuelData = { lastUpdate: null, prices: {}, nextUpdate: null };
+    if(!fuelData.prices || typeof fuelData.prices !== 'object') fuelData.prices = {};
+    if(!Array.isArray(fuelHistory)) fuelHistory = [];
   }
 
   // 💾 Guardar datos al localStorage
@@ -61,19 +76,29 @@
       localStorage.setItem(FUEL_STORAGE_KEY, JSON.stringify(fuelData));
       localStorage.setItem(FUEL_VEHICLE_KEY, JSON.stringify(vehicleConfig));
       localStorage.setItem(FUEL_HISTORY_KEY, JSON.stringify(fuelHistory));
+      return true;
     }catch(e){
       console.error('[OAVIX Fuel Save]', e);
+      toast('⚠ No se pudo guardar', 'El navegador rechazó guardar los datos de combustible (almacenamiento lleno o modo privado).', 'red');
+      return false;
     }
   }
 
   // 🌐 Consultar API de precios SEN Honduras - CON DATOS REALES
   async function fetchSENPrices(){
     try{
-      // Primero, intentar obtener datos reales del SEN vía proxy
-      const senPrices = await fetchRealSENData();
-      if(senPrices) return senPrices;
-      
-      // Si falla, usar datos por defecto (estructura lista para datos reales)
+      // Primero, intentar obtener datos reales del SEN vía proxy (opcional).
+      // Un fallo aquí solo debe degradar a los precios por defecto, no cancelar la carga.
+      if(typeof window.fetchRealSENData === 'function'){
+        try{
+          const senPrices = await window.fetchRealSENData();
+          if(senPrices) return senPrices;
+        }catch(e){
+          console.warn('[OAVIX Fuel] No se pudo consultar el SEN, se usarán los precios por defecto.', e);
+        }
+      }
+
+      // Datos por defecto (estructura lista para datos reales)
       const mockData = {
         date: new Date().toISOString(),
         prices: {
@@ -144,10 +169,10 @@
       const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7;
       fuelData.nextUpdate = new Date(now.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000).toISOString();
 
-      saveFuelData();
-      return true;
+      return saveFuelData();
     }catch(e){
       console.error('[OAVIX Fuel API]', e);
+      toast('⚠ Error de precios', 'No se pudieron preparar los precios: ' + (e.message || 'error desconocido'), 'red');
       return false;
     }
   }
@@ -196,7 +221,10 @@
       };
       
       fuelHistory.push(record);
-      saveFuelData();
+      if(!saveFuelData()){
+        fuelHistory.pop();
+        throw new Error('No se pudo guardar la recarga de combustible.');
+      }
       return record;
     },
 
@@ -212,8 +240,13 @@
 
     // Actualizar configuración de vehículo
     updateVehicleConfig: function(config){
+      const previous = vehicleConfig;
       vehicleConfig = { ...vehicleConfig, ...config };
-      saveFuelData();
+      if(!saveFuelData()){
+        vehicleConfig = previous;
+        return false;
+      }
+      return true;
     },
 
     // Obtener ciudades disponibles
@@ -273,11 +306,14 @@
     // 🔧 Panel de Admin - Actualizar precios manualmente desde SEN
     updatePricesManually: function(pricesObject, date = null){
       try{
-        if(!pricesObject || typeof pricesObject !== 'object'){
-          console.error('[OAVIX Fuel] Formato inválido para precios');
+        if(!pricesObject || typeof pricesObject !== 'object' || Array.isArray(pricesObject)){
+          console.error('[OAVIX Fuel] Formato inválido para precios', pricesObject);
+          toast('⚠ Formato inválido', 'Los precios deben ser un objeto de ciudades.', 'red');
           return false;
         }
-        
+
+        const previousPrices = fuelData.prices;
+        const previousUpdate = fuelData.lastUpdate;
         fuelData.prices = pricesObject;
         fuelData.lastUpdate = date || new Date().toISOString();
         
@@ -286,15 +322,19 @@
         const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7;
         fuelData.nextUpdate = new Date(now.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000).toISOString();
         
-        saveFuelData();
-        console.log('[OAVIX Fuel] ✅ Precios actualizados correctamente');
-        
+        if(!saveFuelData()){
+          fuelData.prices = previousPrices;
+          fuelData.lastUpdate = previousUpdate;
+          return false;
+        }
+
         // Disparar evento para actualizar UI
         if(window.renderFuelPrices) window.renderFuelPrices();
-        
+
         return true;
       }catch(e){
         console.error('[OAVIX Fuel Admin]', e);
+        toast('⚠ Error', 'No se pudieron actualizar los precios: ' + (e.message || 'error desconocido'), 'red');
         return false;
       }
     },
@@ -310,15 +350,12 @@
 
     // 📥 Importar precios desde JSON
     importPrices: function(jsonData){
-      try{
-        if(jsonData.data && jsonData.data.prices){
-          return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
-        }
-        return false;
-      }catch(e){
-        console.error('[OAVIX Fuel Import]', e);
+      if(!jsonData || typeof jsonData !== 'object' || !jsonData.data || !jsonData.data.prices){
+        console.error('[OAVIX Fuel Import] El JSON no contiene data.prices', jsonData);
+        toast('⚠ Formato inválido', 'El JSON importado no contiene "data.prices".', 'red');
         return false;
       }
+      return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
     }
   };
 
@@ -328,7 +365,7 @@
   // Actualizar precios al cargar (si es viernes)
   document.addEventListener('DOMContentLoaded', function(){
     if(!fuelData.lastUpdate){
-      fetchSENPrices();
+      fetchSENPrices().catch(e => console.error('[OAVIX Fuel Init]', e));
     }
   }, { once: true });
 
@@ -336,7 +373,7 @@
   setInterval(() => {
     const now = new Date();
     if(now.getDay() === 5 && now.getHours() === 0){
-      fetchSENPrices();
+      fetchSENPrices().catch(e => console.error('[OAVIX Fuel Auto]', e));
     }
   }, 3600000); // Cada hora verificar
 
