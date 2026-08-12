@@ -69,3 +69,79 @@
   window.addEventListener('beforeunload',()=>{if(accountEmail)saveAccountSnapshot(accountEmail,nativeGet(localUpdatedKey(accountEmail))||(accountSnapshot(accountEmail)||{}).updatedAt||new Date().toISOString());});
   document.addEventListener('DOMContentLoaded',()=>{setTimeout(initUI,0);if(accountEmail&&navigator.onLine&&nativeGet(PENDING_KEY)==='true')setTimeout(()=>syncNow(false),900);},{once:true});
 })();
+
+/* OAVIX — ajustes puntuales de mantenimiento y calendario. */
+(function(){
+  'use strict';
+
+  const DEFAULT_CATEGORIES = [
+    'Mantenimiento General',
+    'Cambio de Aceite',
+    'Llantas / Frenos',
+    'Combustible',
+    'Reparaciones'
+  ];
+  const CATEGORY_KEY = 'oavix_auto_categories';
+  const CATEGORY_INIT_KEY = 'oavix_auto_categories_initialized';
+
+  function fixCategories(){
+    let stored = null;
+    try { stored = JSON.parse(localStorage.getItem(CATEGORY_KEY)); } catch (_) { stored = null; }
+
+    /* Si una instalación anterior dejó la lista vacía sin haber sido gestionada
+       por el usuario, recuperamos las categorías iniciales una sola vez. */
+    if (Array.isArray(stored) && stored.length === 0 && !localStorage.getItem(CATEGORY_INIT_KEY)) {
+      stored = DEFAULT_CATEGORIES.slice();
+      localStorage.setItem(CATEGORY_KEY, JSON.stringify(stored));
+    }
+
+    if (!Array.isArray(stored)) {
+      stored = DEFAULT_CATEGORIES.slice();
+      localStorage.setItem(CATEGORY_KEY, JSON.stringify(stored));
+    }
+
+    if (Array.isArray(window.autoCategories)) {
+      window.autoCategories.splice(0, window.autoCategories.length, ...stored);
+    }
+
+    localStorage.setItem(CATEGORY_INIT_KEY, 'true');
+
+    if (typeof window.setupCategoryDropdowns === 'function') {
+      window.setupCategoryDropdowns();
+    }
+  }
+
+  function keepCategoryStateManaged(){
+    if (typeof window.addNewCategory === 'function' && !window.__OAVIX_CATEGORY_WRAPPED__) {
+      const originalAdd = window.addNewCategory;
+      window.addNewCategory = function(){
+        originalAdd.apply(this, arguments);
+        localStorage.setItem(CATEGORY_INIT_KEY, 'true');
+      };
+
+      const originalDelete = window.deleteCategory;
+      if (typeof originalDelete === 'function') {
+        window.deleteCategory = function(){
+          originalDelete.apply(this, arguments);
+          localStorage.setItem(CATEGORY_INIT_KEY, 'true');
+        };
+      }
+      window.__OAVIX_CATEGORY_WRAPPED__ = true;
+    }
+  }
+
+  function applyFixes(){
+    fixCategories();
+    keepCategoryStateManaged();
+
+    /* El calendario ya conserva selectedCalendarMonth/selectedCalendarYear
+       durante toda la sesión y se inicializa con el mes actual al recargar.
+       No se guarda en localStorage para que una recarga vuelva al mes actual. */
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyFixes, 0); }, {once:true});
+  } else {
+    setTimeout(applyFixes, 0);
+  }
+})();
