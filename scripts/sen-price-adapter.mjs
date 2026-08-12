@@ -90,11 +90,11 @@ export function validateOfficialPayload(prices) {
   if (cityCount < 3) {
     throw new Error(`Datos insuficientes: solo ${cityCount} ciudades detectadas.`);
   }
-  if (valueCount < 5) {
-    throw new Error(`Datos insuficientes: solo ${valueCount} precios detectados.`);
-  }
   if (fuelTypes.size < 2) {
     throw new Error(`Datos insuficientes: solo ${fuelTypes.size} tipos de combustible detectados.`);
+  }
+  if (valueCount < 5) {
+    throw new Error(`Datos insuficientes: solo ${valueCount} precios detectados.`);
   }
 
   return { cityCount, valueCount, fuelTypeCount: fuelTypes.size };
