@@ -14,3 +14,30 @@ window.OAVIX_GOOGLE_CLIENT_ID = '450696651936-p56j2qn8iccbktb375s737pa3hvpki1s.a
   link.href = 'oavix-theme-overrides.css?v=1';
   document.head.appendChild(link);
 })();
+
+/* OAVIX — initialize maintenance categories before index.html reads them. */
+(function () {
+  var key = 'oavix_auto_categories';
+  var initKey = 'oavix_auto_categories_initialized';
+  var defaults = [
+    'Mantenimiento General',
+    'Cambio de Aceite',
+    'Llantas / Frenos',
+    'Combustible',
+    'Reparaciones'
+  ];
+
+  try {
+    var raw = localStorage.getItem(key);
+    var parsed = raw === null ? null : JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      localStorage.setItem(key, JSON.stringify(defaults));
+    } else if (parsed.length === 0 && !localStorage.getItem(initKey)) {
+      /* Recupera una instalación que quedó con la lista vacía sin gestionarla. */
+      localStorage.setItem(key, JSON.stringify(defaults));
+    }
+  } catch (_) {
+    localStorage.setItem(key, JSON.stringify(defaults));
+  }
+})();
