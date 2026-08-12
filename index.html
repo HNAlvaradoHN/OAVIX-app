@@ -637,6 +637,36 @@
         </div>
       </div>
 
+      <!-- PANEL DE ADMINISTRADOR - ACTUALIZAR PRECIOS DEL SEN -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3 border-2 border-amber-500/30">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-wrench text-amber-400"></i>
+          <span>Panel Admin - Actualizar Precios SEN</span>
+        </h3>
+        <p class="text-xs opacity-70">Copia los precios de <a href="https://app.powerbi.com/view?r=eyJrIjoiZDdmNzNjMmYtNzMzYy00ZDQ2LTg0MzctYWRlNDQ5MWIzNGYxIiwidCI6Ijk0MDNiYTRiLWJjNTQtNDAzZS05NTg4LWI1NTJkMThhODI3YiJ9" target="_blank" class="text-blue-400 hover:underline">Power BI SEN</a> y actualiza aquí</p>
+        
+        <div class="space-y-2">
+          <label class="text-xs font-bold block">Pega los precios en JSON:</label>
+          <textarea id="fuel-admin-json-input" class="w-full h-32 bg-slate-900/50 border border-slate-600 rounded-lg p-2 text-xs font-mono text-green-400 focus:border-blue-400 focus:outline-none" placeholder='{"tegucigalpa":{"Gasolina Súper":57.85,"Gasolina Regular":55.20,...},...}'></textarea>
+          <div class="flex gap-2">
+            <button onclick="importFuelPricesFromJSON()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+              <i class="fa-solid fa-upload mr-1"></i> Importar
+            </button>
+            <button onclick="exportFuelPricesToJSON()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+              <i class="fa-solid fa-download mr-1"></i> Exportar
+            </button>
+            <button onclick="showFuelAdminGuide()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+              <i class="fa-solid fa-question-circle mr-1"></i> Guía
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/30 rounded-lg p-2 text-xs">
+          <p class="font-bold text-amber-400 mb-1">📋 Última actualización SEN:</p>
+          <p id="fuel-admin-last-update" class="text-slate-300">--</p>
+        </div>
+      </div>
+
     </div>
 
   </main>
@@ -1731,6 +1761,121 @@
       document.getElementById('fuel-avg-consumption').value = config.avgConsumption;
       document.getElementById('fuel-city-select').value = config.city;
       document.getElementById('fuel-type-select').value = config.fuelType;
+      
+      // Actualizar fecha última actualización en panel admin
+      const lastUpdate = window.FuelModule.getLastUpdate();
+      if(lastUpdate) {
+        document.getElementById('fuel-admin-last-update').textContent = 
+          new Date(lastUpdate).toLocaleString('es-HN');
+      }
+    }
+
+    // 🔧 PANEL ADMIN - Importar precios desde JSON
+    function importFuelPricesFromJSON() {
+      try {
+        const jsonInput = document.getElementById('fuel-admin-json-input').value.trim();
+        
+        if(!jsonInput) {
+          showToast('⚠ Error', 'Pega el JSON de precios primero', 'amber');
+          return;
+        }
+        
+        // Intentar parsear como objeto directo de precios
+        let pricesData;
+        try {
+          pricesData = JSON.parse(jsonInput);
+        } catch(e) {
+          showToast('⚠ JSON Inválido', 'Revisa el formato del JSON', 'red');
+          return;
+        }
+        
+        // Validar que sea un objeto con ciudades
+        if(!pricesData || typeof pricesData !== 'object') {
+          showToast('⚠ Formato Inválido', 'Debe ser un objeto JSON', 'red');
+          return;
+        }
+        
+        // Actualizar precios
+        const success = window.FuelModule.updatePricesManually(pricesData);
+        
+        if(success) {
+          document.getElementById('fuel-admin-json-input').value = '';
+          showToast('✅ Actualizado', 'Precios del SEN sincronizados correctamente', 'emerald');
+          renderFuelPrices();
+          renderFuelModule();
+        } else {
+          showToast('⚠ Error', 'No se pudieron actualizar los precios', 'red');
+        }
+      } catch(e) {
+        console.error('[Admin Import]', e);
+        showToast('⚠ Error', 'Ocurrió un error: ' + e.message, 'red');
+      }
+    }
+
+    // 📋 PANEL ADMIN - Exportar precios a JSON (para copiar del Power BI)
+    function exportFuelPricesToJSON() {
+      try {
+        const exported = window.FuelModule.exportPrices();
+        const jsonStr = JSON.stringify(exported.data.prices, null, 2);
+        
+        document.getElementById('fuel-admin-json-input').value = jsonStr;
+        
+        showToast('📋 Copiado', 'JSON de precios generado en el textarea', 'blue');
+        
+        // Copiar al portapapeles automáticamente
+        navigator.clipboard.writeText(jsonStr).then(() => {
+          showToast('✅ Copiado', 'JSON en el portapapeles', 'emerald');
+        }).catch(() => {
+          showToast('ℹ Info', 'Copia manualmente desde el textarea', 'blue');
+        });
+      } catch(e) {
+        console.error('[Admin Export]', e);
+        showToast('⚠ Error', 'No se pudo exportar: ' + e.message, 'red');
+      }
+    }
+
+    // 📖 PANEL ADMIN - Mostrar guía de actualización
+    function showFuelAdminGuide() {
+      const guide = `
+🔧 GUÍA DE ACTUALIZACIÓN DE PRECIOS SEN
+
+1️⃣ ACCEDER A LOS PRECIOS REALES:
+   • Ve a: https://app.powerbi.com/view?r=eyJrIjoiZDdmNzNjMmYtNzMzYy00ZDQ2LTg0MzctYWRlNDQ5MWIzNGYxIiwidCI6Ijk0MDNiYTRiLWJjNTQtNDAzZS05NTg4LWI1NTJkMThhODI3YiJ9
+   • Los precios se actualizan cada viernes
+
+2️⃣ FORMATO DE PRECIOS:
+   {
+     "tegucigalpa": {
+       "Gasolina Súper": 57.85,
+       "Gasolina Regular": 55.20,
+       "Diésel": 52.15,
+       "Kerosene": 51.30,
+       "GLP": 35.90
+     },
+     "sps": { ... },
+     "laceiba": { ... },
+     "choloma": { ... },
+     "danli": { ... },
+     "juticalpa": { ... },
+     "comayagua": { ... },
+     "trujillo": { ... }
+   }
+
+3️⃣ PASOS:
+   a) Presiona "Exportar" para ver el formato actual
+   b) Reemplaza los valores con los precios del SEN
+   c) Pega el JSON en el textarea
+   d) Presiona "Importar"
+
+4️⃣ VALIDACIÓN:
+   ✓ Debe ser JSON válido
+   ✓ Todas las 8 ciudades
+   ✓ Los 5 tipos de combustible
+
+¡Los precios se sincronizarán automáticamente a todos los dispositivos!
+      `;
+      
+      showToast('📖 Guía', guide, 'cyan', 8000);
     }
 
   </script>

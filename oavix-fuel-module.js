@@ -66,13 +66,14 @@
     }
   }
 
-  // 🌐 Consultar API de precios SEN Honduras
+  // 🌐 Consultar API de precios SEN Honduras - CON DATOS REALES
   async function fetchSENPrices(){
     try{
-      // Nota: Esta es una estructura de demostración
-      // En producción, integrar con API real de SEN
-      // URL ejemplo: https://www.sen.gob.hn/api/precios (verificar endpoint real)
+      // Primero, intentar obtener datos reales del SEN vía proxy
+      const senPrices = await fetchRealSENData();
+      if(senPrices) return senPrices;
       
+      // Si falla, usar datos por defecto (estructura lista para datos reales)
       const mockData = {
         date: new Date().toISOString(),
         prices: {
@@ -267,6 +268,57 @@
         avgConsumption: totalKm / totalGallons,
         avgPrice: avgPrice.toFixed(2)
       };
+    },
+
+    // 🔧 Panel de Admin - Actualizar precios manualmente desde SEN
+    updatePricesManually: function(pricesObject, date = null){
+      try{
+        if(!pricesObject || typeof pricesObject !== 'object'){
+          console.error('[OAVIX Fuel] Formato inválido para precios');
+          return false;
+        }
+        
+        fuelData.prices = pricesObject;
+        fuelData.lastUpdate = date || new Date().toISOString();
+        
+        // Calcular próxima actualización (viernes próximo a las 00:00)
+        const now = new Date();
+        const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7;
+        fuelData.nextUpdate = new Date(now.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000).toISOString();
+        
+        saveFuelData();
+        console.log('[OAVIX Fuel] ✅ Precios actualizados correctamente');
+        
+        // Disparar evento para actualizar UI
+        if(window.renderFuelPrices) window.renderFuelPrices();
+        
+        return true;
+      }catch(e){
+        console.error('[OAVIX Fuel Admin]', e);
+        return false;
+      }
+    },
+
+    // 📋 Exportar precios en formato JSON (para compartir con otros usuarios)
+    exportPrices: function(){
+      return {
+        timestamp: new Date().toISOString(),
+        data: fuelData,
+        version: '1.0'
+      };
+    },
+
+    // 📥 Importar precios desde JSON
+    importPrices: function(jsonData){
+      try{
+        if(jsonData.data && jsonData.data.prices){
+          return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
+        }
+        return false;
+      }catch(e){
+        console.error('[OAVIX Fuel Import]', e);
+        return false;
+      }
     }
   };
 
