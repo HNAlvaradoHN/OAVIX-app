@@ -96,8 +96,6 @@
       renderPricesSafely();
       return true;
     }
-    // No se usa una tabla antigua como si fuera actual. Si el SEN no está disponible,
-    // conservamos la última copia oficial válida que ya exista localmente.
     if(fuelData.source==='official' && Object.keys(fuelData.prices||{}).length){
       fuelData.status='offline-cache';
       saveFuelData();
@@ -138,5 +136,8 @@
   };
 
   loadFuelData();
-  document.addEventListener('DOMContentLoaded',()=>{ fetchSENPrices(); },{once:true});
+  if(!window.__OAVIX_FUEL_DOM_LISTENER__){
+    window.__OAVIX_FUEL_DOM_LISTENER__=true;
+    document.addEventListener('DOMContentLoaded',()=>{ fetchSENPrices(); },{once:true});
+  }
 })();
