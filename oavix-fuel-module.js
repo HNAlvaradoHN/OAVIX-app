@@ -39,31 +39,30 @@
 
   let fuelHistory = [];
 
+  const storage = window.OAVIX.storage;
+
   // 🔄 Cargar datos del localStorage
   function loadFuelData(){
-    try{
-      const stored = localStorage.getItem(FUEL_STORAGE_KEY);
-      if(stored) fuelData = JSON.parse(stored);
-      
-      const storedVehicle = localStorage.getItem(FUEL_VEHICLE_KEY);
-      if(storedVehicle) vehicleConfig = JSON.parse(storedVehicle);
-      
-      const storedHistory = localStorage.getItem(FUEL_HISTORY_KEY);
-      if(storedHistory) fuelHistory = JSON.parse(storedHistory);
-    }catch(e){
-      console.error('[OAVIX Fuel]', e);
-    }
+    fuelData = storage.readJSON(FUEL_STORAGE_KEY, fuelData);
+    vehicleConfig = storage.readJSON(FUEL_VEHICLE_KEY, vehicleConfig);
+    fuelHistory = storage.readJSON(FUEL_HISTORY_KEY, fuelHistory);
   }
 
   // 💾 Guardar datos al localStorage
   function saveFuelData(){
     try{
-      localStorage.setItem(FUEL_STORAGE_KEY, JSON.stringify(fuelData));
-      localStorage.setItem(FUEL_VEHICLE_KEY, JSON.stringify(vehicleConfig));
-      localStorage.setItem(FUEL_HISTORY_KEY, JSON.stringify(fuelHistory));
+      storage.writeJSON(FUEL_STORAGE_KEY, fuelData);
+      storage.writeJSON(FUEL_VEHICLE_KEY, vehicleConfig);
+      storage.writeJSON(FUEL_HISTORY_KEY, fuelHistory);
     }catch(e){
       console.error('[OAVIX Fuel Save]', e);
     }
+  }
+
+  // 📅 Los precios del SEN se publican cada viernes
+  function refreshUpdateWindow(date){
+    fuelData.lastUpdate = date || new Date().toISOString();
+    fuelData.nextUpdate = window.OAVIX.nextFridayISO();
   }
 
   // 🌐 Consultar API de precios SEN Honduras - CON DATOS REALES
@@ -136,13 +135,8 @@
         }
       };
 
-      fuelData.lastUpdate = new Date().toISOString();
       fuelData.prices = mockData.prices;
-      
-      // Calcular próxima actualización (viernes próximo a las 00:00)
-      const now = new Date();
-      const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7;
-      fuelData.nextUpdate = new Date(now.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000).toISOString();
+      refreshUpdateWindow();
 
       saveFuelData();
       return true;
@@ -279,13 +273,8 @@
         }
         
         fuelData.prices = pricesObject;
-        fuelData.lastUpdate = date || new Date().toISOString();
-        
-        // Calcular próxima actualización (viernes próximo a las 00:00)
-        const now = new Date();
-        const daysUntilFriday = (5 - now.getDay() + 7) % 7 || 7;
-        fuelData.nextUpdate = new Date(now.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000).toISOString();
-        
+        refreshUpdateWindow(date);
+
         saveFuelData();
         console.log('[OAVIX Fuel] ✅ Precios actualizados correctamente');
         
