@@ -165,14 +165,14 @@
 
     .nav-btn {
       position: relative;
-      width: 3rem;
-      height: 3rem;
+      width: 2.5rem;
+      height: 2.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 1.5rem;
+      border-radius: 1.25rem;
       color: white;
-      font-size: 1.2rem;
+      font-size: 0.95rem;
       transition: all 0.3s ease;
       background: transparent;
       border: none;
@@ -221,6 +221,8 @@
   <!-- OAVIX Google Drive Sync -->
   <script src="oavix-sync-config.js?v=4"></script>
   <script src="oavix-sync.js?v=4"></script>
+  <!-- OAVIX Fuel Module -->
+  <script src="oavix-fuel-module.js?v=1"></script>
 </head>
 <body class="h-full flex flex-col pt-20">
 
@@ -234,6 +236,9 @@
     </button>
     <button id="nav-btn-calendar" onclick="switchSubTab('calendar')" class="nav-btn" title="Calendario">
       <i class="fa-solid fa-calendar-days"></i>
+    </button>
+    <button id="nav-btn-fuel" onclick="switchSubTab('fuel')" class="nav-btn" title="Gestión de Combustible">
+      <i class="fa-solid fa-gas-pump"></i>
     </button>
     <button id="nav-btn-alerts" onclick="switchSubTab('alerts')" class="nav-btn" title="Alarmas & Citas">
       <i class="fa-solid fa-bell"></i>
@@ -480,6 +485,158 @@
         <p class="text-[11px] font-bold mt-1 opacity-90">Aquí se encuentran los servicios que ya cumplieron su función y fueron validados. No afectan al semáforo ni generan alertas pendientes.</p>
       </div>
       <div id="archive-records-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+    </div>
+
+    <!-- SUBTAB 5: GESTIÓN DE COMBUSTIBLE -->
+    <div id="subtab-fuel" class="hidden space-y-4">
+      <!-- BANNER INFORMATIVO -->
+      <div class="animated-glass-card rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-xl">
+        <div class="flex items-center justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest">
+                ⛽ Combustibles SEN Honduras
+              </span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black tracking-tight">Gestión Inteligente de Combustible</h2>
+            <p class="text-xs sm:text-sm font-bold leading-relaxed opacity-90">
+              Precios actualizados cada viernes por la Secretaría de Energía. Calcula costos de tanque lleno y consumo por kilómetro.
+            </p>
+          </div>
+          <button onclick="refreshFuelPrices()" class="p-3 rounded-2xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 border border-emerald-500/40 transition" title="Actualizar Precios">
+            <i class="fa-solid fa-rotate-right text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN DE VEHÍCULO -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-car text-cyan-400"></i>
+          <span>Configuración de Tu Vehículo</span>
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Capacidad de Tanque</label>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="fuel-tank-capacity" min="5" max="80" step="0.5" value="15" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <span class="text-[10px] font-extrabold opacity-70">gal</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Consumo Promedio</label>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="fuel-avg-consumption" min="3" max="30" step="0.5" value="8" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <span class="text-[10px] font-extrabold opacity-70">km/gal</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Tu Ciudad</label>
+            <select id="fuel-city-select" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <option value="tegucigalpa">Tegucigalpa</option>
+              <option value="sps">San Pedro Sula</option>
+              <option value="laceiba">La Ceiba</option>
+              <option value="choloma">Choloma</option>
+              <option value="danli">Danlí</option>
+              <option value="juticalpa">Juticalpa</option>
+              <option value="comayagua">Comayagua</option>
+              <option value="trujillo">Trujillo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Tipo de Combustible</label>
+            <select id="fuel-type-select" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <option value="Gasolina Regular">Gasolina Regular</option>
+              <option value="Gasolina Súper">Gasolina Súper</option>
+              <option value="Diésel">Diésel</option>
+              <option value="Kerosene">Kerosene</option>
+              <option value="GLP">GLP</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALCULADORAS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <!-- CALCULADORA 1: TANQUE LLENO -->
+        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
+          <h3 class="font-black text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-gas-pump text-emerald-400"></i>
+            <span>Tanque Lleno</span>
+          </h3>
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Galones</label>
+              <input type="number" id="calc-tank-gallons" min="1" step="0.1" placeholder="Ej: 15" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+            </div>
+            <button onclick="calculateTankFill()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded-lg transition text-sm">Calcular Costo</button>
+            <div id="tank-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-emerald-500/30 text-center">
+              <p class="text-[10px] opacity-70 font-bold">Costo Total</p>
+              <p id="tank-result-value" class="text-lg font-black text-emerald-400">L 0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALCULADORA 2: COSTO POR KM -->
+        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
+          <h3 class="font-black text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-road text-cyan-400"></i>
+            <span>Costo por Km</span>
+          </h3>
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Distancia (km)</label>
+              <input type="number" id="calc-km-distance" min="1" step="1" placeholder="Ej: 100" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+            </div>
+            <button onclick="calculateCostPerKm()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-black py-2 rounded-lg transition text-sm">Calcular Costo</button>
+            <div id="km-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-cyan-500/30 text-center">
+              <p class="text-[10px] opacity-70 font-bold">Costo Total</p>
+              <p id="km-result-value" class="text-lg font-black text-cyan-400">L 0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALCULADORA 3: AUTOCOMPLETADO -->
+        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
+          <h3 class="font-black text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+            <span>Auto-completado</span>
+          </h3>
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Galones Comprados</label>
+              <input type="number" id="calc-autofill-gallons" min="0.1" step="0.1" placeholder="Ej: 10" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none" oninput="calculateAutoFill()">
+            </div>
+            <div id="autofill-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-amber-500/30 text-center">
+              <p class="text-[10px] opacity-70 font-bold">Monto a Registrar</p>
+              <p id="autofill-result-value" class="text-lg font-black text-amber-400">L 0.00</p>
+            </div>
+            <button onclick="copyAutoFillToForm()" id="copy-autofill-btn" class="hidden w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-2 rounded-lg transition text-sm">Copiar a Formulario</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRECIOS ACTUALES POR CIUDAD -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-chart-column text-blue-400"></i>
+          <span>Precios Actuales por Ciudad</span>
+        </h3>
+        <p class="text-[10px] font-bold opacity-70" id="fuel-prices-update-date">Últimas actualización: --</p>
+        <div id="fuel-prices-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
+      </div>
+
+      <!-- HISTÓRICO DE CARGAS -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-history text-purple-400"></i>
+          <span>Histórico de Cargas de Combustible</span>
+        </h3>
+        <div id="fuel-history-list" class="space-y-2">
+          <p class="text-xs font-bold opacity-70 text-center py-4">Sin histórico registrado aún</p>
+        </div>
+      </div>
+
     </div>
 
   </main>
@@ -1306,7 +1463,7 @@
 
     function switchSubTab(t) {
       // Ocultar todas las sub-pestañas incluyendo el Dashboard
-      ['dashboard', 'records', 'calendar', 'alerts', 'archive'].forEach(tab => {
+      ['dashboard', 'records', 'calendar', 'fuel', 'alerts', 'archive'].forEach(tab => {
         const element = document.getElementById(`subtab-${tab}`);
         if (element) element.classList.add('hidden');
         
@@ -1323,6 +1480,7 @@
       if (activeNavBtn) activeNavBtn.classList.add('active');
 
       if (t === 'archive') renderArchiveRecords();
+      if (t === 'fuel') setTimeout(renderFuelModule, 0);
       if (t === 'dashboard') window.scrollTo({top:0, behavior:'smooth'});
     }
 
@@ -1411,6 +1569,170 @@
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }
+
+    // ⛽ FUNCIONES DEL MÓDULO DE COMBUSTIBLE
+    function updateVehicleConfig() {
+      if(!window.FuelModule) return;
+      const config = {
+        tankCapacity: parseFloat(document.getElementById('fuel-tank-capacity').value) || 15,
+        city: document.getElementById('fuel-city-select').value || 'tegucigalpa',
+        fuelType: document.getElementById('fuel-type-select').value || 'Gasolina Regular',
+        avgConsumption: parseFloat(document.getElementById('fuel-avg-consumption').value) || 8
+      };
+      window.FuelModule.updateVehicleConfig(config);
+      renderFuelPrices();
+    }
+
+    function calculateTankFill() {
+      if(!window.FuelModule) return;
+      const gallons = parseFloat(document.getElementById('calc-tank-gallons').value);
+      if(!gallons || gallons <= 0) {
+        showToast('Error', 'Ingresa galones válidos.', 'rose');
+        return;
+      }
+      const config = window.FuelModule.getVehicleConfig();
+      const cost = window.FuelModule.calculateFullTank(gallons, config.city, config.fuelType);
+      if(!cost) {
+        showToast('Error', 'No hay precio para esta combinación.', 'rose');
+        return;
+      }
+      const resultDiv = document.getElementById('tank-result');
+      document.getElementById('tank-result-value').textContent = formatMoney(cost, 'HNL');
+      resultDiv.classList.remove('hidden');
+    }
+
+    function calculateCostPerKm() {
+      if(!window.FuelModule) return;
+      const km = parseFloat(document.getElementById('calc-km-distance').value);
+      if(!km || km <= 0) {
+        showToast('Error', 'Ingresa kilómetros válidos.', 'rose');
+        return;
+      }
+      const config = window.FuelModule.getVehicleConfig();
+      const cost = window.FuelModule.calculateCostPerKm(km, config.city, config.fuelType, config.avgConsumption);
+      if(!cost) {
+        showToast('Error', 'No hay precio para esta combinación.', 'rose');
+        return;
+      }
+      const resultDiv = document.getElementById('km-result');
+      document.getElementById('km-result-value').textContent = formatMoney(cost, 'HNL');
+      resultDiv.classList.remove('hidden');
+    }
+
+    function calculateAutoFill() {
+      if(!window.FuelModule) return;
+      const gallons = parseFloat(document.getElementById('calc-autofill-gallons').value);
+      if(!gallons || gallons <= 0) {
+        document.getElementById('autofill-result').classList.add('hidden');
+        document.getElementById('copy-autofill-btn').classList.add('hidden');
+        return;
+      }
+      const config = window.FuelModule.getVehicleConfig();
+      const amount = window.FuelModule.getAutoFillAmount(gallons, config.city, config.fuelType);
+      if(!amount) {
+        showToast('Error', 'No hay precio para esta combinación.', 'rose');
+        return;
+      }
+      document.getElementById('autofill-result-value').textContent = formatMoney(amount, 'HNL');
+      document.getElementById('autofill-result').classList.remove('hidden');
+      document.getElementById('copy-autofill-btn').classList.remove('hidden');
+    }
+
+    function copyAutoFillToForm() {
+      const amount = document.getElementById('autofill-result-value').textContent.replace(/[^\d.]/g, '');
+      if(document.getElementById('form-amount')) {
+        document.getElementById('form-amount').value = amount;
+        showToast('Copiado', 'Monto copiado al formulario.', 'emerald');
+      }
+    }
+
+    function renderFuelPrices() {
+      if(!window.FuelModule) return;
+      const prices = window.FuelModule.getCurrentPrices();
+      const cities = window.FuelModule.getCities();
+      const config = window.FuelModule.getVehicleConfig();
+      const lastUpdate = window.FuelModule.getLastUpdate();
+      
+      if(lastUpdate) {
+        const date = new Date(lastUpdate);
+        document.getElementById('fuel-prices-update-date').textContent = `Última actualización: ${date.toLocaleDateString('es-HN')} a las ${date.toLocaleTimeString('es-HN', {hour: '2-digit', minute: '2-digit'})}`;
+      }
+
+      const grid = document.getElementById('fuel-prices-grid');
+      grid.innerHTML = '';
+      
+      cities.forEach(city => {
+        const cityPrices = prices[city.id];
+        if(!cityPrices) return;
+        
+        const fuelType = config.fuelType;
+        const price = cityPrices[fuelType];
+        const isSelected = city.id === config.city;
+        
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-lg border transition ${isSelected ? 'bg-cyan-500/20 border-cyan-500/60' : 'bg-slate-900/40 border-slate-700/60'} cursor-pointer hover:border-cyan-400`;
+        card.onclick = () => {
+          document.getElementById('fuel-city-select').value = city.id;
+          updateVehicleConfig();
+        };
+        
+        card.innerHTML = `
+          <p class="text-xs font-black">${city.name}</p>
+          <p class="text-[10px] opacity-70 font-bold">${city.region}</p>
+          <p class="text-lg font-black text-amber-400 mt-1">${formatMoney(price, 'HNL')}</p>
+          <p class="text-[9px] opacity-60">${fuelType}</p>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    function renderFuelHistory() {
+      if(!window.FuelModule) return;
+      const history = window.FuelModule.getFuelHistory(5);
+      const list = document.getElementById('fuel-history-list');
+      
+      if(history.length === 0) {
+        list.innerHTML = '<p class="text-xs font-bold opacity-70 text-center py-4">Sin histórico registrado aún</p>';
+        return;
+      }
+      
+      list.innerHTML = history.map(h => `
+        <div class="p-2.5 rounded-lg bg-slate-900/40 border border-slate-700/60 text-xs">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-black">${new Date(h.date).toLocaleDateString('es-HN')}</p>
+              <p class="text-[10px] opacity-70">${h.fuelType} • ${h.gallons} gal</p>
+            </div>
+            <p class="font-black text-emerald-400">${formatMoney(h.amountPaid, 'HNL')}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function refreshFuelPrices() {
+      if(!window.FuelModule) return;
+      showToast('Actualizando', 'Obteniendo precios del SEN...', 'cyan');
+      window.FuelModule.refreshPrices().then(success => {
+        if(success) {
+          renderFuelPrices();
+          showToast('✓ Actualizado', 'Precios de combustible sincronizados.', 'emerald');
+        } else {
+          showToast('⚠ Error', 'No se pudieron obtener los precios.', 'amber');
+        }
+      });
+    }
+
+    function renderFuelModule() {
+      renderFuelPrices();
+      renderFuelHistory();
+      const config = window.FuelModule.getVehicleConfig();
+      document.getElementById('fuel-tank-capacity').value = config.tankCapacity;
+      document.getElementById('fuel-avg-consumption').value = config.avgConsumption;
+      document.getElementById('fuel-city-select').value = config.city;
+      document.getElementById('fuel-type-select').value = config.fuelType;
+    }
+
   </script>
 </body>
 </html>
