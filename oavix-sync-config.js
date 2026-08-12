@@ -37,7 +37,12 @@ window.OAVIX_GOOGLE_CLIENT_ID = '450696651936-p56j2qn8iccbktb375s737pa3hvpki1s.a
       /* Recupera una instalación que quedó con la lista vacía sin gestionarla. */
       localStorage.setItem(key, JSON.stringify(defaults));
     }
-  } catch (_) {
-    localStorage.setItem(key, JSON.stringify(defaults));
+  } catch (e) {
+    console.warn('[OAVIX] Categorías guardadas ilegibles o almacenamiento bloqueado; se restauran las predeterminadas.', e);
+    try {
+      localStorage.setItem(key, JSON.stringify(defaults));
+    } catch (writeError) {
+      console.error('[OAVIX] No se pudo escribir las categorías predeterminadas.', writeError);
+    }
   }
 })();
