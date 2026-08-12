@@ -143,71 +143,104 @@
   <script src="oavix-sync-config.js?v=4"></script>
   <script src="oavix-sync.js?v=4"></script>
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+  <style>
+    /* Estilos para la barra de navegación flotante */
+    .floating-nav {
+      position: fixed;
+      top: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.6rem;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px -5px var(--border-neon);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .light-theme .floating-nav {
+      background: rgba(255, 255, 255, 0.75);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 15px -5px var(--border-neon);
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .nav-btn {
+      position: relative;
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1.5rem;
+      color: white;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .nav-btn:hover {
+      transform: scale(1.15) translateY(-2px);
+      background: rgba(6, 182, 212, 0.2);
+      color: #22d3ee;
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .light-theme .nav-btn {
+      color: #475569;
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .light-theme .nav-btn:hover {
+      background: rgba(139, 92, 246, 0.15);
+      color: #7c3aed;
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .nav-btn.active {
+      background: var(--border-neon);
+      color: white;
+      box-shadow: 0 0 15px var(--border-neon);
+    }
 
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
-
-  <!-- OAVIX Google Drive Sync -->
-  <script src="oavix-sync-config.js?v=4"></script>
-  <script src="oavix-sync.js?v=4"></script>
+    .nav-btn .badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 1.1rem;
+      height: 1.1rem;
+      background: #ef4444;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 900;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(15, 23, 42, 0.8);
+    }
 </head>
-<body class="h-full flex flex-col">
+<body class="h-full flex flex-col pt-20">
+
+  <!-- NAVEGACIÓN FLOTANTE PRINCIPAL -->
+  <nav class="floating-nav">
+    <button id="nav-btn-records" onclick="switchSubTab('records')" class="nav-btn active" title="Historial Técnico">
+      <i class="fa-solid fa-list-check"></i>
+    </button>
+    <button id="nav-btn-calendar" onclick="switchSubTab('calendar')" class="nav-btn" title="Calendario">
+      <i class="fa-solid fa-calendar-days"></i>
+    </button>
+    <button id="nav-btn-alerts" onclick="switchSubTab('alerts')" class="nav-btn" title="Alarmas & Citas">
+      <i class="fa-solid fa-bell"></i>
+      <span id="nav-alerts-badge" class="badge hidden">0</span>
+    </button>
+    <button id="nav-btn-archive" onclick="switchSubTab('archive')" class="nav-btn" title="Archivo">
+      <i class="fa-solid fa-box-archive"></i>
+    </button>
+  </nav>
 
   <header class="bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-800/80 sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-auto min-h-[4.5rem] flex flex-wrap items-center justify-between gap-2 py-2.5">
@@ -453,22 +486,6 @@
 
     <!-- TARJETAS DE ESTADÍSTICAS -->
     <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-
-    <div class="flex border-b border-slate-800 space-x-3 sm:space-x-6 text-xs sm:text-sm font-extrabold overflow-x-auto pb-1">
-      <button id="tab-btn-records" onclick="switchSubTab('records')" class="pb-2.5 text-cyan-400 border-b-2 border-cyan-500 font-black flex items-center space-x-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-list-check"></i> <span>Historial Técnico</span>
-      </button>
-      <button id="tab-btn-calendar" onclick="switchSubTab('calendar')" class="pb-2.5 opacity-80 hover:opacity-100 flex items-center space-x-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-calendar-days"></i> <span>Calendario</span>
-      </button>
-      <button id="tab-btn-alerts" onclick="switchSubTab('alerts')" class="pb-2.5 opacity-80 hover:opacity-100 flex items-center space-x-1.5 relative whitespace-nowrap">
-        <i class="fa-solid fa-bell"></i> <span>Alarmas & Citas</span>
-        <span id="alerts-badge-count" class="hidden absolute -top-1 -right-3 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center">0</span>
-      </button>
-      <button id="tab-btn-archive" onclick="switchSubTab('archive')" class="pb-2.5 opacity-80 hover:opacity-100 flex items-center space-x-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-box-archive"></i> <span>Historial Archivado</span>
-      </button>
-    </div>
 
     <!-- SUBTAB 1: HISTORIAL TÉCNICO -->
     <div id="subtab-records" class="space-y-3">
@@ -1310,16 +1327,24 @@
     function renderAlerts() {
       const container = document.getElementById('alerts-list');
       const badge = document.getElementById('alerts-badge-count');
+      const navBadge = document.getElementById('nav-alerts-badge');
       const alerts = autoRecords.filter(r => !r.validated && r.alertDate);
 
       if (alerts.length === 0) {
         container.innerHTML = `<p class="text-xs font-extrabold opacity-90">No hay alarmas pendientes.</p>`;
-        badge.classList.add('hidden');
+        if (badge) badge.classList.add('hidden');
+        if (navBadge) navBadge.classList.add('hidden');
         return;
       }
 
-      badge.classList.remove('hidden');
-      badge.textContent = alerts.length;
+      if (badge) {
+        badge.classList.remove('hidden');
+        badge.textContent = alerts.length;
+      }
+      if (navBadge) {
+        navBadge.classList.remove('hidden');
+        navBadge.textContent = alerts.length;
+      }
 
       container.innerHTML = alerts.map(a => `
         <div class="p-3 rounded-xl border border-slate-600 bg-slate-900/80 flex justify-between items-center text-xs">
@@ -1339,12 +1364,14 @@
     function switchSubTab(t) {
       ['records', 'calendar', 'alerts', 'archive'].forEach(tab => {
         document.getElementById(`subtab-${tab}`).classList.toggle('hidden', tab !== t);
-        const btn = document.getElementById(`tab-btn-${tab}`);
-        if (btn) {
+        
+        // Actualizar botones de navegación flotante
+        const navBtn = document.getElementById(`nav-btn-${tab}`);
+        if (navBtn) {
           if (tab === t) {
-            btn.className = 'pb-2.5 text-cyan-400 border-b-2 border-cyan-500 font-black flex items-center space-x-1.5 whitespace-nowrap';
+            navBtn.classList.add('active');
           } else {
-            btn.className = 'pb-2.5 opacity-80 hover:opacity-100 flex items-center space-x-1.5 whitespace-nowrap font-extrabold';
+            navBtn.classList.remove('active');
           }
         }
       });
