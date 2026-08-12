@@ -1,41 +1,128 @@
 /* OAVIX — Superficies de información con tinte moderado del color elegido.
- * Solo modifica la superficie visual; no aplica opacity al contenido interno.
+ * El color del fondo se refleja suavemente en las ventanas sin teñir el contenido.
+ * Bordes, sombras y movimiento son deliberadamente discretos.
  */
 
-/* Tarjetas/ventanas principales de información */
+:root {
+  --oavix-surface-dark: #0f172a;
+  --oavix-surface-light: #ffffff;
+  --oavix-surface-speed: 18s;
+}
+
+@keyframes oavixSurfaceDrift {
+  0%, 100% {
+    background-position: 0% 50%, 100% 50%;
+  }
+  50% {
+    background-position: 100% 50%, 0% 50%;
+  }
+}
+
+/* Tarjetas y ventanas principales de información */
 .animated-glass-card {
-  background: color-mix(in srgb, var(--bg-dynamic) 12%, #0f172a 88%) !important;
-  border-color: color-mix(in srgb, var(--border-neon) 55%, #64748b 45%) !important;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.32),
-              0 0 18px -8px var(--border-neon) !important;
+  position: relative;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--bg-dynamic) 10%, var(--oavix-surface-dark) 90%) !important;
+  background-image:
+    radial-gradient(circle at 0% 50%, color-mix(in srgb, var(--bg-dynamic) 16%, transparent), transparent 52%),
+    radial-gradient(circle at 100% 50%, color-mix(in srgb, var(--border-neon) 8%, transparent), transparent 55%) !important;
+  background-size: 180% 180%, 180% 180% !important;
+  animation: oavixSurfaceDrift var(--oavix-surface-speed) ease-in-out infinite !important;
+  backdrop-filter: blur(16px) saturate(115%);
+  -webkit-backdrop-filter: blur(16px) saturate(115%);
+  border: 1.5px solid color-mix(in srgb, var(--border-neon) 48%, #64748b 52%) !important;
+  border-radius: 1.1rem;
+  box-shadow:
+    0 10px 30px -8px rgba(0, 0, 0, 0.34),
+    0 0 16px -10px var(--border-neon) !important;
+}
+
+.animated-glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 34px -10px rgba(0, 0, 0, 0.38),
+    0 0 18px -12px var(--border-neon) !important;
 }
 
 /* En modo claro conservamos una superficie clara y solo dejamos entrar
    una pequeña cantidad del color personalizado. */
 .light-theme .animated-glass-card {
-  background: color-mix(in srgb, var(--bg-dynamic) 9%, #ffffff 91%) !important;
-  border-color: color-mix(in srgb, var(--border-neon) 48%, #94a3b8 52%) !important;
-  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.18),
-              0 0 16px -10px var(--border-neon) !important;
+  background-color: color-mix(in srgb, var(--bg-dynamic) 7%, var(--oavix-surface-light) 93%) !important;
+  background-image:
+    radial-gradient(circle at 0% 50%, color-mix(in srgb, var(--bg-dynamic) 10%, transparent), transparent 52%),
+    radial-gradient(circle at 100% 50%, color-mix(in srgb, var(--border-neon) 7%, transparent), transparent 55%) !important;
+  border-color: color-mix(in srgb, var(--border-neon) 40%, #94a3b8 60%) !important;
+  box-shadow:
+    0 10px 30px -9px rgba(15, 23, 42, 0.18),
+    0 0 15px -11px var(--border-neon) !important;
 }
 
-/* Ventanas modales que no dependan de animated-glass-card */
+/* Ventanas modales que no dependan de animated-glass-card. */
 div[id^="modal-"] > div {
-  background-color: color-mix(in srgb, var(--bg-dynamic) 10%, #0f172a 90%) !important;
-  border-color: color-mix(in srgb, var(--border-neon) 48%, #475569 52%) !important;
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.45),
-              0 0 20px -12px var(--border-neon) !important;
+  background-color: color-mix(in srgb, var(--bg-dynamic) 9%, var(--oavix-surface-dark) 91%) !important;
+  background-image:
+    radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--bg-dynamic) 12%, transparent), transparent 55%),
+    radial-gradient(circle at 90% 80%, color-mix(in srgb, var(--border-neon) 6%, transparent), transparent 55%) !important;
+  background-size: 180% 180%, 180% 180% !important;
+  animation: oavixSurfaceDrift 20s ease-in-out infinite !important;
+  backdrop-filter: blur(16px) saturate(112%);
+  -webkit-backdrop-filter: blur(16px) saturate(112%);
+  border-width: 1.5px !important;
+  border-color: color-mix(in srgb, var(--border-neon) 43%, #475569 57%) !important;
+  box-shadow:
+    0 20px 50px -14px rgba(0, 0, 0, 0.46),
+    0 0 18px -13px var(--border-neon) !important;
 }
 
 .light-theme div[id^="modal-"] > div {
-  background-color: color-mix(in srgb, var(--bg-dynamic) 7%, #ffffff 93%) !important;
-  border-color: color-mix(in srgb, var(--border-neon) 42%, #94a3b8 58%) !important;
-  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.22),
-              0 0 18px -12px var(--border-neon) !important;
+  background-color: color-mix(in srgb, var(--bg-dynamic) 6%, var(--oavix-surface-light) 94%) !important;
+  background-image:
+    radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--bg-dynamic) 8%, transparent), transparent 55%),
+    radial-gradient(circle at 90% 80%, color-mix(in srgb, var(--border-neon) 5%, transparent), transparent 55%) !important;
+  border-color: color-mix(in srgb, var(--border-neon) 36%, #94a3b8 64%) !important;
+  box-shadow:
+    0 20px 50px -14px rgba(15, 23, 42, 0.22),
+    0 0 16px -13px var(--border-neon) !important;
+}
+
+/* Paneles y formularios que usan clases de superficie Tailwind pero no modal. */
+.oavix-info-surface,
+.oavix-maintenance-window,
+.oavix-form-window {
+  background-color: color-mix(in srgb, var(--bg-dynamic) 9%, var(--oavix-surface-dark) 91%);
+  background-image: linear-gradient(120deg,
+    color-mix(in srgb, var(--bg-dynamic) 8%, transparent),
+    transparent 45%,
+    color-mix(in srgb, var(--border-neon) 5%, transparent));
+  background-size: 180% 180%;
+  animation: oavixSurfaceDrift var(--oavix-surface-speed) ease-in-out infinite;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid color-mix(in srgb, var(--border-neon) 40%, #64748b 60%);
+}
+
+.light-theme .oavix-info-surface,
+.light-theme .oavix-maintenance-window,
+.light-theme .oavix-form-window {
+  background-color: color-mix(in srgb, var(--bg-dynamic) 6%, var(--oavix-surface-light) 94%);
+  border-color: color-mix(in srgb, var(--border-neon) 35%, #94a3b8 65%);
 }
 
 /* La alarma crítica conserva deliberadamente su tratamiento rojo propio. */
 #modal-continuous-alarm > div {
   background-color: rgba(2, 6, 23, 0.95) !important;
+  background-image: none !important;
   border-color: rgba(244, 63, 94, 0.9) !important;
+  animation: none !important;
+}
+
+/* Reduce el movimiento si el dispositivo lo solicita. */
+@media (prefers-reduced-motion: reduce) {
+  .animated-glass-card,
+  div[id^="modal-"] > div,
+  .oavix-info-surface,
+  .oavix-maintenance-window,
+  .oavix-form-window {
+    animation: none !important;
+  }
 }
