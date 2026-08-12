@@ -5,7 +5,13 @@
   window.__OAVIX_SYNC_V5__ = true;
 
   const CFG = window.OAVIX_GOOGLE_CLIENT_ID || '';
-  const FILE_NAME = 'oavix-data.json';
+  const DRIVE_FOLDER_NAME = 'OAVIX-Datos';
+  const FILE_NAMES = {
+    mainData: 'oavix-data.json',
+    fuelData: 'oavix-fuel-data.json',
+    fuelHistory: 'oavix-fuel-history.json',
+    fuelConfig: 'oavix-fuel-config.json'
+  };
   const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
   const DATA_KEYS = ['oavix_auto_records','oavix_auto_mileage','oavix_auto_categories','oavix_auto_unit','oavix_custom_bg','oavix_custom_neon','oavix_is_light','oavix_triggered_alarms'];
   const SESSION_KEY = 'oavix_google_session';
@@ -13,8 +19,9 @@
   const META_SUFFIX = '__meta';
   const PENDING_KEY = 'oavix_sync_pending';
   const LAST_SYNC_KEY = 'oavix_sync_last';
+  const SYNC_POLL_INTERVAL = 15000; // Polling cada 15 segundos para cambios en Drive
   const DEBOUNCE = 1600;
-  let tokenClient = null, accessToken = null, tokenExpiresAt = 0, fileId = null, busy = false, timer = null, authInProgress = false, accountEmail = '', pendingTokenResolve = null, pendingTokenReject = null;
+  let tokenClient = null, accessToken = null, tokenExpiresAt = 0, folderIdCache = null, fileIdsCache = {}, busy = false, timer = null, pollTimer = null, authInProgress = false, accountEmail = '', pendingTokenResolve = null, pendingTokenReject = null;
 
   const nativeSet = localStorage.setItem.bind(localStorage);
   const nativeRemove = localStorage.removeItem.bind(localStorage);

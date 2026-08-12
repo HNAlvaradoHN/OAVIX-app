@@ -223,6 +223,8 @@
   <script src="oavix-sync.js?v=4"></script>
   <!-- OAVIX Fuel Module -->
   <script src="oavix-fuel-module.js?v=1"></script>
+  <!-- OAVIX Drive Sync v2 - Multi-device Synchronization -->
+  <script src="oavix-drive-sync-v2.js?v=1"></script>
 </head>
 <body class="h-full flex flex-col pt-20">
 
@@ -1610,7 +1612,37 @@
         avgConsumption: parseFloat(document.getElementById('fuel-avg-consumption').value) || 8
       };
       window.FuelModule.updateVehicleConfig(config);
+      
+      // 🔄 Sincronizar automáticamente a Drive cuando se actualiza la configuración
+      syncFuelDataToDrive();
+      
       renderFuelPrices();
+    }
+
+    // 🔄 Sincronizar datos de combustible a Google Drive
+    function syncFuelDataToDrive() {
+      try {
+        if(window.OAVIXDriveSyncV2) {
+          const fuelData = localStorage.getItem('oavix_fuel_data');
+          const fuelHistory = localStorage.getItem('oavix_fuel_history');
+          const fuelConfig = localStorage.getItem('oavix_fuel_vehicle_config');
+          
+          if(fuelData || fuelHistory || fuelConfig) {
+            window.OAVIXDriveSyncV2.uploadFuelData(
+              fuelData ? JSON.parse(fuelData) : {},
+              fuelHistory ? JSON.parse(fuelHistory) : [],
+              fuelConfig ? JSON.parse(fuelConfig) : {}
+            ).then(() => {
+              console.log('[Sync] Datos de combustible sincronizados a Drive');
+              localStorage.setItem('oavix_fuel_sync_timestamp', Date.now().toString());
+            }).catch(e => {
+              console.error('[Sync Error]', e);
+            });
+          }
+        }
+      } catch(e) {
+        console.error('[FuelSync]', e);
+      }
     }
 
     function calculateTankFill() {
@@ -1800,9 +1832,18 @@
         
         if(success) {
           document.getElementById('fuel-admin-json-input').value = '';
-          showToast('✅ Actualizado', 'Precios del SEN sincronizados correctamente', 'emerald');
+          
+          // 🔄 Sincronizar precios a Drive automáticamente
+          syncFuelDataToDrive();
+          
+          showToast('✅ Actualizado', 'Precios del SEN sincronizados en Drive', 'emerald');
           renderFuelPrices();
           renderFuelModule();
+          
+          // Notificar a otros dispositivos
+          if(navigator.onLine) {
+            showToast('📱 Multi-dispositivo', 'Se sincronizará a tus otros dispositivos', 'blue');
+          }
         } else {
           showToast('⚠ Error', 'No se pudieron actualizar los precios', 'red');
         }
