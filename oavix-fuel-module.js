@@ -39,17 +39,49 @@
 
   let fuelHistory = [];
 
+  // ✅ Validación de la estructura { ciudad: { combustible: número } }
+  function sanitizePrices(input){
+    if(!input || typeof input !== 'object' || Array.isArray(input)) return null;
+    const cityIds = HONDURAS_CITIES.map(c => c.id);
+    const clean = {};
+    Object.keys(input).forEach(cityId => {
+      if(!cityIds.includes(cityId)) return;
+      const cityPrices = input[cityId];
+      if(!cityPrices || typeof cityPrices !== 'object' || Array.isArray(cityPrices)) return;
+      const cleanCity = {};
+      FUEL_TYPES.forEach(fuelType => {
+        const price = Number(cityPrices[fuelType]);
+        if(Number.isFinite(price) && price > 0 && price < 10000) cleanCity[fuelType] = price;
+      });
+      if(Object.keys(cleanCity).length) clean[cityId] = cleanCity;
+    });
+    return Object.keys(clean).length ? clean : null;
+  }
+
   // 🔄 Cargar datos del localStorage
   function loadFuelData(){
     try{
-      const stored = localStorage.getItem(FUEL_STORAGE_KEY);
-      if(stored) fuelData = JSON.parse(stored);
-      
-      const storedVehicle = localStorage.getItem(FUEL_VEHICLE_KEY);
-      if(storedVehicle) vehicleConfig = JSON.parse(storedVehicle);
-      
-      const storedHistory = localStorage.getItem(FUEL_HISTORY_KEY);
-      if(storedHistory) fuelHistory = JSON.parse(storedHistory);
+      const stored = JSON.parse(localStorage.getItem(FUEL_STORAGE_KEY) || 'null');
+      if(stored && typeof stored === 'object' && !Array.isArray(stored)){
+        fuelData = {
+          lastUpdate: typeof stored.lastUpdate === 'string' ? stored.lastUpdate : null,
+          prices: sanitizePrices(stored.prices) || {},
+          nextUpdate: typeof stored.nextUpdate === 'string' ? stored.nextUpdate : null
+        };
+      }
+
+      const storedVehicle = JSON.parse(localStorage.getItem(FUEL_VEHICLE_KEY) || 'null');
+      if(storedVehicle && typeof storedVehicle === 'object' && !Array.isArray(storedVehicle)){
+        vehicleConfig = {
+          tankCapacity: Number(storedVehicle.tankCapacity) > 0 ? Number(storedVehicle.tankCapacity) : 15,
+          city: HONDURAS_CITIES.some(c => c.id === storedVehicle.city) ? storedVehicle.city : 'tegucigalpa',
+          fuelType: FUEL_TYPES.includes(storedVehicle.fuelType) ? storedVehicle.fuelType : 'Gasolina Regular',
+          avgConsumption: Number(storedVehicle.avgConsumption) > 0 ? Number(storedVehicle.avgConsumption) : 8
+        };
+      }
+
+      const storedHistory = JSON.parse(localStorage.getItem(FUEL_HISTORY_KEY) || 'null');
+      if(Array.isArray(storedHistory)) fuelHistory = storedHistory;
     }catch(e){
       console.error('[OAVIX Fuel]', e);
     }
@@ -69,11 +101,11 @@
   // 🌐 Consultar API de precios SEN Honduras - CON DATOS REALES
   async function fetchSENPrices(){
     try{
-      // Primero, intentar obtener datos reales del SEN vía proxy
+      // Fuente externa opcional; el SEN no expone una API pública, así que
+      // normalmente se usan los precios por defecto y el panel de administración.
       const senPrices = typeof fetchRealSENData === 'function' ? await fetchRealSENData() : null;
       if(senPrices) return senPrices;
-      
-      // Si falla, usar datos por defecto (estructura lista para datos reales)
+
       const mockData = {
         date: new Date().toISOString(),
         prices: {
@@ -184,15 +216,16 @@
 
     // Guardar recarga de combustible
     recordFuelFill: function(data){
+      const input = data || {};
       const record = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
-        city: data.city || vehicleConfig.city,
-        fuelType: data.fuelType || vehicleConfig.fuelType,
-        gallons: parseFloat(data.gallons) || 0,
-        amountPaid: parseFloat(data.amountPaid) || 0,
-        odometer: data.odometer || 0,
-        notes: data.notes || ''
+        city: HONDURAS_CITIES.some(c => c.id === input.city) ? input.city : vehicleConfig.city,
+        fuelType: FUEL_TYPES.includes(input.fuelType) ? input.fuelType : vehicleConfig.fuelType,
+        gallons: parseFloat(input.gallons) || 0,
+        amountPaid: parseFloat(input.amountPaid) || 0,
+        odometer: parseFloat(input.odometer) || 0,
+        notes: String(input.notes || '').slice(0, 500)
       };
       
       fuelHistory.push(record);
@@ -212,7 +245,13 @@
 
     // Actualizar configuración de vehículo
     updateVehicleConfig: function(config){
-      vehicleConfig = { ...vehicleConfig, ...config };
+      const next = { ...vehicleConfig, ...(config || {}) };
+      vehicleConfig = {
+        tankCapacity: Number(next.tankCapacity) > 0 ? Number(next.tankCapacity) : 15,
+        city: HONDURAS_CITIES.some(c => c.id === next.city) ? next.city : 'tegucigalpa',
+        fuelType: FUEL_TYPES.includes(next.fuelType) ? next.fuelType : 'Gasolina Regular',
+        avgConsumption: Number(next.avgConsumption) > 0 ? Number(next.avgConsumption) : 8
+      };
       saveFuelData();
     },
 
@@ -273,13 +312,14 @@
     // 🔧 Panel de Admin - Actualizar precios manualmente desde SEN
     updatePricesManually: function(pricesObject, date = null){
       try{
-        if(!pricesObject || typeof pricesObject !== 'object'){
+        const clean = sanitizePrices(pricesObject);
+        if(!clean){
           console.error('[OAVIX Fuel] Formato inválido para precios');
           return false;
         }
-        
-        fuelData.prices = pricesObject;
-        fuelData.lastUpdate = date || new Date().toISOString();
+
+        fuelData.prices = clean;
+        fuelData.lastUpdate = typeof date === 'string' && !Number.isNaN(Date.parse(date)) ? date : new Date().toISOString();
         
         // Calcular próxima actualización (viernes próximo a las 00:00)
         const now = new Date();
@@ -311,6 +351,9 @@
     // 📥 Importar precios desde JSON
     importPrices: function(jsonData){
       try{
+        if(!jsonData || typeof jsonData !== 'object'){
+          throw new TypeError('Snapshot de precios inválido');
+        }
         if(jsonData.data && jsonData.data.prices){
           return this.updatePricesManually(jsonData.data.prices, jsonData.timestamp);
         }

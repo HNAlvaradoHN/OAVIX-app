@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.googleapis.com https://accounts.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'none'">
   <title>OAVIX - Gestión Inteligente Vehicular</title>
   
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.16" integrity="sha384-mS5Uq7sE90lgbBDN8xgf34ibEgbZo4gB3tfLY40ZRle+M188BQw8onzNHg6GUZaA" crossorigin="anonymous"></script>
   <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous" referrerpolicy="no-referrer">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
   <!-- SheetJS para exportar a Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
     tailwind.config = {
@@ -848,8 +849,31 @@
       return (num < 0 ? '-' : '') + sym + formatted;
     }
 
+    const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' };
+
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"'`]/g, c => HTML_ESCAPES[c]);
+    }
+
+    function escJs(value) {
+      return JSON.stringify(String(value == null ? '' : value)).slice(1, -1).replace(/[&<>"'`]/g, c => HTML_ESCAPES[c]);
+    }
+
+    function safeImageUrl(url) {
+      const raw = String(url == null ? '' : url).trim();
+      if (!raw) return '';
+      if (/^data:image\/(png|jpe?g|gif|webp|avif|bmp|svg\+xml);/i.test(raw)) return raw;
+      try {
+        const parsed = new URL(raw, window.location.href);
+        return (parsed.protocol === 'https:' || parsed.protocol === 'http:' || parsed.protocol === 'blob:') ? parsed.href : '';
+      } catch (e) {
+        return '';
+      }
+    }
+
     let currentUserName = localStorage.getItem('oavix_current_user_name') || '';
-    let currentUserPIN = localStorage.getItem('oavix_current_user_pin') || '';
+    /* El PIN local nunca se persiste: la sesión real la gestiona Google OAuth. */
+    localStorage.removeItem('oavix_current_user_pin');
     let currentUnit = localStorage.getItem('oavix_auto_unit') || 'km';
     let currentVehicleMileage = Number(localStorage.getItem('oavix_auto_mileage')) || 85400;
     let globalLikes = Number(localStorage.getItem('oavix_global_likes')) || 142;
@@ -906,48 +930,22 @@
       const bannerTag = document.getElementById('banner-username-tag');
 
       if (!currentUserName) {
-        modal.classList.remove('hidden');
+        if (modal) modal.classList.remove('hidden');
       } else {
-        modal.classList.add('hidden');
-        badge.innerHTML = `
-          <i class="fa-solid fa-user-circle text-indigo-400 text-sm"></i>
-          <span class="font-extrabold">${currentUserName}</span>
-          <button onclick="logoutSession()" class="px-2.5 py-1 rounded-lg bg-rose-600/40 hover:bg-rose-600 text-white text-[10px] transition font-extrabold" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
-        `;
+        if (modal) modal.classList.add('hidden');
+        if (badge) {
+          badge.innerHTML = `
+            <i class="fa-solid fa-user-circle text-indigo-400 text-sm"></i>
+            <span class="font-extrabold">${esc(currentUserName)}</span>
+            <button onclick="logoutSession()" class="px-2.5 py-1 rounded-lg bg-rose-600/40 hover:bg-rose-600 text-white text-[10px] transition font-extrabold" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
+          `;
+        }
         if (bannerTag) bannerTag.textContent = `Usuario: ${currentUserName}`;
       }
     }
 
-    function togglePasswordVisibility() {
-      const pwd = document.getElementById('login-password');
-      const icon = document.getElementById('eye-icon');
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
-        icon.className = 'fa-solid fa-eye-slash';
-      } else {
-        pwd.type = 'password';
-        icon.className = 'fa-solid fa-eye';
-      }
-    }
-
-    function handleLoginSubmit(e) {
-      e.preventDefault();
-      const user = document.getElementById('login-username').value.trim();
-      const pin = document.getElementById('login-password').value.trim();
-      if (!user || !pin) return;
-
-      currentUserName = user;
-      currentUserPIN = pin;
-      localStorage.setItem('oavix_current_user_name', user);
-      localStorage.setItem('oavix_current_user_pin', pin);
-
-      checkLoginState();
-      showToast('Sesión Iniciada', `Bienvenido ${user}. Recuerda guardar tu PIN en un lugar seguro.`, 'emerald');
-    }
-
     function logoutSession() {
       currentUserName = '';
-      currentUserPIN = '';
       localStorage.removeItem('oavix_current_user_name');
       localStorage.removeItem('oavix_current_user_pin');
       checkLoginState();
@@ -1000,12 +998,12 @@
       
       if (filterSel) {
         filterSel.innerHTML = '<option value="ALL">Todas las Categorías</option>';
-        autoCategories.forEach(c => filterSel.innerHTML += `<option value="${c}">${c}</option>`);
+        autoCategories.forEach(c => filterSel.innerHTML += `<option value="${esc(c)}">${esc(c)}</option>`);
       }
 
       if (formSel) {
         formSel.innerHTML = '';
-        autoCategories.forEach(c => formSel.innerHTML += `<option value="${c}">${c}</option>`);
+        autoCategories.forEach(c => formSel.innerHTML += `<option value="${esc(c)}">${esc(c)}</option>`);
         formSel.innerHTML += `<option value="__ADD_NEW__" class="text-cyan-400 font-black">+ Agregar / Gestionar Categorías...</option>`;
       }
     }
@@ -1031,7 +1029,7 @@
       const container = document.getElementById('categories-manage-list');
       container.innerHTML = autoCategories.map((cat, idx) => `
         <div class="flex items-center justify-between bg-slate-800 p-2 rounded-xl text-xs font-extrabold">
-          <span>${cat}</span>
+          <span>${esc(cat)}</span>
           <button type="button" onclick="deleteCategory(${idx})" class="text-rose-400 hover:text-rose-300 px-2 py-1"><i class="fa-solid fa-trash"></i></button>
         </div>
       `).join('');
@@ -1062,8 +1060,13 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(evt) {
-        currentBase64Image = evt.target.result;
-        document.getElementById('photo-preview').src = currentBase64Image;
+        const safe = safeImageUrl(evt.target.result);
+        if (!safe) {
+          showToast('Imagen no válida', 'Solo se admiten imágenes PNG, JPG, GIF o WEBP.', 'rose');
+          return;
+        }
+        currentBase64Image = safe;
+        document.getElementById('photo-preview').src = safe;
         document.getElementById('photo-preview-container').classList.remove('hidden');
       };
       reader.readAsDataURL(file);
@@ -1071,8 +1074,14 @@
 
     function previewImageUrl(url) {
       if (!url) return;
-      currentBase64Image = url;
-      document.getElementById('photo-preview').src = url;
+      const safe = safeImageUrl(url);
+      if (!safe) {
+        currentBase64Image = '';
+        document.getElementById('photo-preview-container').classList.add('hidden');
+        return;
+      }
+      currentBase64Image = safe;
+      document.getElementById('photo-preview').src = safe;
       document.getElementById('photo-preview-container').classList.remove('hidden');
     }
 
@@ -1084,7 +1093,9 @@
     }
 
     function openImageViewer(src) {
-      document.getElementById('image-viewer-src').src = src;
+      const safe = safeImageUrl(src);
+      if (!safe) return;
+      document.getElementById('image-viewer-src').src = safe;
       document.getElementById('modal-image-viewer').classList.remove('hidden');
     }
 
@@ -1288,12 +1299,12 @@
         return `
           <div class="p-3 rounded-xl border border-slate-600 bg-slate-900/60 dark:bg-slate-900/80 flex justify-between items-center text-xs">
             <div>
-              <span class="font-black">${r.title}</span>
+              <span class="font-black">${esc(r.title)}</span>
               <p class="text-[10px] font-extrabold opacity-80">Objetivo: ${formatNumber(target)} ${unitText}</p>
             </div>
             <div class="flex items-center space-x-2">
               <span class="font-black ${diff < 0 ? 'text-rose-400' : 'text-emerald-400'}">${diff < 0 ? 'Vencido' : 'Faltan ' + formatNumber(diff) + ' ' + unitText}</span>
-              <button onclick="toggleValidateRecord('${r.id}')" class="px-2 py-1 rounded bg-cyan-600/35 hover:bg-cyan-600/60 text-cyan-300 text-[10px] font-black" title="Validar y Archivar">✓</button>
+              <button onclick="toggleValidateRecord('${escJs(r.id)}')" class="px-2 py-1 rounded bg-cyan-600/35 hover:bg-cyan-600/60 text-cyan-300 text-[10px] font-black" title="Validar y Archivar">✓</button>
             </div>
           </div>
         `;
@@ -1333,27 +1344,30 @@
         return;
       }
 
-      list.innerHTML = activeRecords.map(r => `
+      list.innerHTML = activeRecords.map(r => {
+        const photo = safeImageUrl(r.photo);
+        return `
         <div class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2">
-          ${r.photo ? `
-            <div class="w-full h-28 rounded-xl overflow-hidden mb-2 cursor-pointer border border-slate-600 relative group" onclick="openImageViewer('${r.photo}')">
-              <img src="${r.photo}" class="w-full h-full object-cover">
+          ${photo ? `
+            <div class="w-full h-28 rounded-xl overflow-hidden mb-2 cursor-pointer border border-slate-600 relative group" onclick="openImageViewer('${escJs(photo)}')">
+              <img src="${esc(photo)}" class="w-full h-full object-cover">
               <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-black transition">Ver HD</div>
             </div>
           ` : ''}
           <div class="flex justify-between items-start">
-            <h4 class="font-black text-sm">${r.title}</h4>
+            <h4 class="font-black text-sm">${esc(r.title)}</h4>
             <span class="font-black text-cyan-400 text-sm">${formatMoney(r.amount, r.currency || 'USD')}</span>
           </div>
-          <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${r.date} | ${r.category}</p>
-          ${r.notes ? `<p class="text-[11px] font-bold italic p-2 rounded-lg bg-slate-900/20">${r.notes}</p>` : ''}
+          <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${esc(r.date)} | ${esc(r.category)}</p>
+          ${r.notes ? `<p class="text-[11px] font-bold italic p-2 rounded-lg bg-slate-900/20">${esc(r.notes)}</p>` : ''}
           <div class="pt-2 border-t border-slate-600/60 flex justify-end space-x-2">
-            <button onclick="openFormModal('${r.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
-            <button onclick="toggleValidateRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-black">Validar / Archivar</button>
-            <button onclick="deleteRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs font-black">Eliminar</button>
+            <button onclick="openFormModal('${escJs(r.id)}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
+            <button onclick="toggleValidateRecord('${escJs(r.id)}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-black">Validar / Archivar</button>
+            <button onclick="deleteRecord('${escJs(r.id)}')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs font-black">Eliminar</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function renderArchiveRecords() {
@@ -1368,15 +1382,15 @@
       list.innerHTML = archived.map(r => `
         <div class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2 border-dashed">
           <div class="flex justify-between items-start">
-            <h4 class="font-black text-sm line-through opacity-80">${r.title}</h4>
+            <h4 class="font-black text-sm line-through opacity-80">${esc(r.title)}</h4>
             <span class="font-black text-emerald-400 text-sm">${formatMoney(r.amount, r.currency || 'USD')}</span>
           </div>
-          <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${r.date} | ${r.category}</p>
-          ${r.notes ? `<p class="text-[11px] font-bold italic p-2 rounded-lg bg-slate-900/20">${r.notes}</p>` : ''}
+          <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${esc(r.date)} | ${esc(r.category)}</p>
+          ${r.notes ? `<p class="text-[11px] font-bold italic p-2 rounded-lg bg-slate-900/20">${esc(r.notes)}</p>` : ''}
           <div class="pt-2 border-t border-slate-600/60 flex justify-end space-x-2">
-            <button onclick="openFormModal('${r.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
-            <button onclick="toggleValidateRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 text-xs font-black">Restaurar</button>
-            <button onclick="deleteRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs font-black">Eliminar</button>
+            <button onclick="openFormModal('${escJs(r.id)}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
+            <button onclick="toggleValidateRecord('${escJs(r.id)}')" class="px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 text-xs font-black">Restaurar</button>
+            <button onclick="deleteRecord('${escJs(r.id)}')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs font-black">Eliminar</button>
           </div>
         </div>
       `).join('');
@@ -1431,7 +1445,7 @@
               ${dayEntries.length > 0 ? `<span class="w-2 h-2 rounded-full bg-cyan-500"></span>` : ''}
             </div>
             <div class="space-y-0.5 overflow-hidden">
-              ${dayEntries.slice(0, 1).map(e => `<div class="text-[8px] truncate bg-slate-950/40 px-1 py-0.5 rounded font-bold">${e.title}</div>`).join('')}
+              ${dayEntries.slice(0, 1).map(e => `<div class="text-[8px] truncate bg-slate-950/40 px-1 py-0.5 rounded font-bold">${esc(e.title)}</div>`).join('')}
             </div>
           </div>
         `;
@@ -1479,13 +1493,13 @@
       container.innerHTML = alerts.map(a => `
         <div class="p-3 rounded-xl border border-slate-600 bg-slate-900/80 flex justify-between items-center text-xs">
           <div>
-            <span class="font-black">${a.title}</span>
-            <p class="text-[10px] text-amber-300 font-bold">Fecha: ${a.alertDate} ${a.alertTime || ''}</p>
+            <span class="font-black">${esc(a.title)}</span>
+            <p class="text-[10px] text-amber-300 font-bold">Fecha: ${esc(a.alertDate)} ${esc(a.alertTime || '')}</p>
           </div>
           <div class="flex items-center space-x-2">
             <span class="font-black text-cyan-400">${formatMoney(a.amount, a.currency || 'USD')}</span>
-            <button onclick="openFormModal('${a.id}')" class="px-2 py-1 rounded bg-indigo-600/30 text-indigo-300 text-[10px] font-black">Editar</button>
-            <button onclick="toggleValidateRecord('${a.id}')" class="px-2 py-1 rounded bg-emerald-600/30 text-emerald-300 text-[10px] font-black">Validar</button>
+            <button onclick="openFormModal('${escJs(a.id)}')" class="px-2 py-1 rounded bg-indigo-600/30 text-indigo-300 text-[10px] font-black">Editar</button>
+            <button onclick="toggleValidateRecord('${escJs(a.id)}')" class="px-2 py-1 rounded bg-emerald-600/30 text-emerald-300 text-[10px] font-black">Validar</button>
           </div>
         </div>
       `).join('');
@@ -1567,7 +1581,7 @@
         alertDate: document.getElementById('form-alert-date').value,
         alertTime: document.getElementById('form-alert-time').value,
         notes: document.getElementById('form-notes').value,
-        photo: currentBase64Image,
+        photo: safeImageUrl(currentBase64Image),
         validated: false
       };
 
@@ -1595,7 +1609,9 @@
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = 'pointer-events-auto p-3 rounded-xl bg-slate-900 border border-cyan-500/50 text-white text-xs shadow-xl flex items-center space-x-2 font-bold';
-      toast.innerHTML = `<i class="fa-solid fa-bell text-cyan-400"></i><div><b>${title}</b><p class="text-[10px] opacity-90 font-extrabold">${body}</p></div>`;
+      toast.innerHTML = '<i class="fa-solid fa-bell text-cyan-400"></i><div><b class="toast-title"></b><p class="toast-body text-[10px] opacity-90 font-extrabold whitespace-pre-line"></p></div>';
+      toast.querySelector('.toast-title').textContent = title == null ? '' : String(title);
+      toast.querySelector('.toast-body').textContent = body == null ? '' : String(body);
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 4000);
     }
@@ -1707,8 +1723,8 @@
         };
         
         card.innerHTML = `
-          <p class="text-xs font-black">${city.name}</p>
-          <p class="text-[10px] opacity-70 font-bold">${city.region}</p>
+          <p class="text-xs font-black">${esc(city.name)}</p>
+          <p class="text-[10px] opacity-70 font-bold">${esc(city.region)}</p>
           <p class="text-lg font-black text-amber-400 mt-1">${formatMoney(price, 'HNL')}</p>
           <p class="text-[9px] opacity-60">${fuelType}</p>
         `;
@@ -1731,8 +1747,8 @@
         <div class="p-2.5 rounded-lg bg-slate-900/40 border border-slate-700/60 text-xs">
           <div class="flex justify-between items-start">
             <div>
-              <p class="font-black">${new Date(h.date).toLocaleDateString('es-HN')}</p>
-              <p class="text-[10px] opacity-70">${h.fuelType} • ${h.gallons} gal</p>
+              <p class="font-black">${esc(new Date(h.date).toLocaleDateString('es-HN'))}</p>
+              <p class="text-[10px] opacity-70">${esc(h.fuelType)} • ${esc(h.gallons)} gal</p>
             </div>
             <p class="font-black text-emerald-400">${formatMoney(h.amountPaid, 'HNL')}</p>
           </div>
@@ -1790,8 +1806,8 @@
         }
         
         // Validar que sea un objeto con ciudades
-        if(!pricesData || typeof pricesData !== 'object') {
-          showToast('⚠ Formato Inválido', 'Debe ser un objeto JSON', 'red');
+        if(!pricesData || typeof pricesData !== 'object' || Array.isArray(pricesData)) {
+          showToast('⚠ Formato Inválido', 'Debe ser un objeto JSON de ciudades', 'red');
           return;
         }
         
