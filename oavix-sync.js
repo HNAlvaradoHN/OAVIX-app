@@ -84,48 +84,49 @@
   const CATEGORY_KEY = 'oavix_auto_categories';
   const CATEGORY_INIT_KEY = 'oavix_auto_categories_initialized';
 
+  const storage = window.OAVIX.storage;
+
   function fixCategories(){
-    let stored = null;
-    try { stored = JSON.parse(localStorage.getItem(CATEGORY_KEY)); } catch (_) { stored = null; }
+    let stored = storage.readJSON(CATEGORY_KEY);
 
     /* Si una instalación anterior dejó la lista vacía sin haber sido gestionada
        por el usuario, recuperamos las categorías iniciales una sola vez. */
-    if (Array.isArray(stored) && stored.length === 0 && !localStorage.getItem(CATEGORY_INIT_KEY)) {
+    if (Array.isArray(stored) && stored.length === 0 && !storage.read(CATEGORY_INIT_KEY)) {
       stored = DEFAULT_CATEGORIES.slice();
-      localStorage.setItem(CATEGORY_KEY, JSON.stringify(stored));
+      storage.writeJSON(CATEGORY_KEY, stored);
     }
 
     if (!Array.isArray(stored)) {
       stored = DEFAULT_CATEGORIES.slice();
-      localStorage.setItem(CATEGORY_KEY, JSON.stringify(stored));
+      storage.writeJSON(CATEGORY_KEY, stored);
     }
 
     if (Array.isArray(window.autoCategories)) {
       window.autoCategories.splice(0, window.autoCategories.length, ...stored);
     }
 
-    localStorage.setItem(CATEGORY_INIT_KEY, 'true');
+    storage.write(CATEGORY_INIT_KEY, 'true');
 
     if (typeof window.setupCategoryDropdowns === 'function') {
       window.setupCategoryDropdowns();
     }
   }
 
+  /* Marca las categorías como gestionadas por el usuario tras cada cambio manual. */
+  function markManagedAfter(fnName){
+    const original = window[fnName];
+    if (typeof original !== 'function') return;
+    window[fnName] = function(){
+      const result = original.apply(this, arguments);
+      storage.write(CATEGORY_INIT_KEY, 'true');
+      return result;
+    };
+  }
+
   function keepCategoryStateManaged(){
     if (typeof window.addNewCategory === 'function' && !window.__OAVIX_CATEGORY_WRAPPED__) {
-      const originalAdd = window.addNewCategory;
-      window.addNewCategory = function(){
-        originalAdd.apply(this, arguments);
-        localStorage.setItem(CATEGORY_INIT_KEY, 'true');
-      };
-
-      const originalDelete = window.deleteCategory;
-      if (typeof originalDelete === 'function') {
-        window.deleteCategory = function(){
-          originalDelete.apply(this, arguments);
-          localStorage.setItem(CATEGORY_INIT_KEY, 'true');
-        };
-      }
+      markManagedAfter('addNewCategory');
+      markManagedAfter('deleteCategory');
       window.__OAVIX_CATEGORY_WRAPPED__ = true;
     }
   }

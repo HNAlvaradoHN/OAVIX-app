@@ -1,7 +1,9 @@
-const CACHE = 'oavix-shell-v2';
+const CACHE = 'oavix-shell-v3';
 const APP_SHELL = [
   './',
   './index.html',
+  './oavix-utils.js',
+  './oavix-fuel-module.js',
   './oavix-sync.js',
   './oavix-sync-config.js',
   './manifest.webmanifest',
