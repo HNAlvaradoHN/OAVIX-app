@@ -1,0 +1,180 @@
+<div id="subtab-fuel" class="hidden space-y-4">
+      <!-- BANNER INFORMATIVO -->
+      <div class="animated-glass-card rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-xl">
+        <div class="flex items-center justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest">
+                ⛽ Combustibles SEN Honduras
+              </span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black tracking-tight">Gestión Inteligente de Combustible</h2>
+            <p class="text-xs sm:text-sm font-bold leading-relaxed opacity-90">
+              Precios actualizados cada viernes por la Secretaría de Energía. Calcula costos de tanque lleno y consumo por kilómetro.
+            </p>
+          </div>
+          <button onclick="refreshFuelPrices()" class="p-3 rounded-2xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 border border-emerald-500/40 transition" title="Actualizar Precios">
+            <i class="fa-solid fa-rotate-right text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN DE VEHÍCULO -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-car text-cyan-400"></i>
+          <span>Configuración de Tu Vehículo</span>
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Capacidad de Tanque</label>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="fuel-tank-capacity" min="5" max="80" step="0.5" value="15" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <span class="text-[10px] font-extrabold opacity-70">gal</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Consumo Promedio</label>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="fuel-avg-consumption" min="3" max="30" step="0.5" value="8" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <span class="text-[10px] font-extrabold opacity-70">km/gal</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Tu Ciudad</label>
+            <select id="fuel-city-select" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <option value="tegucigalpa">Tegucigalpa</option>
+              <option value="sps">San Pedro Sula</option>
+              <option value="laceiba">La Ceiba</option>
+              <option value="choloma">Choloma</option>
+              <option value="danli">Danlí</option>
+              <option value="juticalpa">Juticalpa</option>
+              <option value="comayagua">Comayagua</option>
+              <option value="trujillo">Trujillo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Tipo de Combustible</label>
+            <select id="fuel-type-select" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+              <option value="Gasolina Regular">Gasolina Regular</option>
+              <option value="Gasolina Súper">Gasolina Súper</option>
+              <option value="Diésel">Diésel</option>
+              <option value="Kerosene">Kerosene</option>
+              <option value="GLP">GLP</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALCULADORAS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <!-- CALCULADORA 1: TANQUE LLENO -->
+        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
+          <h3 class="font-black text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-gas-pump text-emerald-400"></i>
+            <span>Tanque Lleno</span>
+          </h3>
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Galones</label>
+              <input type="number" id="calc-tank-gallons" min="1" step="0.1" placeholder="Ej: 15" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+            </div>
+            <button onclick="calculateTankFill()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded-lg transition text-sm">Calcular Costo</button>
+            <div id="tank-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-emerald-500/30 text-center">
+              <p class="text-[10px] opacity-70 font-bold">Costo Total</p>
+              <p id="tank-result-value" class="text-lg font-black text-emerald-400">L 0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALCULADORA 2: COSTO POR KM -->
+        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
+          <h3 class="font-black text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-road text-cyan-400"></i>
+            <span>Costo por Km</span>
+          </h3>
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Distancia (km)</label>
+              <input type="number" id="calc-km-distance" min="1" step="1" placeholder="Ej: 100" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
+            </div>
+            <button onclick="calculateCostPerKm()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-black py-2 rounded-lg transition text-sm">Calcular Costo</button>
+            <div id="km-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-cyan-500/30 text-center">
+              <p class="text-[10px] opacity-70 font-bold">Costo Total</p>
+              <p id="km-result-value" class="text-lg font-black text-cyan-400">L 0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALCULADORA 3: AUTOCOMPLETADO -->
+        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
+          <h3 class="font-black text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+            <span>Auto-completado</span>
+          </h3>
+          <div class="space-y-2.5">
+            <div>
+              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Galones Comprados</label>
+              <input type="number" id="calc-autofill-gallons" min="0.1" step="0.1" placeholder="Ej: 10" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none" oninput="calculateAutoFill()">
+            </div>
+            <div id="autofill-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-amber-500/30 text-center">
+              <p class="text-[10px] opacity-70 font-bold">Monto a Registrar</p>
+              <p id="autofill-result-value" class="text-lg font-black text-amber-400">L 0.00</p>
+            </div>
+            <button onclick="copyAutoFillToForm()" id="copy-autofill-btn" class="hidden w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-2 rounded-lg transition text-sm">Copiar a Formulario</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRECIOS ACTUALES POR CIUDAD -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-chart-column text-blue-400"></i>
+          <span>Precios Actuales por Ciudad</span>
+        </h3>
+        <p class="text-[10px] font-bold opacity-70" id="fuel-prices-update-date">Últimas actualización: --</p>
+        <div id="fuel-prices-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
+      </div>
+
+      <!-- HISTÓRICO DE CARGAS -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-history text-purple-400"></i>
+          <span>Histórico de Cargas de Combustible</span>
+        </h3>
+        <div id="fuel-history-list" class="space-y-2">
+          <p class="text-xs font-bold opacity-70 text-center py-4">Sin histórico registrado aún</p>
+        </div>
+      </div>
+
+      <!-- PANEL DE ADMINISTRADOR - ACTUALIZAR PRECIOS DEL SEN -->
+      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3 border-2 border-amber-500/30">
+        <h3 class="font-black text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-wrench text-amber-400"></i>
+          <span>Panel Admin - Actualizar Precios SEN</span>
+        </h3>
+        <p class="text-xs opacity-70">Copia los precios de <a href="https://app.powerbi.com/view?r=eyJrIjoiZDdmNzNjMmYtNzMzYy00ZDQ2LTg0MzctYWRlNDQ5MWIzNGYxIiwidCI6Ijk0MDNiYTRiLWJjNTQtNDAzZS05NTg4LWI1NTJkMThhODI3YiJ9" target="_blank" class="text-blue-400 hover:underline">Power BI SEN</a> y actualiza aquí</p>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold block">Pega los precios en JSON:</label>
+          <textarea id="fuel-admin-json-input" class="w-full h-32 bg-slate-900/50 border border-slate-600 rounded-lg p-2 text-xs font-mono text-green-400 focus:border-blue-400 focus:outline-none" placeholder='{"tegucigalpa":{"Gasolina Súper":57.85,"Gasolina Regular":55.20,...},...}'></textarea>
+          <div class="flex gap-2">
+            <button onclick="importFuelPricesFromJSON()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+              <i class="fa-solid fa-upload mr-1"></i> Importar
+            </button>
+            <button onclick="exportFuelPricesToJSON()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+              <i class="fa-solid fa-download mr-1"></i> Exportar
+            </button>
+            <button onclick="showFuelAdminGuide()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+              <i class="fa-solid fa-question-circle mr-1"></i> Guía
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/30 rounded-lg p-2 text-xs">
+          <p class="font-bold text-amber-400 mb-1">📋 Última actualización SEN:</p>
+          <p id="fuel-admin-last-update" class="text-slate-300">--</p>
+        </div>
+      </div>
+
+    </div>
