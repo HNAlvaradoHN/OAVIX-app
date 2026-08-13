@@ -15,24 +15,6 @@ function extractSwitchSubTabBody(source) {
   return match[1];
 }
 
-function extractCheckLoginStateBody(source) {
-  const match = source.match(
-    /function\s+checkLoginState\s*\(\)\s*\{([\s\S]*?)\n\s*\}\n\n\s*function\s+togglePasswordVisibility/
-  );
-
-  if (!match) throw new Error('No se encontró la implementación completa de checkLoginState');
-  return match[1];
-}
-
-function extractUpdateLikesUIBody(source) {
-  const match = source.match(
-    /function\s+updateLikesUI\s*\(\)\s*\{([\s\S]*?)\n\s*\}\n\n\s*function\s+setDistanceUnit/
-  );
-
-  if (!match) throw new Error('No se encontró la implementación completa de updateLikesUI');
-  return match[1];
-}
-
 describe('index.html integrity', () => {
   it('has a complete HTML document instead of a truncated file', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
@@ -57,25 +39,12 @@ describe('index.html integrity', () => {
       expect(html).toMatch(new RegExp(`function\\s+${functionName}\\s*\\(`));
     }
   );
-});
 
-describe('session bootstrap fallback', () => {
-  it('does not stop app initialization when the sync modal is not mounted yet', () => {
-    document.body.innerHTML = '';
-    const checkLoginState = new Function('currentUserName', extractCheckLoginStateBody(html));
-
-    expect(() => checkLoginState('')).not.toThrow();
-  });
-
-  it('does not stop app initialization after the legacy likes counter is removed', () => {
-    document.body.innerHTML = '';
-    const updateLikesUI = new Function(
-      'globalLikes',
-      'formatNumber',
-      extractUpdateLikesUIBody(html)
-    );
-
-    expect(() => updateLikesUI(142, value => String(value))).not.toThrow();
+  it('does not keep inactive login, likes or rescue implementations', () => {
+    expect(html).not.toContain('OAVIX SYNC RESCUE');
+    expect(html).not.toContain('OAVIX HOTFIX');
+    expect(html).not.toMatch(/function\s+handleLoginSubmit\s*\(/);
+    expect(html).not.toMatch(/function\s+giveAppLike\s*\(/);
   });
 });
 
