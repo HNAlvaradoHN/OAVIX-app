@@ -17,7 +17,9 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/features/archive/` | Vista del archivo. |
 | `src/ui/` | Tema y notificaciones visuales compartidas. |
 | `src/styles/` | Estilos generales. |
-| `src/legacy/app.js` | Lógica activa que será separada por función en la siguiente etapa. |
+| `src/core/` | Estado, almacenamiento, utilidades y arranque compartidos. |
+| `src/features/*/controller.js` | Lógica propia de cada función. |
+| `src/ui/*/controller.js` | Lógica de navegación, tema y avisos visuales. |
 | `oavix-sync.js` | Sincronización y autenticación de Google. |
 | `oavix-fuel-module.js` | Datos y cálculos actuales de combustible. |
 | `tests/` | Pruebas que protegen navegación, almacenamiento, sincronización y despliegue. |
@@ -31,6 +33,6 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 
 ## Próximas etapas
 
-1. Separar los controladores y el estado de mantenimiento, calendario, alertas, gasolina y archivo.
-2. Aislar autenticación, sincronización y almacenamiento común.
-3. Eliminar `src/legacy/app.js` cuando toda su lógica tenga un módulo definitivo.
+1. Aislar autenticación, sincronización remota y almacenamiento local detrás de interfaces claras.
+2. Añadir pruebas específicas para cada controlador.
+3. Mantener cada cambio futuro dentro de la carpeta de la función afectada.

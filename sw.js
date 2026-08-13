@@ -1,4 +1,4 @@
-const CACHE = 'oavix-shell-v5';
+const CACHE = 'oavix-shell-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,7 +8,19 @@ const APP_SHELL = [
   './src/app.js',
   './src/config/tailwind.js',
   './src/styles/app.css',
-  './src/legacy/app.js',
+  './src/core/utils.js',
+  './src/core/state.js',
+  './src/core/storage.js',
+  './src/core/bootstrap.js',
+  './src/ui/toasts/controller.js',
+  './src/ui/theme/controller.js',
+  './src/ui/navigation/controller.js',
+  './src/features/dashboard/controller.js',
+  './src/features/maintenance/controller.js',
+  './src/features/archive/controller.js',
+  './src/features/calendar/controller.js',
+  './src/features/alerts/controller.js',
+  './src/features/fuel/controller.js',
   './src/app-shell/navigation.html',
   './src/app-shell/header.html',
   './src/features/dashboard/view.html',
