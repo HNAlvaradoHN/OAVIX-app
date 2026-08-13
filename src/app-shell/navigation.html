@@ -1,21 +1,27 @@
 <nav class="floating-nav">
-    <button id="nav-btn-dashboard" onclick="switchSubTab('dashboard')" class="nav-btn active" title="Inicio / Panel">
+    <button id="nav-btn-dashboard" onclick="switchSubTab('dashboard')" class="nav-btn active" aria-label="Inicio" aria-current="page">
+      <span class="nav-label" aria-hidden="true">Inicio</span>
       <i class="fa-solid fa-house"></i>
     </button>
-    <button id="nav-btn-records" onclick="switchSubTab('records')" class="nav-btn" title="Historial Técnico">
+    <button id="nav-btn-records" onclick="switchSubTab('records')" class="nav-btn" aria-label="Mantenimiento">
+      <span class="nav-label" aria-hidden="true">Mantenimiento</span>
       <i class="fa-solid fa-list-check"></i>
     </button>
-    <button id="nav-btn-calendar" onclick="switchSubTab('calendar')" class="nav-btn" title="Calendario">
+    <button id="nav-btn-calendar" onclick="switchSubTab('calendar')" class="nav-btn" aria-label="Calendario">
+      <span class="nav-label" aria-hidden="true">Calendario</span>
       <i class="fa-solid fa-calendar-days"></i>
     </button>
-    <button id="nav-btn-fuel" onclick="switchSubTab('fuel')" class="nav-btn" title="Gestión de Combustible">
+    <button id="nav-btn-fuel" onclick="switchSubTab('fuel')" class="nav-btn" aria-label="Gasolina">
+      <span class="nav-label" aria-hidden="true">Gasolina</span>
       <i class="fa-solid fa-gas-pump"></i>
     </button>
-    <button id="nav-btn-alerts" onclick="switchSubTab('alerts')" class="nav-btn" title="Alarmas & Citas">
+    <button id="nav-btn-alerts" onclick="switchSubTab('alerts')" class="nav-btn" aria-label="Alertas">
+      <span class="nav-label" aria-hidden="true">Alertas</span>
       <i class="fa-solid fa-bell"></i>
       <span id="nav-alerts-badge" class="badge hidden">0</span>
     </button>
-    <button id="nav-btn-archive" onclick="switchSubTab('archive')" class="nav-btn" title="Archivo">
+    <button id="nav-btn-archive" onclick="switchSubTab('archive')" class="nav-btn" aria-label="Archivos">
+      <span class="nav-label" aria-hidden="true">Archivos</span>
       <i class="fa-solid fa-box-archive"></i>
     </button>
   </nav>
