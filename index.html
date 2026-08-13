@@ -1962,5 +1962,80 @@
     modal.classList.remove('hidden');
   }
 </script>
+
+<!-- ===== OAVIX SYNC RESCUE v1 =====
+     Seguro: si el sync original funciona, este bloque no hace nada.
+     Para quitarlo: elimina este bloque completo. -->
+<script>
+(function(){
+  'use strict';
+  if (window.OAVIXDriveSync || window.__OAVIX_RESCUE__) return;
+  window.__OAVIX_RESCUE__ = true;
+
+  var CFG = window.OAVIX_GOOGLE_CLIENT_ID || '';
+  var FILE_NAME = 'oavix-data.json';
+  var SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+  var KEYS = ['oavix_auto_records','oavix_auto_mileage','oavix_auto_categories','oavix_auto_unit','oavix_custom_bg','oavix_custom_neon','oavix_is_light','oavix_triggered_alarms','oavix_fuel_history','oavix_fuel_vehicle_config'];
+  var SESSION_KEY = 'oavix_google_session';
+  var email='', token=null, expires=0, fileId=null, busy=false, timer=null;
+
+  function get(k){ return localStorage.getItem(k); }
+  function nSet(k,v){ localStorage.setItem(k,v); }
+  function del(k){ localStorage.removeItem(k); }
+  function snap(){ var d={}; KEYS.forEach(function(k){ var v=get(k); if(v!==null) d[k]=v; }); return d; }
+  function toast(t,b,c){ if(window.showToast) window.showToast(t,b,c); }
+
+  function loadGIS(){ return new Promise(function(res,rej){ if(window.google&&google.accounts&&google.accounts.oauth2) return res(); var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.onload=res; s.onerror=function(){rej(new Error('No cargó Google Identity Services'));}; document.head.appendChild(s); }); }
+
+  function askToken(interactive){ return new Promise(function(res,rej){ loadGIS().then(function(){ if(!window.__rc_client){ window.__rc_client=google.accounts.oauth2.initTokenClient({ client_id:CFG, scope:SCOPE, callback:function(r){ if(r&&r.access_token){ token=r.access_token; expires=Date.now()+Math.max(60,(r.expires_in||3600)-60)*1000; res(r); } else { rej(new Error(r&&r.error_description||'Google negó el acceso')); } }, error_callback:function(){ rej(new Error('Se canceló el acceso')); } }); } window.__rc_client.requestAccessToken({ prompt: interactive?'select_account':'', login_hint: email||undefined }); }).catch(rej); }); }
+
+  function ensure(){ if(token&&Date.now()<expires) return Promise.resolve(token); if(!CFG) return Promise.reject(new Error('Falta el Client ID de Google')); return askToken(!email).then(function(r){ return r.access_token; }); }
+
+  function drive(method,url,body,ct){ return ensure().then(function(t){ var o={method:method,headers:{Authorization:'Bearer '+t}}; if(body){ o.headers['Content-Type']=ct||'application/json'; o.body=body; } return fetch(url,o).then(function(r){ if(r.status===401){ token=null; return askToken(true).then(function(r2){ o.headers.Authorization='Bearer '+r2.access_token; return fetch(url,o); }); } if(!r.ok) throw new Error('Drive respondió '+r.status); return r; }); }); }
+
+  function find(){ return drive('GET','https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent("name='"+FILE_NAME+"' and 'appDataFolder' in parents and trashed=false")+'&spaces=appDataFolder&fields=files(id)').then(function(r){return r.json();}).then(function(j){return (j.files&&j.files[0])||null;}); }
+
+  function pull(){ return find().then(function(f){ if(!f) return null; fileId=f.id; return drive('GET','https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media').then(function(r){return r.json();}); }); }
+
+  function push(){ var payload={schemaVersion:5,app:'OAVIX',account:email,updatedAt:new Date().toISOString(),keys:KEYS,data:snap()}; var body=JSON.stringify(payload); var base=fileId?Promise.resolve({id:fileId}):find(); return base.then(function(f){ if(!f){ var b='oavix_'+Math.random().toString(16).slice(2); var multi='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:FILE_NAME,parents:['appDataFolder'],mimeType:'application/json'})+'\r\n--'+b+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+b+'--'; return drive('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',multi,'multipart/related; boundary='+b).then(function(r){return r.json();}).then(function(j){ fileId=j.id; }); } fileId=f.id; return drive('PATCH','https://www.googleapis.com/upload/drive/v3/files/'+f.id+'?uploadType=media',body); }).then(function(){ nSet('oavix_rescue_updated', payload.updatedAt); }); }
+
+  function apply(p){ if(!p||!p.data) return false; KEYS.forEach(function(k){ if(Object.prototype.hasOwnProperty.call(p.data,k)) nSet(k,p.data[k]); }); return true; }
+
+  function sync(interactive){ if(busy||!email) return Promise.resolve(); if(!navigator.onLine){ if(interactive) toast('✓ Guardado localmente','Se sincronizará al haber conexión.','amber'); return Promise.resolve(); } busy=true; return pull().then(function(cloud){ if(!cloud){ toast('☁️ Sincronizando','Subiendo tus datos a Drive…','cyan'); return push().then(function(){ toast('✓ Sincronizado','Datos guardados en tu cuenta.','emerald'); }); } var lu=get('oavix_rescue_updated')||''; var cu=cloud.updatedAt||''; var distinto=JSON.stringify(snap())!==JSON.stringify(cloud.data||{}); if(distinto&&cu&&(!lu||cu>lu)){ if(apply(cloud)){ nSet('oavix_rescue_updated',cu); toast('✓ Datos restaurados','Se descargaron tus datos de Drive.','emerald'); setTimeout(function(){ location.reload(); },700); } return; } if(distinto){ return push(); } nSet('oavix_rescue_updated',cu||lu); }).catch(function(e){ console.error('[OAVIX RESCUE]',e); toast('⚠ Revisa tu sesión','Toca la nube ☁️ para reintentar.','amber'); }).then(function(){ busy=false; }); }
+
+  function schedule(){ clearTimeout(timer); nSet('oavix_rescue_updated', new Date().toISOString()); timer=setTimeout(function(){ sync(false); },1500); }
+
+  function login(){ askToken(true).then(function(){ return fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',{headers:{Authorization:'Bearer '+token}}); }).then(function(r){return r.json();}).then(function(me){ var em=me.user&&me.user.emailAddress; if(!em) throw new Error('Google no devolvió el correo'); email=em; nSet(SESSION_KEY,JSON.stringify({email:em})); nSet('oavix_current_user_name',em); location.reload(); }).catch(function(e){ toast('No se pudo iniciar sesión',e.message||'Google canceló el acceso.','rose'); }); }
+
+  function logout(){ del(SESSION_KEY); del('oavix_current_user_name'); del('oavix_rescue_updated'); KEYS.forEach(del); location.reload(); }
+
+  var realSet = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(k,v){ realSet(k,v); if(email&&KEYS.indexOf(k)>=0) schedule(); };
+
+  try { var s=JSON.parse(get(SESSION_KEY)||'null'); if(s&&s.email) email=s.email; } catch(e){}
+
+  function ui(){
+    var badge=document.getElementById('user-session-badge'); if(badge) badge.remove();
+    var like=document.getElementById('global-likes-count'); if(like&&like.closest('button')) like.closest('button').remove();
+    var tag=document.getElementById('banner-username-tag'); if(tag&&email) tag.textContent='Usuario: '+email;
+    var old=document.getElementById('modal-login');
+    if(email){
+      if(old) old.style.display='none';
+      if(!document.getElementById('rc-logout')){ var b=document.createElement('button'); b.id='rc-logout'; b.type='button'; b.textContent='Cerrar sesión'; b.style.cssText='margin-left:6px;padding:2px 8px;border-radius:6px;border:1px solid rgba(244,63,94,.4);background:rgba(244,63,94,.15);color:#fda4af;font-weight:800;font-size:10px;'; b.onclick=logout; (tag?tag.parentElement:document.body).appendChild(b); }
+      if(!document.getElementById('rc-cloud')){ var c=document.createElement('button'); c.id='rc-cloud'; c.type='button'; c.title='Sincronizar con Drive'; c.textContent='☁️'; c.style.cssText='position:fixed;top:5rem;left:.5rem;z-index:40;padding:8px 10px;border-radius:12px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.18);'; c.onclick=function(){ sync(true); }; document.body.appendChild(c); }
+      setTimeout(function(){ sync(false); },800);
+    } else {
+      if(!old){ old=document.createElement('div'); old.id='modal-login'; old.className='fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur'; old.innerHTML='<div class="animated-glass-card rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-5 text-center"><h3 class="text-2xl font-black text-white">Bienvenido a OAVIX</h3><p class="text-sm text-slate-300 font-bold">Inicia sesión con Google para sincronizar tus datos entre dispositivos.</p><button id="rc-google" type="button" class="w-full py-3 px-4 rounded-2xl bg-white text-slate-900 font-black">Continuar con Google</button></div>'; document.body.appendChild(old); }
+      old.style.display='flex';
+      var g=document.getElementById('rc-google'); if(g) g.onclick=login;
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(ui,0); },{once:true}); else setTimeout(ui,0);
+
+  window.logoutSession = logout;
+  window.OAVIXDriveSync = { syncNow:function(){ sync(true); }, loginWithGoogle:login, logoutSession:logout };
+})();
+</script>
 </body>
 </html>
