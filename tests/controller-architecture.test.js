@@ -23,7 +23,7 @@ const controllerPaths = [
 
 const ownership = {
   'src/features/dashboard/controller.js': ['setDistanceUnit', 'saveCurrentMileageInput', 'renderMileageComparison', 'renderStats'],
-  'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'renderRecords', 'startNewMaintenance', 'openFormModal', 'handleFormSubmit'],
+  'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'compressMaintenanceImage', 'previewImageFile', 'renderRecords', 'startNewMaintenance', 'openFormModal', 'handleFormSubmit'],
   'src/features/archive/controller.js': ['renderArchiveRecords'],
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
   'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
@@ -75,7 +75,8 @@ describe('controller architecture', () => {
       JSON,
       localStorage: {
         getItem: key => storage.get(key) ?? null,
-        setItem: (key, value) => storage.set(key, String(value))
+        setItem: (key, value) => storage.set(key, String(value)),
+        removeItem: key => storage.delete(key)
       },
       setInterval,
       clearInterval,
@@ -208,7 +209,8 @@ describe('controller architecture', () => {
       document,
       localStorage: {
         getItem: key => storage.get(key) ?? null,
-        setItem: (key, value) => storage.set(key, String(value))
+        setItem: (key, value) => storage.set(key, String(value)),
+        removeItem: key => storage.delete(key)
       },
       setTimeout: callback => {
         timers.push(callback);
