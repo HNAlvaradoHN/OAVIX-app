@@ -1,10 +1,26 @@
-const CACHE = 'oavix-shell-v4';
+const CACHE = 'oavix-shell-v5';
 const APP_SHELL = [
   './',
   './index.html',
   './oavix-sync.js',
   './oavix-sync-config.js',
   './oavix-fuel-module.js',
+  './src/app.js',
+  './src/config/tailwind.js',
+  './src/styles/app.css',
+  './src/legacy/app.js',
+  './src/app-shell/navigation.html',
+  './src/app-shell/header.html',
+  './src/features/dashboard/view.html',
+  './src/features/maintenance/view.html',
+  './src/features/maintenance/overlays.html',
+  './src/features/calendar/view.html',
+  './src/features/alerts/view.html',
+  './src/features/alerts/overlays.html',
+  './src/features/fuel/view.html',
+  './src/features/archive/view.html',
+  './src/ui/theme/view.html',
+  './src/ui/toasts/view.html',
   './manifest.webmanifest',
   './icon.svg'
 ];

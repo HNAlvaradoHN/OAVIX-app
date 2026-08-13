@@ -1,0 +1,12 @@
+<div id="modal-continuous-alarm" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-slate-950/95 p-4 backdrop-blur-md">
+  <div class="animated-glass-card w-full max-w-md space-y-5 border-rose-500 p-6 text-center">
+    <i class="fa-solid fa-bell text-5xl text-rose-400 animate-pulse"></i>
+    <div>
+      <h3 id="alarm-screen-title" class="text-xl font-black text-white">Alarma de mantenimiento</h3>
+      <p id="alarm-screen-subtitle" class="mt-2 text-sm font-bold text-slate-300"></p>
+    </div>
+    <button type="button" onclick="stopContinuousAlarm()" class="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-black text-white hover:bg-rose-500">
+      Detener alarma
+    </button>
+  </div>
+</div>
