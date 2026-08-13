@@ -64,6 +64,11 @@
       box-shadow: 0 16px 38px -5px color-mix(in srgb, var(--border-neon) 40%, transparent), 0 0 22px -1px var(--border-neon);
     }
 
+    .maintenance-record-highlight {
+      outline: 3px solid #34d399;
+      outline-offset: 4px;
+    }
+
     .cluster-housing {
       background: radial-gradient(ellipse at center, color-mix(in srgb, var(--bg-dynamic) 70%, #030712) 0%, var(--bg-dynamic) 100%);
       border: 3px solid var(--border-neon);

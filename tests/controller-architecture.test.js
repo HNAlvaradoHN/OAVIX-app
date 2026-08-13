@@ -23,7 +23,7 @@ const controllerPaths = [
 
 const ownership = {
   'src/features/dashboard/controller.js': ['setDistanceUnit', 'saveCurrentMileageInput', 'renderMileageComparison', 'renderStats'],
-  'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'renderRecords', 'openFormModal', 'handleFormSubmit'],
+  'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'renderRecords', 'startNewMaintenance', 'openFormModal', 'handleFormSubmit'],
   'src/features/archive/controller.js': ['renderArchiveRecords'],
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
   'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
@@ -188,6 +188,72 @@ describe('controller architecture', () => {
     expect(input.getAttribute('type')).toBe('text');
     expect(input.getAttribute('inputmode')).toBe('numeric');
     expect(input.getAttribute('pattern')).toBe('[0-9,]*');
+  });
+
+  it('uses one maintenance form and reveals a newly saved record in its tab', () => {
+    document.body.innerHTML = [
+      'src/app-shell/navigation.html',
+      'src/features/dashboard/view.html',
+      'src/features/maintenance/view.html',
+      'src/features/maintenance/overlays.html'
+    ].map(read).join('\n');
+
+    const storage = new Map();
+    const selectedTabs = [];
+    const timers = [];
+    const context = createContext({
+      console,
+      Date,
+      JSON,
+      document,
+      localStorage: {
+        getItem: key => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, String(value))
+      },
+      setTimeout: callback => {
+        timers.push(callback);
+        return timers.length;
+      },
+      switchSubTab: tab => selectedTabs.push(tab),
+      renderStats: () => {},
+      renderArchiveRecords: () => {},
+      renderMileageComparison: () => {},
+      renderCalendar: () => {},
+      renderAlerts: () => {},
+      showToast: () => {}
+    });
+    context.window = context;
+
+    new Script(read('src/core/utils.js')).runInContext(context);
+    new Script(read('src/core/state.js')).runInContext(context);
+    new Script(read('src/core/storage.js')).runInContext(context);
+    new Script(read('src/features/maintenance/controller.js')).runInContext(context);
+    new Script('setupCategoryDropdowns()').runInContext(context);
+
+    const dashboardButton = document.getElementById('dashboard-new-maintenance-button');
+    const maintenanceButton = document.getElementById('maintenance-new-button');
+    expect(dashboardButton.getAttribute('onclick')).toBe('startNewMaintenance()');
+    expect(maintenanceButton.getAttribute('onclick')).toBe('startNewMaintenance()');
+    expect(document.querySelectorAll('#record-form')).toHaveLength(1);
+
+    new Script('startNewMaintenance()').runInContext(context);
+    expect(selectedTabs).toEqual(['records']);
+    expect(document.getElementById('modal-form').classList.contains('hidden')).toBe(false);
+
+    document.getElementById('form-title').value = 'Cambio de aceite nuevo';
+    document.getElementById('form-amount').value = '950';
+    document.getElementById('form-currency').value = 'HNL';
+    document.getElementById('form-date').value = '2026-08-13';
+    new Script('handleFormSubmit({ preventDefault() {} })').runInContext(context);
+
+    const savedRecords = JSON.parse(storage.get('oavix_auto_records'));
+    const firstCard = document.querySelector('[data-maintenance-record-id]');
+    expect(selectedTabs).toEqual(['records', 'records']);
+    expect(savedRecords).toHaveLength(1);
+    expect(savedRecords[0].title).toBe('Cambio de aceite nuevo');
+    expect(firstCard.textContent).toContain('Cambio de aceite nuevo');
+    expect(firstCard.classList.contains('maintenance-record-highlight')).toBe(true);
+    expect(timers).toHaveLength(1);
   });
 
   it('recovers an empty category list that the user never managed', () => {
