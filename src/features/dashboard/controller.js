@@ -13,8 +13,9 @@
     }
 
     function saveCurrentMileageInput(elem) {
-      const raw = elem.value.replace(/,/g, '');
-      const val = Number(raw || 0);
+      const digits = String(elem.value || '').replace(/\D/g, '').slice(0, 15);
+      const val = digits ? Number(digits) : 0;
+      elem.value = digits ? formatNumber(val) : '';
       currentVehicleMileage = val;
       localStorage.setItem('oavix_auto_mileage', currentVehicleMileage);
       renderMileageComparison();
