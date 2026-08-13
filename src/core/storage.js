@@ -1,10 +1,3 @@
-    function seedData() {
-      autoRecords = [
-        { id: '1', title: 'Cambio de Aceite Sintético', category: 'Cambio de Aceite', amount: 60.00, currency: 'USD', mileage: 86000, provider: 'Taller San Pedro', date: '2026-06-01', notes: 'Filtro nuevo', photo: '', validated: false }
-      ];
-      saveAll();
-    }
-
     function saveAll() {
       localStorage.setItem('oavix_auto_records', JSON.stringify(autoRecords));
     }

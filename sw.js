@@ -1,9 +1,10 @@
-const CACHE = 'oavix-shell-v7';
+const CACHE = 'oavix-shell-v8';
 const APP_SHELL = [
   './',
   './index.html',
   './oavix-sync-config.js',
   './src/services/sync/context.js',
+  './src/services/sync/merge-engine.js',
   './src/services/sync/account-storage.js',
   './src/services/sync/feedback.js',
   './src/services/sync/google-auth.js',

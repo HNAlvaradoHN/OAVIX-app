@@ -107,18 +107,17 @@
       if (!email) throw new Error('Google no devolvió el correo de la cuenta.');
 
       const oldEmail = state.accountEmail;
+      storage.removeLegacyDemoData();
       const firstMigration = !oldEmail && storage.legacyMigrationAllowed() && storage.hasLegacyData();
       if (firstMigration) {
         const timestamp = new Date().toISOString();
         nativeStorage.set(localUpdatedKey(email), timestamp);
-        storage.saveAccountSnapshot(email, timestamp);
+        storage.saveAccountSnapshot(email, timestamp, undefined, Object.keys(storage.dataSnapshot()));
         nativeStorage.set('oavix_migration_v5', 'done');
-      } else if (storage.accountSnapshot(email)) {
-        storage.restoreAccount(email);
       } else {
         storage.clearActiveData();
-        nativeStorage.remove(localUpdatedKey(email));
-        nativeStorage.set(needsPullKey(email), 'true');
+        if (storage.accountSnapshot(email)) storage.restoreAccount(email);
+        else nativeStorage.remove(localUpdatedKey(email));
       }
 
       state.accountEmail = email;
@@ -128,6 +127,8 @@
       }));
       nativeStorage.set('oavix_current_user_name', email);
       nativeStorage.remove('oavix_current_user_pin');
+      nativeStorage.set(needsPullKey(email), 'true');
+      await runtime.synchronizer.syncNow(true, { reload: false });
       root.location.reload();
     } catch (error) {
       console.error('[OAVIX login]', error);

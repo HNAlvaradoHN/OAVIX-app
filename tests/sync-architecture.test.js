@@ -6,6 +6,7 @@ const read = path => readFileSync(resolve(process.cwd(), path), 'utf8');
 
 const modules = [
   'src/services/sync/context.js',
+  'src/services/sync/merge-engine.js',
   'src/services/sync/account-storage.js',
   'src/services/sync/feedback.js',
   'src/services/sync/google-auth.js',
@@ -16,6 +17,7 @@ const modules = [
 ];
 
 const responsibilities = {
+  'src/services/sync/merge-engine.js': ['normalizePayload', 'mergePayloads', 'recordMutation'],
   'src/services/sync/account-storage.js': ['dataSnapshot', 'restoreAccount', 'installMutationHooks'],
   'src/services/sync/google-auth.js': ['requestToken', 'loginWithGoogle', 'logoutSession'],
   'src/services/sync/drive-client.js': ['drive', 'findFile', 'readCloud', 'writeCloud'],
@@ -26,7 +28,7 @@ const responsibilities = {
 describe('sync service architecture', () => {
   it('loads the sync modules synchronously in dependency order', () => {
     const html = read('index.html');
-    const positions = modules.map(path => html.indexOf(`${path}?v=1`));
+    const positions = modules.map(path => html.indexOf(`${path}?v=2`));
 
     expect(positions.every(position => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
