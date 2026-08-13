@@ -96,7 +96,9 @@ describe('FuelModule', () => {
     fuel.recordFuelFill({ gallons: 10, amountPaid: 500, odometer: 100 });
     fuel.recordFuelFill({ gallons: 10, amountPaid: 600, odometer: 200 });
     const stats = fuel.getConsumptionStats();
-    expect(stats.totalGallons).toBe(20);
+    // El primer registro fija el odómetro base; el consumo medible ocurre
+    // entre la primera y la segunda carga, por eso solo cuenta 10 galones.
+    expect(stats.totalGallons).toBe(10);
     expect(stats.totalKm).toBe(100);
     expect(fuel.getFuelHistory().length).toBe(2);
   });
