@@ -134,7 +134,7 @@ function repairMaintenanceCategories() {
       }
 
       list.innerHTML = activeRecords.map(r => `
-        <div class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2">
+        <div data-maintenance-record-id="${r.id}" class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2">
           ${r.photo ? `
             <div class="w-full h-28 rounded-xl overflow-hidden mb-2 cursor-pointer border border-slate-600 relative group" onclick="openImageViewer('${r.photo}')">
               <img src="${r.photo}" class="w-full h-full object-cover">
@@ -154,6 +154,23 @@ function repairMaintenanceCategories() {
           </div>
         </div>
       `).join('');
+    }
+
+    function startNewMaintenance() {
+      switchSubTab('records');
+      openFormModal();
+    }
+
+    function revealMaintenanceRecord(id) {
+      const card = Array.from(document.querySelectorAll('[data-maintenance-record-id]'))
+        .find(element => element.dataset.maintenanceRecordId === String(id));
+      if (!card) return;
+
+      card.classList.add('maintenance-record-highlight');
+      if (typeof card.scrollIntoView === 'function') {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setTimeout(() => card.classList.remove('maintenance-record-highlight'), 2400);
     }
 
     function openFormModal(editId = null) {
@@ -214,7 +231,8 @@ function repairMaintenanceCategories() {
       };
 
       const idx = autoRecords.findIndex(item => item.id === id);
-      if (idx >= 0) {
+      const isNewRecord = idx < 0;
+      if (!isNewRecord) {
         r.validated = autoRecords[idx].validated;
         autoRecords[idx] = r;
       } else {
@@ -230,5 +248,9 @@ function repairMaintenanceCategories() {
       renderMileageComparison();
       renderCalendar();
       renderAlerts();
+      if (isNewRecord) {
+        switchSubTab('records');
+        revealMaintenanceRecord(id);
+      }
       showToast('Guardado', 'Mantenimiento registrado con éxito.', 'emerald');
     }
