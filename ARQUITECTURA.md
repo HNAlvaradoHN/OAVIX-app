@@ -13,7 +13,7 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/features/maintenance/` | Vista y ventanas de mantenimiento. |
 | `src/features/calendar/` | Vista del calendario. |
 | `src/features/alerts/` | Vista y ventanas de alertas. |
-| `src/features/fuel/` | Vista de gasolina. |
+| `src/features/fuel/` | Vista, interacción, vehículos y cálculos de Combustibles. |
 | `src/features/archive/` | Vista del archivo. |
 | `src/ui/` | Tema y notificaciones visuales compartidas. |
 | `src/styles/` | Estilos generales. |
@@ -28,7 +28,9 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/services/sync/synchronizer.js` | Flujo Drive-first: descargar, combinar y después guardar. |
 | `src/services/sync/ui.js` | Interfaz de sesión, botón de nube e instalación PWA. |
 | `src/services/sync/bootstrap.js` | Vinculación pública y eventos de sincronización. |
-| `oavix-fuel-module.js` | Datos y cálculos actuales de combustible. |
+| `src/features/fuel/module.js` | Modelo autónomo de Combustibles: vehículos, cargas, unidades, consumo y precios SEN. |
+| `data/sen-prices.json` | Última copia nacional validada del tablero oficial de la SEN. |
+| `scripts/update-sen-prices.mjs` | Actualización automática y validación preventiva de precios oficiales. |
 | `tests/` | Pruebas que protegen navegación, almacenamiento, sincronización y despliegue. |
 
 ## Regla de mantenimiento
@@ -41,7 +43,8 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 ## Regla de sincronización
 
 - Google Drive se consulta antes de cada subida; un dispositivo vacío no reemplaza una cuenta con información.
-- Mantenimiento y gasolina se combinan registro por registro. Los registros distintos se conservan y, si el mismo registro cambió en dos equipos, se usa su modificación más reciente.
+- Mantenimiento, cargas y vehículos se combinan registro por registro. Los registros distintos se conservan y, si el mismo registro cambió en dos equipos, se usa su modificación más reciente.
+- Los precios SEN no se suben al Drive personal: son una copia pública común, renovada automáticamente, y nunca sustituyen la última tabla válida con una respuesta vacía.
 - Los borrados guardan una marca interna para que un equipo atrasado no vuelva a crear información eliminada.
 - La copia local conserva cambios sin conexión y los envía al abrir, volver a la aplicación, recuperar Internet o usar el botón de nube.
 - Cada correo de Google mantiene una copia local independiente y utiliza su propio archivo privado de datos de aplicación en Drive.

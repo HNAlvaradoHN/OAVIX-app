@@ -1,180 +1,430 @@
-<div id="subtab-fuel" class="hidden space-y-4">
-      <!-- BANNER INFORMATIVO -->
-      <div class="animated-glass-card rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-xl">
-        <div class="flex items-center justify-between">
-          <div class="space-y-2">
-            <div class="flex items-center space-x-2">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest">
-                ⛽ Combustibles SEN Honduras
-              </span>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-black tracking-tight">Gestión Inteligente de Combustible</h2>
-            <p class="text-xs sm:text-sm font-bold leading-relaxed opacity-90">
-              Precios actualizados cada viernes por la Secretaría de Energía. Calcula costos de tanque lleno y consumo por kilómetro.
-            </p>
-          </div>
-          <button onclick="refreshFuelPrices()" class="p-3 rounded-2xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 border border-emerald-500/40 transition" title="Actualizar Precios">
-            <i class="fa-solid fa-rotate-right text-lg"></i>
-          </button>
+<div id="subtab-fuel" class="hidden fuel-shell space-y-4">
+  <section class="fuel-hero animated-glass-card" aria-labelledby="fuel-title">
+    <div class="fuel-hero-glow fuel-hero-glow-one" aria-hidden="true"></div>
+    <div class="fuel-hero-glow fuel-hero-glow-two" aria-hidden="true"></div>
+
+    <div class="fuel-hero-content">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="fuel-kicker"><i class="fa-solid fa-gas-pump"></i> Combustibles</span>
+          <span id="fuel-source-badge" class="fuel-source-badge fuel-source-loading">
+            <span class="fuel-status-dot"></span> Consultando SEN
+          </span>
         </div>
+        <h2 id="fuel-title">Tu combustible, bajo control</h2>
+        <p>Registra cargas, conoce el consumo real y consulta precios oficiales sin salir de OAVIX.</p>
       </div>
 
-      <!-- CONFIGURACIÓN DE VEHÍCULO -->
-      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-        <h3 class="font-black text-sm flex items-center space-x-2">
-          <i class="fa-solid fa-car text-cyan-400"></i>
-          <span>Configuración de Tu Vehículo</span>
-        </h3>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <div>
-            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Capacidad de Tanque</label>
-            <div class="flex items-center space-x-1">
-              <input type="number" id="fuel-tank-capacity" min="5" max="80" step="0.5" value="15" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
-              <span class="text-[10px] font-extrabold opacity-70">gal</span>
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Consumo Promedio</label>
-            <div class="flex items-center space-x-1">
-              <input type="number" id="fuel-avg-consumption" min="3" max="30" step="0.5" value="8" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
-              <span class="text-[10px] font-extrabold opacity-70">km/gal</span>
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Tu Ciudad</label>
-            <select id="fuel-city-select" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
-              <option value="tegucigalpa">Tegucigalpa</option>
-              <option value="sps">San Pedro Sula</option>
-              <option value="laceiba">La Ceiba</option>
-              <option value="choloma">Choloma</option>
-              <option value="danli">Danlí</option>
-              <option value="juticalpa">Juticalpa</option>
-              <option value="comayagua">Comayagua</option>
-              <option value="trujillo">Trujillo</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-extrabold mb-1 opacity-80">Tipo de Combustible</label>
-            <select id="fuel-type-select" onchange="updateVehicleConfig()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
-              <option value="Gasolina Regular">Gasolina Regular</option>
-              <option value="Gasolina Súper">Gasolina Súper</option>
-              <option value="Diésel">Diésel</option>
-              <option value="Kerosene">Kerosene</option>
-              <option value="GLP">GLP</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- CALCULADORAS -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-        <!-- CALCULADORA 1: TANQUE LLENO -->
-        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
-          <h3 class="font-black text-sm flex items-center space-x-2">
-            <i class="fa-solid fa-gas-pump text-emerald-400"></i>
-            <span>Tanque Lleno</span>
-          </h3>
-          <div class="space-y-2.5">
-            <div>
-              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Galones</label>
-              <input type="number" id="calc-tank-gallons" min="1" step="0.1" placeholder="Ej: 15" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
-            </div>
-            <button onclick="calculateTankFill()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded-lg transition text-sm">Calcular Costo</button>
-            <div id="tank-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-emerald-500/30 text-center">
-              <p class="text-[10px] opacity-70 font-bold">Costo Total</p>
-              <p id="tank-result-value" class="text-lg font-black text-emerald-400">L 0.00</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- CALCULADORA 2: COSTO POR KM -->
-        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
-          <h3 class="font-black text-sm flex items-center space-x-2">
-            <i class="fa-solid fa-road text-cyan-400"></i>
-            <span>Costo por Km</span>
-          </h3>
-          <div class="space-y-2.5">
-            <div>
-              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Distancia (km)</label>
-              <input type="number" id="calc-km-distance" min="1" step="1" placeholder="Ej: 100" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none">
-            </div>
-            <button onclick="calculateCostPerKm()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-black py-2 rounded-lg transition text-sm">Calcular Costo</button>
-            <div id="km-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-cyan-500/30 text-center">
-              <p class="text-[10px] opacity-70 font-bold">Costo Total</p>
-              <p id="km-result-value" class="text-lg font-black text-cyan-400">L 0.00</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- CALCULADORA 3: AUTOCOMPLETADO -->
-        <div class="animated-glass-card rounded-2xl p-4 shadow-xl space-y-3">
-          <h3 class="font-black text-sm flex items-center space-x-2">
-            <i class="fa-solid fa-bolt text-amber-400"></i>
-            <span>Auto-completado</span>
-          </h3>
-          <div class="space-y-2.5">
-            <div>
-              <label class="text-[10px] font-extrabold mb-1 block opacity-80">Galones Comprados</label>
-              <input type="number" id="calc-autofill-gallons" min="0.1" step="0.1" placeholder="Ej: 10" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-sm focus:outline-none" oninput="calculateAutoFill()">
-            </div>
-            <div id="autofill-result" class="hidden bg-slate-900/50 p-2.5 rounded-lg border border-amber-500/30 text-center">
-              <p class="text-[10px] opacity-70 font-bold">Monto a Registrar</p>
-              <p id="autofill-result-value" class="text-lg font-black text-amber-400">L 0.00</p>
-            </div>
-            <button onclick="copyAutoFillToForm()" id="copy-autofill-btn" class="hidden w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-2 rounded-lg transition text-sm">Copiar a Formulario</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- PRECIOS ACTUALES POR CIUDAD -->
-      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-        <h3 class="font-black text-sm flex items-center space-x-2">
-          <i class="fa-solid fa-chart-column text-blue-400"></i>
-          <span>Precios Actuales por Ciudad</span>
-        </h3>
-        <p class="text-[10px] font-bold opacity-70" id="fuel-prices-update-date">Últimas actualización: --</p>
-        <div id="fuel-prices-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
-      </div>
-
-      <!-- HISTÓRICO DE CARGAS -->
-      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-        <h3 class="font-black text-sm flex items-center space-x-2">
-          <i class="fa-solid fa-history text-purple-400"></i>
-          <span>Histórico de Cargas de Combustible</span>
-        </h3>
-        <div id="fuel-history-list" class="space-y-2">
-          <p class="text-xs font-bold opacity-70 text-center py-4">Sin histórico registrado aún</p>
-        </div>
-      </div>
-
-      <!-- PANEL DE ADMINISTRADOR - ACTUALIZAR PRECIOS DEL SEN -->
-      <div class="animated-glass-card rounded-2xl p-4 sm:p-5 shadow-xl space-y-3 border-2 border-amber-500/30">
-        <h3 class="font-black text-sm flex items-center space-x-2">
-          <i class="fa-solid fa-wrench text-amber-400"></i>
-          <span>Panel Admin - Actualizar Precios SEN</span>
-        </h3>
-        <p class="text-xs opacity-70">Copia los precios de <a href="https://app.powerbi.com/view?r=eyJrIjoiZDdmNzNjMmYtNzMzYy00ZDQ2LTg0MzctYWRlNDQ5MWIzNGYxIiwidCI6Ijk0MDNiYTRiLWJjNTQtNDAzZS05NTg4LWI1NTJkMThhODI3YiJ9" target="_blank" class="text-blue-400 hover:underline">Power BI SEN</a> y actualiza aquí</p>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold block">Pega los precios en JSON:</label>
-          <textarea id="fuel-admin-json-input" class="w-full h-32 bg-slate-900/50 border border-slate-600 rounded-lg p-2 text-xs font-mono text-green-400 focus:border-blue-400 focus:outline-none" placeholder='{"tegucigalpa":{"Gasolina Súper":57.85,"Gasolina Regular":55.20,...},...}'></textarea>
-          <div class="flex gap-2">
-            <button onclick="importFuelPricesFromJSON()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
-              <i class="fa-solid fa-upload mr-1"></i> Importar
-            </button>
-            <button onclick="exportFuelPricesToJSON()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
-              <i class="fa-solid fa-download mr-1"></i> Exportar
-            </button>
-            <button onclick="showFuelAdminGuide()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
-              <i class="fa-solid fa-question-circle mr-1"></i> Guía
-            </button>
-          </div>
-        </div>
-
-        <div class="bg-slate-900/30 rounded-lg p-2 text-xs">
-          <p class="font-bold text-amber-400 mb-1">📋 Última actualización SEN:</p>
-          <p id="fuel-admin-last-update" class="text-slate-300">--</p>
-        </div>
-      </div>
-
+      <button type="button" onclick="openFuelFillModal()" class="fuel-primary-action">
+        <i class="fa-solid fa-plus"></i>
+        <span>Registrar carga</span>
+      </button>
     </div>
+
+    <div class="fuel-vehicle-switcher">
+      <div class="fuel-vehicle-identity">
+        <span id="fuel-vehicle-icon" class="fuel-vehicle-icon"><i class="fa-solid fa-car-side"></i></span>
+        <div class="min-w-0">
+          <label for="fuel-active-vehicle">Vehículo activo</label>
+          <select id="fuel-active-vehicle" onchange="selectFuelVehicle(this.value)" aria-label="Seleccionar vehículo"></select>
+          <p id="fuel-vehicle-caption">—</p>
+        </div>
+      </div>
+      <button type="button" onclick="openFuelVehicleModal()" class="fuel-icon-action" title="Agregar o editar vehículo" aria-label="Agregar o editar vehículo">
+        <i class="fa-solid fa-sliders"></i>
+      </button>
+    </div>
+  </section>
+
+  <nav class="fuel-panel-tabs" aria-label="Apartados de Combustibles" role="tablist">
+    <button id="fuel-tab-overview" type="button" class="fuel-panel-tab active" role="tab" aria-selected="true" aria-controls="fuel-panel-overview" onclick="switchFuelPanel('overview')">
+      <i class="fa-solid fa-gauge-high"></i><span>Resumen</span>
+    </button>
+    <button id="fuel-tab-prices" type="button" class="fuel-panel-tab" role="tab" aria-selected="false" aria-controls="fuel-panel-prices" onclick="switchFuelPanel('prices')">
+      <i class="fa-solid fa-tags"></i><span>Precios SEN</span>
+    </button>
+    <button id="fuel-tab-history" type="button" class="fuel-panel-tab" role="tab" aria-selected="false" aria-controls="fuel-panel-history" onclick="switchFuelPanel('history')">
+      <i class="fa-solid fa-clock-rotate-left"></i><span>Historial</span>
+    </button>
+  </nav>
+
+  <section id="fuel-panel-overview" class="fuel-panel space-y-4" role="tabpanel" aria-labelledby="fuel-tab-overview">
+    <div class="fuel-metric-grid">
+      <article class="fuel-metric-card fuel-tone-cyan">
+        <div class="fuel-metric-top"><span>Esta semana</span><i class="fa-solid fa-calendar-week"></i></div>
+        <strong id="fuel-stat-week">L 0.00</strong>
+        <small id="fuel-stat-week-volume">Sin cargas registradas</small>
+      </article>
+      <article class="fuel-metric-card fuel-tone-violet">
+        <div class="fuel-metric-top"><span>Este mes</span><i class="fa-solid fa-chart-line"></i></div>
+        <strong id="fuel-stat-month">L 0.00</strong>
+        <small id="fuel-stat-month-trend">Aún sin comparación</small>
+      </article>
+      <article class="fuel-metric-card fuel-tone-amber">
+        <div class="fuel-metric-top"><span>Este año</span><i class="fa-solid fa-calendar"></i></div>
+        <strong id="fuel-stat-year">L 0.00</strong>
+        <small id="fuel-stat-year-count">0 cargas registradas</small>
+      </article>
+      <article class="fuel-metric-card fuel-tone-emerald">
+        <div class="fuel-metric-top"><span>Rendimiento</span><i class="fa-solid fa-leaf"></i></div>
+        <strong id="fuel-stat-efficiency">—</strong>
+        <small id="fuel-stat-efficiency-source">Esperando dos tanques llenos</small>
+      </article>
+    </div>
+
+    <div class="fuel-overview-grid">
+      <article class="fuel-card fuel-spend-card">
+        <div class="fuel-card-heading">
+          <div>
+            <span class="fuel-eyebrow">Últimos 6 meses</span>
+            <h3>Gasto en combustible</h3>
+          </div>
+          <div class="fuel-projection">
+            <span>Proyección mensual</span>
+            <strong id="fuel-month-projection">L 0.00</strong>
+          </div>
+        </div>
+        <div id="fuel-spend-chart" class="fuel-spend-chart" aria-label="Gráfico de gasto de los últimos seis meses"></div>
+        <p id="fuel-chart-empty" class="fuel-empty-note">Registra tu primera carga y aquí aparecerá la tendencia.</p>
+      </article>
+
+      <article class="fuel-card fuel-health-card">
+        <div class="fuel-card-heading">
+          <div>
+            <span class="fuel-eyebrow">Lectura del vehículo</span>
+            <h3 id="fuel-insight-title">Mi vehículo</h3>
+          </div>
+          <span id="fuel-efficiency-quality" class="fuel-quality-pill">Estimado</span>
+        </div>
+        <div class="fuel-insight-grid">
+          <div><span>Autonomía</span><strong id="fuel-insight-range">—</strong></div>
+          <div><span>Costo por distancia</span><strong id="fuel-insight-cost-distance">—</strong></div>
+          <div><span>Tanque completo</span><strong id="fuel-insight-tank-cost">—</strong></div>
+          <div><span>Precio utilizado</span><strong id="fuel-insight-price">—</strong></div>
+        </div>
+        <div id="fuel-consumption-guidance" class="fuel-guidance">
+          <i class="fa-solid fa-circle-info"></i>
+          <p>Para medir el consumo real, marca dos cargas completas e ingresa el kilometraje.</p>
+        </div>
+      </article>
+    </div>
+
+    <article class="fuel-card fuel-calculator-card">
+      <div class="fuel-card-heading">
+        <div>
+          <span class="fuel-eyebrow">Planificador</span>
+          <h3>¿Cuánto gastaré o cuánto puedo recorrer?</h3>
+        </div>
+        <span id="fuel-calculator-source" class="fuel-calc-source">Precio oficial SEN</span>
+      </div>
+
+      <div class="fuel-calculator-grid">
+        <form class="fuel-calc-box" onsubmit="calculateFuelTrip(event)">
+          <div class="fuel-calc-icon fuel-tone-cyan"><i class="fa-solid fa-route"></i></div>
+          <div>
+            <h4>Calcular un viaje</h4>
+            <p>Indica la distancia y OAVIX calcula combustible y costo.</p>
+          </div>
+          <label for="fuel-trip-distance">Distancia</label>
+          <div class="fuel-input-with-unit">
+            <input id="fuel-trip-distance" type="number" inputmode="decimal" min="0.1" step="0.1" placeholder="Ej. 250" required>
+            <span id="fuel-trip-distance-unit">km</span>
+          </div>
+          <label class="fuel-check-row">
+            <input id="fuel-trip-round" type="checkbox">
+            <span>Calcular ida y regreso</span>
+          </label>
+          <button type="submit" class="fuel-calc-button">Calcular viaje</button>
+          <div id="fuel-trip-result" class="fuel-calc-result hidden" aria-live="polite">
+            <span>Costo aproximado</span>
+            <strong id="fuel-trip-cost">L 0.00</strong>
+            <small id="fuel-trip-detail">—</small>
+          </div>
+        </form>
+
+        <form class="fuel-calc-box" onsubmit="calculateFuelBudget(event)">
+          <div class="fuel-calc-icon fuel-tone-emerald"><i class="fa-solid fa-wallet"></i></div>
+          <div>
+            <h4>Calcular por presupuesto</h4>
+            <p>Descubre cuánto combustible compras y tu alcance estimado.</p>
+          </div>
+          <label for="fuel-budget-amount">Presupuesto</label>
+          <div class="fuel-input-with-unit">
+            <input id="fuel-budget-amount" type="number" inputmode="decimal" min="1" step="0.01" placeholder="Ej. 500" required>
+            <span>L</span>
+          </div>
+          <div class="fuel-calc-spacer" aria-hidden="true"></div>
+          <button type="submit" class="fuel-calc-button">Calcular alcance</button>
+          <div id="fuel-budget-result" class="fuel-calc-result hidden" aria-live="polite">
+            <span>Alcance aproximado</span>
+            <strong id="fuel-budget-distance">0 km</strong>
+            <small id="fuel-budget-detail">—</small>
+          </div>
+        </form>
+      </div>
+    </article>
+  </section>
+
+  <section id="fuel-panel-prices" class="fuel-panel hidden space-y-4" role="tabpanel" aria-labelledby="fuel-tab-prices">
+    <article class="fuel-card fuel-official-card">
+      <div class="fuel-official-summary">
+        <span id="fuel-official-icon" class="fuel-official-icon"><i class="fa-solid fa-building-columns"></i></span>
+        <div>
+          <span class="fuel-eyebrow">Secretaría de Energía de Honduras</span>
+          <h3 id="fuel-official-status">Verificando precios oficiales</h3>
+          <p id="fuel-official-period">La información se actualiza automáticamente.</p>
+        </div>
+      </div>
+      <button type="button" id="fuel-refresh-prices" onclick="refreshFuelPrices()" class="fuel-secondary-action">
+        <i class="fa-solid fa-rotate"></i><span>Comprobar ahora</span>
+      </button>
+    </article>
+
+    <article class="fuel-card">
+      <div class="fuel-card-heading fuel-price-heading">
+        <div>
+          <span class="fuel-eyebrow">Comparador nacional</span>
+          <h3>Precios por municipio</h3>
+        </div>
+        <p id="fuel-price-result-count">—</p>
+      </div>
+
+      <div class="fuel-price-filters">
+        <div>
+          <label for="fuel-price-department">Departamento</label>
+          <select id="fuel-price-department" onchange="changeFuelPriceDepartment(this.value)"></select>
+        </div>
+        <div>
+          <label for="fuel-price-product">Combustible</label>
+          <select id="fuel-price-product" onchange="changeFuelPriceProduct(this.value)"></select>
+        </div>
+        <div>
+          <label for="fuel-price-search">Buscar municipio</label>
+          <div class="fuel-search-field">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="fuel-price-search" type="search" placeholder="Escribe un municipio" oninput="renderFuelPrices()">
+          </div>
+        </div>
+      </div>
+
+      <div id="fuel-prices-grid" class="fuel-price-grid"></div>
+      <div id="fuel-prices-empty" class="fuel-empty-state hidden">
+        <i class="fa-solid fa-satellite-dish"></i>
+        <strong>No hay precios oficiales disponibles</strong>
+        <p>OAVIX conservará la última copia confirmada y volverá a comprobar automáticamente.</p>
+      </div>
+    </article>
+
+    <article id="fuel-map-card" class="fuel-card fuel-map-card hidden">
+      <div class="fuel-card-heading">
+        <div>
+          <span class="fuel-eyebrow">Ubicación de referencia</span>
+          <h3 id="fuel-map-title">Municipio</h3>
+          <p id="fuel-map-subtitle">—</p>
+        </div>
+        <button type="button" onclick="closeFuelMap()" class="fuel-close-inline" aria-label="Cerrar mapa"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="fuel-map-frame" class="fuel-map-frame"></div>
+    </article>
+
+    <article class="fuel-card fuel-source-card">
+      <div>
+        <span class="fuel-eyebrow">Transparencia de datos</span>
+        <h3>Consulta el tablero original dentro de OAVIX</h3>
+        <p>Úsalo como respaldo para comparar la información publicada directamente por la SEN.</p>
+      </div>
+      <button type="button" onclick="toggleFuelOfficialSource()" class="fuel-secondary-action">
+        <i class="fa-solid fa-chart-pie"></i><span id="fuel-source-button-label">Abrir fuente oficial</span>
+      </button>
+      <div id="fuel-official-frame" class="fuel-official-frame hidden"></div>
+    </article>
+  </section>
+
+  <section id="fuel-panel-history" class="fuel-panel hidden space-y-4" role="tabpanel" aria-labelledby="fuel-tab-history">
+    <article class="fuel-card">
+      <div class="fuel-card-heading fuel-history-heading">
+        <div>
+          <span class="fuel-eyebrow">Registro personal</span>
+          <h3>Historial de cargas</h3>
+          <p id="fuel-history-summary">Todavía no hay cargas registradas.</p>
+        </div>
+        <div class="fuel-history-actions">
+          <select id="fuel-history-range" onchange="changeFuelHistoryRange(this.value)" aria-label="Filtrar historial">
+            <option value="all">Todo</option>
+            <option value="month">Este mes</option>
+            <option value="year">Este año</option>
+          </select>
+          <button type="button" onclick="openFuelFillModal()" class="fuel-secondary-action"><i class="fa-solid fa-plus"></i><span>Nueva carga</span></button>
+        </div>
+      </div>
+      <div id="fuel-history-list" class="fuel-history-list"></div>
+      <div id="fuel-history-empty" class="fuel-empty-state hidden">
+        <i class="fa-solid fa-receipt"></i>
+        <strong>Tu historial comenzará aquí</strong>
+        <p>Registra monto, cantidad, kilometraje y si completaste el tanque.</p>
+        <button type="button" onclick="openFuelFillModal()" class="fuel-primary-action"><i class="fa-solid fa-plus"></i><span>Registrar primera carga</span></button>
+      </div>
+    </article>
+  </section>
+
+  <div id="fuel-fill-modal" class="fuel-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fuel-fill-modal-title">
+    <div class="fuel-modal-backdrop" onclick="closeFuelFillModal()"></div>
+    <div class="fuel-modal-sheet">
+      <div class="fuel-modal-header">
+        <div>
+          <span class="fuel-eyebrow">Historial de combustible</span>
+          <h3 id="fuel-fill-modal-title">Registrar carga</h3>
+        </div>
+        <button type="button" onclick="closeFuelFillModal()" class="fuel-modal-close" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="fuel-fill-form" class="fuel-form" onsubmit="saveFuelFill(event)">
+        <input id="fuel-fill-id" type="hidden">
+        <div class="fuel-form-grid">
+          <div>
+            <label for="fuel-fill-vehicle">Vehículo</label>
+            <select id="fuel-fill-vehicle" required></select>
+          </div>
+          <div>
+            <label for="fuel-fill-date">Fecha</label>
+            <input id="fuel-fill-date" type="date" required>
+          </div>
+          <div>
+            <label for="fuel-fill-odometer">Kilometraje</label>
+            <div class="fuel-input-with-unit">
+              <input id="fuel-fill-odometer" type="number" inputmode="decimal" min="0" step="0.1" placeholder="Ej. 85420">
+              <span id="fuel-fill-distance-unit">km</span>
+            </div>
+          </div>
+          <div>
+            <label for="fuel-fill-volume">Cantidad comprada</label>
+            <div class="fuel-input-with-unit">
+              <input id="fuel-fill-volume" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="Ej. 8.5" required>
+              <span id="fuel-fill-volume-unit">gal</span>
+            </div>
+          </div>
+          <div>
+            <label for="fuel-fill-amount">Total pagado</label>
+            <div class="fuel-input-with-unit">
+              <input id="fuel-fill-amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="Ej. 950" required>
+              <span>L</span>
+            </div>
+          </div>
+          <div>
+            <label for="fuel-fill-station">Gasolinera <small>opcional</small></label>
+            <input id="fuel-fill-station" type="text" maxlength="80" placeholder="Nombre de la estación">
+          </div>
+        </div>
+
+        <label class="fuel-full-tank-option">
+          <input id="fuel-fill-full-tank" type="checkbox">
+          <span class="fuel-full-tank-check"><i class="fa-solid fa-check"></i></span>
+          <span><strong>Completé el tanque</strong><small>Necesario para calcular el rendimiento real entre cargas.</small></span>
+        </label>
+
+        <div>
+          <label for="fuel-fill-notes">Notas <small>opcional</small></label>
+          <textarea id="fuel-fill-notes" rows="3" maxlength="500" placeholder="Ruta, tráfico, tipo de manejo u otra observación"></textarea>
+        </div>
+
+        <div id="fuel-fill-live-summary" class="fuel-live-summary">
+          <span>Precio por unidad</span><strong>—</strong>
+        </div>
+
+        <div class="fuel-form-actions">
+          <button type="button" onclick="closeFuelFillModal()" class="fuel-cancel-button">Cancelar</button>
+          <button type="submit" class="fuel-primary-action"><i class="fa-solid fa-floppy-disk"></i><span>Guardar carga</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="fuel-vehicle-modal" class="fuel-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fuel-vehicle-modal-title">
+    <div class="fuel-modal-backdrop" onclick="closeFuelVehicleModal()"></div>
+    <div class="fuel-modal-sheet">
+      <div class="fuel-modal-header">
+        <div>
+          <span class="fuel-eyebrow">Perfil independiente</span>
+          <h3 id="fuel-vehicle-modal-title">Configurar vehículo</h3>
+        </div>
+        <div class="fuel-modal-header-actions">
+          <button type="button" onclick="startNewFuelVehicle()" class="fuel-new-vehicle-button"><i class="fa-solid fa-plus"></i><span>Otro</span></button>
+          <button type="button" onclick="closeFuelVehicleModal()" class="fuel-modal-close" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <form id="fuel-vehicle-form" class="fuel-form" onsubmit="saveFuelVehicle(event)">
+        <input id="fuel-vehicle-id" type="hidden">
+        <div class="fuel-type-choice" role="radiogroup" aria-label="Tipo de vehículo">
+          <label><input type="radio" name="fuel-vehicle-type" value="car" checked><span><i class="fa-solid fa-car-side"></i> Automóvil</span></label>
+          <label><input type="radio" name="fuel-vehicle-type" value="motorcycle"><span><i class="fa-solid fa-motorcycle"></i> Motocicleta</span></label>
+        </div>
+
+        <div class="fuel-form-grid">
+          <div class="fuel-field-wide">
+            <label for="fuel-vehicle-name">Nombre</label>
+            <input id="fuel-vehicle-name" type="text" maxlength="60" placeholder="Ej. Auto familiar" required>
+          </div>
+          <div>
+            <label for="fuel-vehicle-product">Combustible habitual</label>
+            <select id="fuel-vehicle-product" required></select>
+          </div>
+          <div>
+            <label for="fuel-vehicle-distance-unit">Unidad de distancia</label>
+            <select id="fuel-vehicle-distance-unit" onchange="updateFuelVehicleUnitLabels()">
+              <option value="km">Kilómetros</option>
+              <option value="mi">Millas</option>
+            </select>
+          </div>
+          <div>
+            <label for="fuel-vehicle-volume-unit">Unidad de combustible</label>
+            <select id="fuel-vehicle-volume-unit" onchange="updateFuelVehicleUnitLabels()">
+              <option value="gal">Galones</option>
+              <option value="l">Litros</option>
+            </select>
+          </div>
+          <div>
+            <label for="fuel-vehicle-tank">Capacidad del tanque</label>
+            <div class="fuel-input-with-unit">
+              <input id="fuel-vehicle-tank" type="number" inputmode="decimal" min="0.1" step="0.1" required>
+              <span id="fuel-vehicle-tank-unit">gal</span>
+            </div>
+          </div>
+          <div>
+            <label for="fuel-vehicle-efficiency">Rendimiento esperado</label>
+            <div class="fuel-input-with-unit">
+              <input id="fuel-vehicle-efficiency" type="number" inputmode="decimal" min="0.1" step="0.1" required>
+              <span id="fuel-vehicle-efficiency-unit">km/gal</span>
+            </div>
+          </div>
+          <div>
+            <label for="fuel-vehicle-department">Departamento habitual</label>
+            <select id="fuel-vehicle-department" onchange="populateFuelVehicleMunicipalities()"></select>
+          </div>
+          <div>
+            <label for="fuel-vehicle-municipality">Municipio habitual</label>
+            <select id="fuel-vehicle-municipality"></select>
+          </div>
+        </div>
+
+        <div class="fuel-guidance">
+          <i class="fa-solid fa-shield-halved"></i>
+          <p>El rendimiento esperado solo se usa como estimación hasta obtener dos registros de tanque lleno.</p>
+        </div>
+
+        <div id="fuel-archived-section" class="fuel-archived-section hidden">
+          <span class="fuel-eyebrow">Vehículos archivados</span>
+          <div id="fuel-archived-list" class="fuel-archived-list"></div>
+        </div>
+
+        <div class="fuel-form-actions fuel-form-actions-split">
+          <button id="fuel-archive-vehicle" type="button" onclick="archiveCurrentFuelVehicle()" class="fuel-danger-button hidden"><i class="fa-solid fa-box-archive"></i><span>Archivar</span></button>
+          <div>
+            <button type="button" onclick="closeFuelVehicleModal()" class="fuel-cancel-button">Cancelar</button>
+            <button type="submit" class="fuel-primary-action"><i class="fa-solid fa-check"></i><span>Guardar vehículo</span></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

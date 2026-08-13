@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const EMAIL = 'piloto@oavix.hn';
 const RECORDS = 'oavix_auto_records';
 const FUEL = 'oavix_fuel_history';
+const VEHICLES = 'oavix_fuel_vehicles';
 
 function createStorage() {
   const values = new Map();
@@ -173,6 +174,26 @@ describe('record-level Drive merge', () => {
     const combined = merge.mergePayloads(phone, tablet, EMAIL);
 
     expect(JSON.parse(combined.data[FUEL]).map(record => record.id)).toEqual(['fill-tablet', 'fill-phone']);
+  });
+
+  it('also combines vehicles created on different devices', async () => {
+    const merge = await loadMergeEngine();
+    const phoneTime = '2026-08-10T10:00:00.000Z';
+    const tabletTime = '2026-08-10T11:00:00.000Z';
+    const phone = payload({
+      updatedAt: phoneTime,
+      data: { [VEHICLES]: JSON.stringify([{ id: 'car', name: 'Auto' }]) },
+      entities: { [VEHICLES]: { car: { updatedAt: phoneTime } } }
+    });
+    const tablet = payload({
+      updatedAt: tabletTime,
+      data: { [VEHICLES]: JSON.stringify([{ id: 'moto', name: 'Moto' }]) },
+      entities: { [VEHICLES]: { moto: { updatedAt: tabletTime } } }
+    });
+
+    const combined = merge.mergePayloads(phone, tablet, EMAIL);
+
+    expect(JSON.parse(combined.data[VEHICLES]).map(vehicle => vehicle.id)).toEqual(['moto', 'car']);
   });
 
   it('does not let a future-dated but empty new device erase Drive', async () => {

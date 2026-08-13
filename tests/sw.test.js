@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const CACHE = 'oavix-shell-v13';
+const CACHE = 'oavix-shell-v14';
 
 function createCache() {
   const store = new Map();
@@ -81,7 +81,8 @@ describe('service worker lifecycle', () => {
       './src/services/sync/synchronizer.js',
       './src/services/sync/ui.js',
       './src/services/sync/bootstrap.js',
-      './oavix-fuel-module.js',
+      './src/features/fuel/module.js',
+      './data/sen-prices.json',
       './src/app.js',
       './src/config/tailwind.js',
       './src/styles/app.css',

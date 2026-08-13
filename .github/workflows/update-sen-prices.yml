@@ -3,10 +3,16 @@ name: Update SEN fuel prices
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 5'
+    # La SEN aplica la nueva estructura semanal los lunes a las 6:00 a. m.
+    - cron: '30 13,16 * * 1'
+    - cron: '30 13 * * 2'
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-sen-fuel-prices
+  cancel-in-progress: false
 
 jobs:
   update-sen-prices:
@@ -20,13 +26,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Playwright
-        run: |
-          npm init -y
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-
-      - name: Extract official SEN prices
+      - name: Read and validate official SEN prices
         run: node scripts/update-sen-prices.mjs
 
       - name: Commit updated prices
