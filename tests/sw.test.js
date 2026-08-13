@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const CACHE = 'oavix-shell-v12';
+const CACHE = 'oavix-shell-v13';
 
 function createCache() {
   const store = new Map();

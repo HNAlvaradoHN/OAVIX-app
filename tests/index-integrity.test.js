@@ -52,7 +52,7 @@ describe('modular app shell integrity', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
     expect(html.trimEnd()).toMatch(/<\/body>\s*<\/html>$/i);
     expect(html.split('\n').length).toBeLessThan(80);
-    expect(html).toContain('src/app.js?v=6');
+    expect(html).toContain('src/app.js?v=7');
     expect(html).not.toContain('function switchSubTab');
     expect(existsSync(resolve(process.cwd(), 'src/legacy/app.js'))).toBe(false);
   });
@@ -62,7 +62,7 @@ describe('modular app shell integrity', () => {
     for (const path of syncScripts) expect(html).toContain(`${path}?v=2`);
     expect(html).not.toContain('src="oavix-sync.js');
     expect(html).toContain('oavix-fuel-module.js?v=4');
-    expect(html).toContain('src/styles/app.css?v=3');
+    expect(html).toContain('src/styles/app.css?v=4');
   });
 
   it.each(Object.entries(tabs))('links the %s tab to its own view file', (tab, path) => {

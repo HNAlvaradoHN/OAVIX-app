@@ -121,6 +121,31 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 4px; }
 
+    /* Avisos visibles sin cubrir ni bloquear controles de la aplicación. */
+    .toast-stack {
+      position: fixed;
+      top: max(5.25rem, calc(env(safe-area-inset-top, 0px) + 4.75rem));
+      right: 0.75rem;
+      left: 3.75rem;
+      z-index: 90;
+      max-height: calc(100dvh - 10rem);
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .oavix-toast {
+      width: 100%;
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      .toast-stack {
+        right: 1rem;
+        left: auto;
+        width: min(20rem, calc(100vw - 2rem));
+      }
+    }
+
     /* Estilos para la barra de navegación flotante */
     .floating-nav {
       position: fixed;
