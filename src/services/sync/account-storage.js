@@ -84,32 +84,6 @@
     return nativeStorage.get('oavix_migration_v5') !== 'done';
   }
 
-  function isDemoRecord(record) {
-    return record && String(record.id) === '1' &&
-      record.title === 'Cambio de Aceite Sintético' &&
-      record.category === 'Cambio de Aceite' &&
-      Number(record.amount) === 60 &&
-      Number(record.mileage) === 86000 &&
-      record.provider === 'Taller San Pedro' &&
-      record.date === '2026-06-01' &&
-      record.notes === 'Filtro nuevo';
-  }
-
-  function removeLegacyDemoData() {
-    const raw = nativeStorage.get('oavix_auto_records');
-    if (!raw) return false;
-    try {
-      const records = JSON.parse(raw);
-      if (!Array.isArray(records)) return false;
-      const clean = records.filter(record => !isDemoRecord(record));
-      if (clean.length === records.length) return false;
-      nativeStorage.set('oavix_auto_records', JSON.stringify(clean));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   function initializeSession() {
     const existingSession = session();
     if (existingSession && existingSession.email) {
@@ -173,7 +147,6 @@
     clearActiveData,
     hasLegacyData,
     legacyMigrationAllowed,
-    removeLegacyDemoData,
     initializeSession,
     installMutationHooks,
     localUpdatedKey,

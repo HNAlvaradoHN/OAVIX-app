@@ -99,8 +99,8 @@
         merge.fingerprint(combined, state.accountEmail);
       const visibleChanged = merge.dataFingerprint(local, state.accountEmail) !==
         merge.dataFingerprint(combined, state.accountEmail);
-      const cloudChanged = merge.fingerprint(cloud, state.accountEmail) !==
-        merge.fingerprint(combined, state.accountEmail);
+      const cloudChanged = merge.containsLegacyDemo(cloud) ||
+        merge.fingerprint(cloud, state.accountEmail) !== merge.fingerprint(combined, state.accountEmail);
 
       if (localChanged) applyCloud(combined, false);
       if (cloudChanged) await runtime.drive.writeCloud(combined);
