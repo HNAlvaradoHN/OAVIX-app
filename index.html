@@ -964,7 +964,8 @@
     }
 
     function updateLikesUI() {
-      document.getElementById('global-likes-count').textContent = formatNumber(globalLikes);
+      const likesCount = document.getElementById('global-likes-count');
+      if (likesCount) likesCount.textContent = formatNumber(globalLikes);
     }
 
     function setDistanceUnit(u) {

@@ -24,6 +24,15 @@ function extractCheckLoginStateBody(source) {
   return match[1];
 }
 
+function extractUpdateLikesUIBody(source) {
+  const match = source.match(
+    /function\s+updateLikesUI\s*\(\)\s*\{([\s\S]*?)\n\s*\}\n\n\s*function\s+setDistanceUnit/
+  );
+
+  if (!match) throw new Error('No se encontró la implementación completa de updateLikesUI');
+  return match[1];
+}
+
 describe('index.html integrity', () => {
   it('has a complete HTML document instead of a truncated file', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
@@ -56,6 +65,17 @@ describe('session bootstrap fallback', () => {
     const checkLoginState = new Function('currentUserName', extractCheckLoginStateBody(html));
 
     expect(() => checkLoginState('')).not.toThrow();
+  });
+
+  it('does not stop app initialization after the legacy likes counter is removed', () => {
+    document.body.innerHTML = '';
+    const updateLikesUI = new Function(
+      'globalLikes',
+      'formatNumber',
+      extractUpdateLikesUIBody(html)
+    );
+
+    expect(() => updateLikesUI(142, value => String(value))).not.toThrow();
   });
 });
 
