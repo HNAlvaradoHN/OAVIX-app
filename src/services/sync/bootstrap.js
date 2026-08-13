@@ -1,8 +1,9 @@
 (function bootstrapSync(root) {
   'use strict';
 
-  if (root.__OAVIX_SYNC_V6__) return;
-  root.__OAVIX_SYNC_V6__ = true;
+  if (root.__OAVIX_SYNC_V7__) return;
+  if (typeof root.__OAVIX_SYNC_TEARDOWN__ === 'function') root.__OAVIX_SYNC_TEARDOWN__();
+  root.__OAVIX_SYNC_V7__ = true;
 
   const runtime = root.OAVIXSyncInternal;
   const { constants, state, nativeStorage, localUpdatedKey } = runtime.context;
@@ -18,13 +19,21 @@
     refreshUI: runtime.ui.initUI
   };
 
-  root.addEventListener('online', () => {
-    if (state.accountEmail && nativeStorage.get(constants.pendingKey) === 'true') {
-      setTimeout(() => runtime.synchronizer.syncNow(false), 400);
-    }
-  });
+  function refreshFromDrive(delay = 0, force = false) {
+    if (!state.accountEmail || !root.navigator.onLine) return;
+    if (!force && Date.now() - state.lastSyncAttemptAt < 15000) return;
+    clearTimeout(state.refreshKickTimer);
+    state.refreshKickTimer = setTimeout(() => runtime.synchronizer.syncNow(false), delay);
+  }
 
-  root.addEventListener('beforeunload', () => {
+  const handleOnline = () => refreshFromDrive(400, true);
+  const handleFocus = () => refreshFromDrive(250);
+  const handlePageShow = () => refreshFromDrive(250);
+  const handleVisibility = () => {
+    if (document.visibilityState === 'visible') refreshFromDrive(250);
+  };
+
+  const handleBeforeUnload = () => {
     if (!state.accountEmail) return;
     const snapshot = storage.accountSnapshot(state.accountEmail) || {};
     storage.saveAccountSnapshot(
@@ -33,13 +42,33 @@
         snapshot.updatedAt ||
         new Date().toISOString()
     );
-  });
+  };
 
-  document.addEventListener('DOMContentLoaded', () => {
+  const handleReady = () => {
     runtime.ui.initUI();
     if (state.accountEmail && root.navigator.onLine) {
-      setTimeout(() => runtime.synchronizer.syncNow(false), 900);
+      refreshFromDrive(900, true);
     }
-  }, { once: true });
-  document.addEventListener('oavix:views-ready', runtime.ui.initUI);
+  };
+  const handleViewsReady = () => runtime.ui.initUI();
+
+  root.addEventListener('online', handleOnline);
+  root.addEventListener('focus', handleFocus);
+  root.addEventListener('pageshow', handlePageShow);
+  root.addEventListener('beforeunload', handleBeforeUnload);
+  document.addEventListener('visibilitychange', handleVisibility);
+  document.addEventListener('DOMContentLoaded', handleReady, { once: true });
+  document.addEventListener('oavix:views-ready', handleViewsReady);
+
+  root.__OAVIX_SYNC_TEARDOWN__ = () => {
+    root.removeEventListener('online', handleOnline);
+    root.removeEventListener('focus', handleFocus);
+    root.removeEventListener('pageshow', handlePageShow);
+    root.removeEventListener('beforeunload', handleBeforeUnload);
+    document.removeEventListener('visibilitychange', handleVisibility);
+    document.removeEventListener('DOMContentLoaded', handleReady);
+    document.removeEventListener('oavix:views-ready', handleViewsReady);
+    clearTimeout(state.timer);
+    clearTimeout(state.refreshKickTimer);
+  };
 })(window);

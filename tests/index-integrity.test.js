@@ -18,6 +18,7 @@ const controllers = {
 };
 const syncScripts = [
   'src/services/sync/context.js',
+  'src/services/sync/merge-engine.js',
   'src/services/sync/account-storage.js',
   'src/services/sync/feedback.js',
   'src/services/sync/google-auth.js',
@@ -57,7 +58,7 @@ describe('modular app shell integrity', () => {
 
   it('loads the separated sync, fuel and style assets', () => {
     expect(html).toContain('oavix-sync-config.js?v=8');
-    for (const path of syncScripts) expect(html).toContain(`${path}?v=1`);
+    for (const path of syncScripts) expect(html).toContain(`${path}?v=2`);
     expect(html).not.toContain('src="oavix-sync.js');
     expect(html).toContain('oavix-fuel-module.js?v=3');
     expect(html).toContain('src/styles/app.css?v=1');

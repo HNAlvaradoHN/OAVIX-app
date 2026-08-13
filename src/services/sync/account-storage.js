@@ -3,11 +3,7 @@
 
   const runtime = root.OAVIXSyncInternal;
   const { constants, state, nativeStorage, metaKey, localUpdatedKey, needsPullKey, session } = runtime.context;
-  const legacyDataKeys = constants.dataKeys.filter(
-    key => key !== 'oavix_fuel_history' && key !== 'oavix_fuel_vehicle_config'
-  );
-
-  const coveredKeys = copy => Array.isArray(copy && copy.keys) ? copy.keys : legacyDataKeys;
+  const merge = runtime.merge;
 
   function dataSnapshot() {
     const data = {};
@@ -18,10 +14,6 @@
     return data;
   }
 
-  function dataString() {
-    return JSON.stringify(dataSnapshot());
-  }
-
   function accountSnapshot(email) {
     try {
       return JSON.parse(nativeStorage.get(metaKey(email)) || 'null');
@@ -30,34 +22,51 @@
     }
   }
 
-  function saveAccountSnapshot(email, updatedAt) {
+  function storeAccountSnapshot(email, copy) {
     if (!email) return undefined;
-    const snapshot = {
-      schemaVersion: 5,
-      updatedAt: updatedAt || new Date().toISOString(),
-      keys: constants.dataKeys.slice(),
-      data: dataSnapshot()
-    };
+    const snapshot = merge.normalizePayload(copy, email);
     nativeStorage.set(metaKey(email), JSON.stringify(snapshot));
     return snapshot;
   }
 
+  function saveAccountSnapshot(email, updatedAt, metadata, keys) {
+    if (!email) return undefined;
+    const rawPrevious = accountSnapshot(email);
+    const previous = merge.normalizePayload(rawPrevious, email);
+    const data = dataSnapshot();
+    const covered = Array.isArray(keys)
+      ? keys
+      : [...new Set([...previous.keys, ...Object.keys(data)])];
+    const snapshot = {
+      schemaVersion: 6,
+      app: 'OAVIX',
+      account: email,
+      updatedAt: updatedAt || (rawPrevious && previous.updatedAt) || new Date().toISOString(),
+      keys: constants.dataKeys.filter(key => covered.includes(key)),
+      data,
+      metadata: metadata || previous.metadata
+    };
+    return storeAccountSnapshot(email, snapshot);
+  }
+
   function restoreAccount(email) {
-    const snapshot = accountSnapshot(email);
-    if (!snapshot) return false;
-    const covered = coveredKeys(snapshot);
+    const raw = accountSnapshot(email);
+    if (!raw) return false;
+    const snapshot = merge.normalizePayload(raw, email);
 
     constants.dataKeys.forEach(key => {
-      if (Object.prototype.hasOwnProperty.call(snapshot.data || {}, key)) {
+      if (Object.prototype.hasOwnProperty.call(snapshot.data, key)) {
         nativeStorage.set(key, snapshot.data[key]);
-      } else if (covered.includes(key)) {
+      } else if (snapshot.keys.includes(key)) {
         nativeStorage.remove(key);
       }
     });
 
-    nativeStorage.set(localUpdatedKey(email), snapshot.updatedAt || new Date().toISOString());
-    nativeStorage.set(constants.lastSyncKey, snapshot.updatedAt || '');
-    nativeStorage.remove(constants.pendingKey);
+    storeAccountSnapshot(email, snapshot);
+    nativeStorage.set(localUpdatedKey(email), snapshot.updatedAt);
+    if (!nativeStorage.get(constants.lastSyncKey)) {
+      nativeStorage.set(constants.lastSyncKey, snapshot.updatedAt);
+    }
     return true;
   }
 
@@ -75,48 +84,96 @@
     return nativeStorage.get('oavix_migration_v5') !== 'done';
   }
 
+  function isDemoRecord(record) {
+    return record && String(record.id) === '1' &&
+      record.title === 'Cambio de Aceite Sintético' &&
+      record.category === 'Cambio de Aceite' &&
+      Number(record.amount) === 60 &&
+      Number(record.mileage) === 86000 &&
+      record.provider === 'Taller San Pedro' &&
+      record.date === '2026-06-01' &&
+      record.notes === 'Filtro nuevo';
+  }
+
+  function removeLegacyDemoData() {
+    const raw = nativeStorage.get('oavix_auto_records');
+    if (!raw) return false;
+    try {
+      const records = JSON.parse(raw);
+      if (!Array.isArray(records)) return false;
+      const clean = records.filter(record => !isDemoRecord(record));
+      if (clean.length === records.length) return false;
+      nativeStorage.set('oavix_auto_records', JSON.stringify(clean));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function initializeSession() {
     const existingSession = session();
     if (existingSession && existingSession.email) {
       state.accountEmail = existingSession.email;
-      restoreAccount(state.accountEmail);
+      if (!restoreAccount(state.accountEmail)) {
+        clearActiveData();
+        nativeStorage.set(needsPullKey(state.accountEmail), 'true');
+      }
     } else if (!legacyMigrationAllowed()) {
       clearActiveData();
     }
   }
 
+  function mutationTimestamp(snapshot) {
+    const now = Date.now();
+    const previous = Date.parse(snapshot && snapshot.updatedAt) || 0;
+    return new Date(Math.max(now, previous + 1)).toISOString();
+  }
+
+  function saveMutation(key, previousRaw, nextRaw, scheduleSync) {
+    if (!state.accountEmail || !constants.dataKeys.includes(key) || previousRaw === nextRaw) return;
+    const current = accountSnapshot(state.accountEmail);
+    const changedAt = mutationTimestamp(current);
+    const snapshot = merge.recordMutation(
+      current,
+      key,
+      previousRaw,
+      nextRaw,
+      changedAt,
+      state.accountEmail
+    );
+    storeAccountSnapshot(state.accountEmail, snapshot);
+    nativeStorage.set(localUpdatedKey(state.accountEmail), changedAt);
+    nativeStorage.set(constants.pendingKey, 'true');
+    scheduleSync();
+  }
+
   function installMutationHooks(scheduleSync) {
     localStorage.setItem = function setTrackedItem(key, value) {
-      nativeStorage.set(key, value);
-      if (!state.accountEmail || !constants.dataKeys.includes(key)) return;
-      const timestamp = new Date().toISOString();
-      nativeStorage.set(localUpdatedKey(state.accountEmail), timestamp);
-      saveAccountSnapshot(state.accountEmail, timestamp);
-      nativeStorage.set(constants.pendingKey, 'true');
-      scheduleSync();
+      const normalizedKey = String(key);
+      const previousRaw = nativeStorage.get(normalizedKey);
+      const nextRaw = String(value);
+      nativeStorage.set(normalizedKey, nextRaw);
+      saveMutation(normalizedKey, previousRaw, nextRaw, scheduleSync);
     };
 
     localStorage.removeItem = function removeTrackedItem(key) {
-      nativeStorage.remove(key);
-      if (!state.accountEmail || !constants.dataKeys.includes(key)) return;
-      const timestamp = new Date().toISOString();
-      nativeStorage.set(localUpdatedKey(state.accountEmail), timestamp);
-      saveAccountSnapshot(state.accountEmail, timestamp);
-      nativeStorage.set(constants.pendingKey, 'true');
-      scheduleSync();
+      const normalizedKey = String(key);
+      const previousRaw = nativeStorage.get(normalizedKey);
+      nativeStorage.remove(normalizedKey);
+      saveMutation(normalizedKey, previousRaw, null, scheduleSync);
     };
   }
 
   runtime.storage = {
-    coveredKeys,
     dataSnapshot,
-    dataString,
     accountSnapshot,
+    storeAccountSnapshot,
     saveAccountSnapshot,
     restoreAccount,
     clearActiveData,
     hasLegacyData,
     legacyMigrationAllowed,
+    removeLegacyDemoData,
     initializeSession,
     installMutationHooks,
     localUpdatedKey,

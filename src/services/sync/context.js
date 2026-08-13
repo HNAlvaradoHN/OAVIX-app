@@ -35,6 +35,8 @@
     fileId: null,
     busy: false,
     timer: null,
+    refreshKickTimer: null,
+    lastSyncAttemptAt: 0,
     authInProgress: false,
     accountEmail: '',
     pendingTokenResolve: null,

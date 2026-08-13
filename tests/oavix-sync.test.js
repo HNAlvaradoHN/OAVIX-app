@@ -73,10 +73,12 @@ function seedAccountSnapshot(email, data, updatedAt) {
 
 async function loadSync() {
   delete window.__OAVIX_SYNC_V6__;
+  delete window.__OAVIX_SYNC_V7__;
   delete window.OAVIXSyncInternal;
   delete window.OAVIXDriveSync;
   vi.resetModules();
   await import('../src/services/sync/context.js');
+  await import('../src/services/sync/merge-engine.js');
   await import('../src/services/sync/account-storage.js');
   await import('../src/services/sync/feedback.js');
   await import('../src/services/sync/google-auth.js');
@@ -100,6 +102,39 @@ function driveBackend({ files = [], content = null, about = { user: { emailAddre
     throw new Error('unexpected request: ' + url);
   });
   return calls;
+}
+
+/** A single in-memory Drive file shared by multiple simulated devices. */
+function sharedDriveBackend(initialContent = null) {
+  let content = initialContent;
+  const calls = [];
+  fetchMock.mockImplementation(async (url, options = {}) => {
+    calls.push({ url, method: options.method || 'GET', options });
+    if (url.includes('/drive/v3/about')) {
+      return jsonResponse({ user: { emailAddress: EMAIL, displayName: 'Piloto' } });
+    }
+    if (url.includes('uploadType=multipart')) {
+      const marker = 'Content-Type: application/json\r\n\r\n';
+      const start = options.body.lastIndexOf(marker) + marker.length;
+      const end = options.body.lastIndexOf('\r\n--');
+      content = JSON.parse(options.body.slice(start, end));
+      return jsonResponse({ id: 'shared-file', modifiedTime: content.updatedAt });
+    }
+    if (url.includes('uploadType=media')) {
+      content = JSON.parse(options.body);
+      return jsonResponse({ id: 'shared-file', modifiedTime: content.updatedAt });
+    }
+    if (url.includes('alt=media')) return jsonResponse(structuredClone(content));
+    if (url.includes('/drive/v3/files?q=')) {
+      return jsonResponse({
+        files: content
+          ? [{ id: 'shared-file', name: 'oavix-data.json', modifiedTime: content.updatedAt }]
+          : []
+      });
+    }
+    throw new Error('unexpected request: ' + url);
+  });
+  return { calls, content: () => structuredClone(content) };
 }
 
 beforeEach(() => {
@@ -138,7 +173,8 @@ describe('account bootstrap', () => {
     // Las claves ausentes del snapshot se eliminan para no mezclar cuentas.
     expect(localStorage.getItem('oavix_auto_mileage')).toBeNull();
     expect(localStorage.getItem(LAST_SYNC_KEY)).toBe('2025-04-01T00:00:00.000Z');
-    expect(localStorage.getItem(PENDING_KEY)).toBeNull();
+    // Una edición pendiente sobrevive al cierre y se enviará al recuperar conexión.
+    expect(localStorage.getItem(PENDING_KEY)).toBe('true');
   });
 
   it('clears active data when nobody is signed in and the migration already ran', async () => {
@@ -215,6 +251,20 @@ describe('localStorage interception', () => {
 
     expect(localStorage.getItem(PENDING_KEY)).toBeNull();
     await vi.advanceTimersByTimeAsync(2000);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not schedule a sync when a module saves the same value again', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, {}, '2026-08-10T10:00:00.000Z');
+    localStorage.setItem('oavix_fuel_history', '[{"id":"same"}]');
+    await loadSync();
+
+    localStorage.setItem('oavix_fuel_history', '[{"id":"same"}]');
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(localStorage.getItem(PENDING_KEY)).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
@@ -371,6 +421,19 @@ describe('syncNow', () => {
 
     expect(fetchMock).toHaveBeenCalled();
   });
+
+  it('checks Drive again when the user returns to the app', async () => {
+    vi.useFakeTimers();
+    seedSession();
+    seedAccountSnapshot(EMAIL, {}, '2026-08-10T10:00:00.000Z');
+    driveBackend({ files: [] });
+    await loadSync();
+
+    window.dispatchEvent(new window.Event('focus'));
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(fetchMock).toHaveBeenCalled();
+  });
 });
 
 describe('cross-device pull', () => {
@@ -408,8 +471,9 @@ describe('cross-device pull', () => {
 
     await sync.syncNow();
 
-    expect(calls.some(c => c.url.includes('uploadType='))).toBe(false);
-    expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
+    // El registro creado antes de la primera descarga se combina con Drive.
+    expect(calls.some(c => c.url.includes('uploadType=media'))).toBe(true);
+    expect(JSON.parse(localStorage.getItem('oavix_auto_records')).map(record => record.id)).toEqual([100, 9]);
     expect(localStorage.getItem(needsPullKey(EMAIL))).toBeNull();
   });
 
@@ -462,7 +526,8 @@ describe('cross-device pull', () => {
 
     await sync.loginWithGoogle();
 
-    expect(localStorage.getItem(needsPullKey(EMAIL))).toBe('true');
+    expect(localStorage.getItem(needsPullKey(EMAIL))).toBeNull();
+    expect(fetchMock).toHaveBeenCalled();
   });
 
   it('keeps fuel data that older snapshots never tracked', async () => {
@@ -550,7 +615,81 @@ describe('cross-device pull', () => {
   });
 });
 
+describe('phone, tablet and phone round trip', () => {
+  it('downloads, extends and returns the combined Drive history', async () => {
+    const drive = sharedDriveBackend();
+    const phoneStorage = localStorage;
+    seedSession();
+    seedAccountSnapshot(
+      EMAIL,
+      { oavix_auto_records: '[{"id":"phone","title":"Aceite"}]' },
+      '2026-08-10T10:00:00.000Z'
+    );
+    await loadSync();
+
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+    expect(JSON.parse(drive.content().data.oavix_auto_records).map(record => record.id)).toEqual(['phone']);
+
+    const tabletStorage = createStorage();
+    Object.defineProperty(window, 'localStorage', { value: tabletStorage, configurable: true, writable: true });
+    seedSession();
+    await loadSync();
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+    expect(JSON.parse(localStorage.getItem('oavix_auto_records')).map(record => record.id)).toEqual(['phone']);
+
+    localStorage.setItem(
+      'oavix_auto_records',
+      JSON.stringify([
+        { id: 'phone', title: 'Aceite' },
+        { id: 'tablet', title: 'Frenos' }
+      ])
+    );
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+    expect(JSON.parse(drive.content().data.oavix_auto_records).map(record => record.id)).toEqual(['tablet', 'phone']);
+
+    Object.defineProperty(window, 'localStorage', { value: phoneStorage, configurable: true, writable: true });
+    await loadSync();
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+
+    expect(JSON.parse(localStorage.getItem('oavix_auto_records')).map(record => record.id)).toEqual(['tablet', 'phone']);
+    expect(drive.calls.filter(call => call.url.includes('uploadType=')).length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe('sign in and sign out', () => {
+  it('downloads Drive before showing the signed-in application', async () => {
+    const cloudRecord = { id: 'cloud', title: 'Mantenimiento desde otro teléfono' };
+    driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2026-08-10T11:00:00.000Z' }],
+      content: {
+        schemaVersion: 5,
+        updatedAt: '2026-08-10T11:00:00.000Z',
+        data: { oavix_auto_records: JSON.stringify([cloudRecord]) }
+      }
+    });
+    const demoRecord = {
+      id: '1',
+      title: 'Cambio de Aceite Sintético',
+      category: 'Cambio de Aceite',
+      amount: 60,
+      mileage: 86000,
+      provider: 'Taller San Pedro',
+      date: '2026-06-01',
+      notes: 'Filtro nuevo'
+    };
+    localStorage.setItem('oavix_auto_records', JSON.stringify([demoRecord]));
+    const sync = await loadSync();
+    let recordsAtReload = null;
+    reload.mockImplementation(() => {
+      recordsAtReload = JSON.parse(localStorage.getItem('oavix_auto_records'));
+    });
+
+    await sync.loginWithGoogle();
+
+    expect(recordsAtReload).toEqual([cloudRecord]);
+    expect(localStorage.getItem('oavix_migration_v5')).toBe('done');
+  });
+
   it('stores the session for the Google account and reloads', async () => {
     driveBackend({ about: { user: { emailAddress: 'Nueva@OAVIX.hn', displayName: 'Nueva' } } });
     localStorage.setItem('oavix_auto_records', '[{"id":1}]');

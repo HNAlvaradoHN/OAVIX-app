@@ -140,7 +140,7 @@ describe('controller architecture', () => {
     }
 
     expect(document.querySelectorAll('#stats-container > *')).toHaveLength(4);
-    expect(document.getElementById('records-list').textContent).toContain('Cambio de Aceite Sintético');
+    expect(document.getElementById('records-list').textContent).toContain('No hay registros activos');
     expect(document.getElementById('calendar-month-year').textContent).not.toBe('');
     expect(document.querySelectorAll('.nav-btn')).toHaveLength(6);
   });

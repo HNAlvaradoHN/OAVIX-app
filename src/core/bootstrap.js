@@ -1,5 +1,4 @@
     function initializeOavixApp() {
-      if (autoRecords.length === 0) seedData();
       document.getElementById('current-mileage-input').value = formatNumber(currentVehicleMileage);
       updateUnitUI();
       setupCategoryDropdowns();
