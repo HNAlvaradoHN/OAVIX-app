@@ -93,6 +93,26 @@ describe('record-level Drive merge', () => {
     expect(JSON.parse(combined.data[RECORDS]).map(record => record.id)).toEqual(['tablet', 'phone']);
   });
 
+  it('keeps an optimized maintenance photo when Drive sends it to another device', async () => {
+    const merge = await loadMergeEngine();
+    const photo = `data:image/webp;base64,${'A'.repeat(1200)}`;
+    const savedAt = '2026-08-10T11:00:00.000Z';
+    const phone = payload({
+      updatedAt: savedAt,
+      data: { [RECORDS]: JSON.stringify([{ id: 'photo', title: 'Aceite', photo }]) },
+      entities: { [RECORDS]: { photo: { updatedAt: savedAt } } }
+    });
+    const newDevice = payload({
+      updatedAt: '2026-08-10T09:00:00.000Z',
+      data: {},
+      keys: []
+    });
+
+    const combined = merge.mergePayloads(newDevice, phone, EMAIL);
+
+    expect(JSON.parse(combined.data[RECORDS])[0].photo).toBe(photo);
+  });
+
   it('keeps the newest edit when both devices changed the same record', async () => {
     const merge = await loadMergeEngine();
     const older = '2026-08-10T10:00:00.000Z';
