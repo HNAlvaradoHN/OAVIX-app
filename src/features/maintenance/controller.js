@@ -1,3 +1,33 @@
+const DEFAULT_MAINTENANCE_CATEGORIES = [
+  'Mantenimiento General',
+  'Cambio de Aceite',
+  'Llantas / Frenos',
+  'Combustible',
+  'Reparaciones'
+];
+const MAINTENANCE_CATEGORY_KEY = 'oavix_auto_categories';
+const MAINTENANCE_CATEGORY_INIT_KEY = 'oavix_auto_categories_initialized';
+
+function repairMaintenanceCategories() {
+      let stored = null;
+      try {
+        stored = JSON.parse(localStorage.getItem(MAINTENANCE_CATEGORY_KEY));
+      } catch (_) {
+        stored = null;
+      }
+
+      const userManaged = localStorage.getItem(MAINTENANCE_CATEGORY_INIT_KEY) === 'true';
+      if (!Array.isArray(stored) || (stored.length === 0 && !userManaged)) {
+        stored = DEFAULT_MAINTENANCE_CATEGORIES.slice();
+        localStorage.setItem(MAINTENANCE_CATEGORY_KEY, JSON.stringify(stored));
+      }
+
+      autoCategories.splice(0, autoCategories.length, ...stored);
+      localStorage.setItem(MAINTENANCE_CATEGORY_INIT_KEY, 'true');
+    }
+
+    repairMaintenanceCategories();
+
     function setupCategoryDropdowns() {
       const filterSel = document.getElementById('filter-category');
       const formSel = document.getElementById('form-category');
@@ -49,6 +79,7 @@
         autoCategories.push(val);
         localStorage.setItem('oavix_auto_categories', JSON.stringify(autoCategories));
       }
+      localStorage.setItem(MAINTENANCE_CATEGORY_INIT_KEY, 'true');
       input.value = '';
       renderCategoryManageList();
       setupCategoryDropdowns();
@@ -57,6 +88,7 @@
     function deleteCategory(idx) {
       autoCategories.splice(idx, 1);
       localStorage.setItem('oavix_auto_categories', JSON.stringify(autoCategories));
+      localStorage.setItem(MAINTENANCE_CATEGORY_INIT_KEY, 'true');
       renderCategoryManageList();
       setupCategoryDropdowns();
     }

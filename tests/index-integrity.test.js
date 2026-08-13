@@ -16,7 +16,17 @@ const controllers = {
   renderFuelModule: 'src/features/fuel/controller.js',
   renderArchiveRecords: 'src/features/archive/controller.js'
 };
-const activeSources = html + Object.values(controllers).map(read).join('\n');
+const syncScripts = [
+  'src/services/sync/context.js',
+  'src/services/sync/account-storage.js',
+  'src/services/sync/feedback.js',
+  'src/services/sync/google-auth.js',
+  'src/services/sync/drive-client.js',
+  'src/services/sync/synchronizer.js',
+  'src/services/sync/ui.js',
+  'src/services/sync/bootstrap.js'
+];
+const activeSources = html + [...new Set(Object.values(controllers)), ...syncScripts].map(read).join('\n');
 const tabs = {
   dashboard: 'src/features/dashboard/view.html',
   records: 'src/features/maintenance/view.html',
@@ -45,9 +55,10 @@ describe('modular app shell integrity', () => {
     expect(existsSync(resolve(process.cwd(), 'src/legacy/app.js'))).toBe(false);
   });
 
-  it('loads the current sync, fuel and style assets', () => {
+  it('loads the separated sync, fuel and style assets', () => {
     expect(html).toContain('oavix-sync-config.js?v=8');
-    expect(html).toContain('oavix-sync.js?v=10');
+    for (const path of syncScripts) expect(html).toContain(`${path}?v=1`);
+    expect(html).not.toContain('src="oavix-sync.js');
     expect(html).toContain('oavix-fuel-module.js?v=3');
     expect(html).toContain('src/styles/app.css?v=1');
   });

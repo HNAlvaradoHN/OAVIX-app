@@ -1,9 +1,16 @@
-const CACHE = 'oavix-shell-v6';
+const CACHE = 'oavix-shell-v7';
 const APP_SHELL = [
   './',
   './index.html',
-  './oavix-sync.js',
   './oavix-sync-config.js',
+  './src/services/sync/context.js',
+  './src/services/sync/account-storage.js',
+  './src/services/sync/feedback.js',
+  './src/services/sync/google-auth.js',
+  './src/services/sync/drive-client.js',
+  './src/services/sync/synchronizer.js',
+  './src/services/sync/ui.js',
+  './src/services/sync/bootstrap.js',
   './oavix-fuel-module.js',
   './src/app.js',
   './src/config/tailwind.js',

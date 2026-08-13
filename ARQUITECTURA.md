@@ -20,7 +20,13 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/core/` | Estado, almacenamiento, utilidades y arranque compartidos. |
 | `src/features/*/controller.js` | Lógica propia de cada función. |
 | `src/ui/*/controller.js` | Lógica de navegación, tema y avisos visuales. |
-| `oavix-sync.js` | Sincronización y autenticación de Google. |
+| `src/services/sync/context.js` | Configuración y estado temporal de la sesión remota. |
+| `src/services/sync/account-storage.js` | Datos locales separados por cuenta. |
+| `src/services/sync/google-auth.js` | Inicio y cierre de sesión con Google. |
+| `src/services/sync/drive-client.js` | Comunicación de bajo nivel con Google Drive. |
+| `src/services/sync/synchronizer.js` | Decisión entre subir, descargar o conservar datos. |
+| `src/services/sync/ui.js` | Interfaz de sesión, botón de nube e instalación PWA. |
+| `src/services/sync/bootstrap.js` | Vinculación pública y eventos de sincronización. |
 | `oavix-fuel-module.js` | Datos y cálculos actuales de combustible. |
 | `tests/` | Pruebas que protegen navegación, almacenamiento, sincronización y despliegue. |
 
@@ -33,6 +39,6 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 
 ## Próximas etapas
 
-1. Aislar autenticación, sincronización remota y almacenamiento local detrás de interfaces claras.
-2. Añadir pruebas específicas para cada controlador.
-3. Mantener cada cambio futuro dentro de la carpeta de la función afectada.
+1. Añadir pruebas específicas cuando una función reciba una capacidad nueva.
+2. Mantener cada cambio futuro dentro de la carpeta de la función afectada.
+3. Actualizar esta guía cuando cambie una responsabilidad compartida.

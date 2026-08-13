@@ -10,7 +10,7 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: [
         'oavix-fuel-module.js',
-        'oavix-sync.js',
+        'src/services/sync/*.js',
         'oavix-sync-config.js',
         'sw.js'
       ]
