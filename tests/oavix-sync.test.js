@@ -647,6 +647,20 @@ describe('UI wiring on DOMContentLoaded', () => {
     expect(document.querySelector('meta[name="theme-color"]').content).toBe('#030712');
   });
 
+  it('mounts the session UI before later DOMContentLoaded listeners run', async () => {
+    await loadSync();
+    let modalSeenByPageListener = false;
+    document.addEventListener('DOMContentLoaded', () => {
+      modalSeenByPageListener = Boolean(document.getElementById('modal-login'));
+      window.checkLoginState();
+    }, { once: true });
+
+    document.dispatchEvent(new window.Event('DOMContentLoaded'));
+
+    expect(modalSeenByPageListener).toBe(true);
+    expect(document.getElementById('modal-login').style.display).toBe('flex');
+  });
+
   it('signs in from the modal button', async () => {
     driveBackend();
     await loadSync();
