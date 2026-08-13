@@ -6,7 +6,10 @@
 
         // Actualizar estado de los botones del menú flotante
         const navBtn = document.getElementById(`nav-btn-${tab}`);
-        if (navBtn) navBtn.classList.remove('active');
+        if (navBtn) {
+          navBtn.classList.remove('active');
+          navBtn.removeAttribute('aria-current');
+        }
       });
 
       // Mostrar solo la seleccionada
@@ -14,7 +17,10 @@
       if (activeElement) activeElement.classList.remove('hidden');
 
       const activeNavBtn = document.getElementById(`nav-btn-${t}`);
-      if (activeNavBtn) activeNavBtn.classList.add('active');
+      if (activeNavBtn) {
+        activeNavBtn.classList.add('active');
+        activeNavBtn.setAttribute('aria-current', 'page');
+      }
 
       if (t === 'archive') renderArchiveRecords();
       if (t === 'fuel') setTimeout(renderFuelModule, 0);

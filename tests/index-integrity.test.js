@@ -6,6 +6,7 @@ const read = path => readFileSync(resolve(process.cwd(), path), 'utf8');
 const html = read('index.html');
 const navigation = read('src/app-shell/navigation.html');
 const navigationController = read('src/ui/navigation/controller.js');
+const appStyles = read('src/styles/app.css');
 const controllers = {
   switchSubTab: 'src/ui/navigation/controller.js',
   openFormModal: 'src/features/maintenance/controller.js',
@@ -51,7 +52,7 @@ describe('modular app shell integrity', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
     expect(html.trimEnd()).toMatch(/<\/body>\s*<\/html>$/i);
     expect(html.split('\n').length).toBeLessThan(80);
-    expect(html).toContain('src/app.js?v=3');
+    expect(html).toContain('src/app.js?v=4');
     expect(html).not.toContain('function switchSubTab');
     expect(existsSync(resolve(process.cwd(), 'src/legacy/app.js'))).toBe(false);
   });
@@ -60,8 +61,8 @@ describe('modular app shell integrity', () => {
     expect(html).toContain('oavix-sync-config.js?v=8');
     for (const path of syncScripts) expect(html).toContain(`${path}?v=2`);
     expect(html).not.toContain('src="oavix-sync.js');
-    expect(html).toContain('oavix-fuel-module.js?v=3');
-    expect(html).toContain('src/styles/app.css?v=1');
+    expect(html).toContain('oavix-fuel-module.js?v=4');
+    expect(html).toContain('src/styles/app.css?v=2');
   });
 
   it.each(Object.entries(tabs))('links the %s tab to its own view file', (tab, path) => {
@@ -105,6 +106,39 @@ describe('main tab navigation', () => {
       const button = document.getElementById(`nav-btn-${tab}`);
       expect(panel.classList.contains('hidden')).toBe(tab !== 'calendar');
       expect(button.classList.contains('active')).toBe(tab === 'calendar');
+      expect(button.getAttribute('aria-current')).toBe(tab === 'calendar' ? 'page' : null);
     }
+  });
+
+  it('gives every icon a visible name but activates only the selected one', () => {
+    const names = {
+      dashboard: 'Inicio',
+      records: 'Mantenimiento',
+      calendar: 'Calendario',
+      fuel: 'Gasolina',
+      alerts: 'Alertas',
+      archive: 'Archivos'
+    };
+
+    for (const [tab, name] of Object.entries(names)) {
+      const button = document.getElementById(`nav-btn-${tab}`);
+      expect(button.getAttribute('aria-label')).toBe(name);
+      expect(button.hasAttribute('title')).toBe(false);
+      expect(button.querySelector('.nav-label').textContent).toBe(name);
+    }
+
+    const switchSubTab = new Function('t', 'renderFuelModule', extractSwitchSubTabBody(navigationController));
+    switchSubTab('fuel', vi.fn());
+
+    expect(document.querySelectorAll('.nav-btn.active')).toHaveLength(1);
+    expect(document.querySelector('.nav-btn.active .nav-label').textContent).toBe('Gasolina');
+  });
+
+  it('reserves scroll space above the floating bar without moving labels into the layout', () => {
+    expect(appStyles).toMatch(/--bottom-nav-clearance:\s*8\.5rem/);
+    expect(appStyles).toMatch(/body\s*>\s*main\s*\{[^}]*padding-bottom:/s);
+    expect(appStyles).toMatch(/\.nav-label\s*\{[^}]*position:\s*absolute/s);
+    expect(appStyles).toMatch(/\.nav-btn\.active\s+\.nav-label\s*\{/);
+    expect(read('oavix-fuel-module.js')).not.toContain('floating-nav');
   });
 });

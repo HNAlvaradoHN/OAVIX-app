@@ -1,4 +1,4 @@
-const CACHE = 'oavix-shell-v9';
+const CACHE = 'oavix-shell-v10';
 const APP_SHELL = [
   './',
   './index.html',
