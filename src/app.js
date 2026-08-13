@@ -1,5 +1,21 @@
 const fragmentHosts = Array.from(document.querySelectorAll('[data-oavix-fragment]'));
 
+export const controllerScripts = [
+  'src/core/utils.js',
+  'src/core/state.js',
+  'src/core/storage.js',
+  'src/ui/toasts/controller.js',
+  'src/ui/theme/controller.js',
+  'src/features/dashboard/controller.js',
+  'src/features/maintenance/controller.js',
+  'src/features/archive/controller.js',
+  'src/features/calendar/controller.js',
+  'src/features/alerts/controller.js',
+  'src/features/fuel/controller.js',
+  'src/ui/navigation/controller.js',
+  'src/core/bootstrap.js'
+];
+
 async function loadFragment(host) {
   const path = host.dataset.oavixFragment;
   const response = await fetch(path, { cache: 'no-cache' });
@@ -20,11 +36,17 @@ function loadClassicScript(path) {
   });
 }
 
+async function loadControllers() {
+  for (const path of controllerScripts) {
+    await loadClassicScript(`${path}?v=1`);
+  }
+}
+
 async function bootstrap() {
   try {
     await Promise.all(fragmentHosts.map(loadFragment));
     document.dispatchEvent(new CustomEvent('oavix:views-ready'));
-    await loadClassicScript('src/legacy/app.js?v=1');
+    await loadControllers();
     document.documentElement.dataset.oavixReady = 'true';
     document.dispatchEvent(new CustomEvent('oavix:ready'));
   } catch (error) {

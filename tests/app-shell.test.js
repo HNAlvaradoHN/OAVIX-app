@@ -17,6 +17,7 @@ beforeEach(() => {
 describe('app shell bootstrap', () => {
   it('loads every view before starting the application controller', async () => {
     const events = [];
+    const loadedScripts = [];
     document.addEventListener('oavix:views-ready', () => events.push('views'), { once: true });
     document.addEventListener('oavix:ready', () => events.push('app'), { once: true });
 
@@ -29,17 +30,22 @@ describe('app shell bootstrap', () => {
 
     vi.spyOn(document.body, 'appendChild').mockImplementation(node => {
       const result = originalAppendChild(node);
-      if (node.tagName === 'SCRIPT') queueMicrotask(() => node.onload());
+      if (node.tagName === 'SCRIPT') {
+        loadedScripts.push(node.getAttribute('src'));
+        queueMicrotask(() => node.onload());
+      }
       return result;
     });
 
-    await import('../src/app.js');
+    const app = await import('../src/app.js');
     await window.OAVIX_APP_READY;
 
     expect(document.getElementById('first-view')).not.toBeNull();
     expect(document.getElementById('second-view')).not.toBeNull();
     expect(document.querySelector('[data-oavix-fragment]')).toBeNull();
     expect(events).toEqual(['views', 'app']);
+    expect(loadedScripts).toEqual(app.controllerScripts.map(path => `${path}?v=1`));
+    expect(loadedScripts.at(-1)).toBe('src/core/bootstrap.js?v=1');
     expect(document.documentElement.dataset.oavixReady).toBe('true');
   });
 

@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const read = path => readFileSync(resolve(process.cwd(), path), 'utf8');
 const html = read('index.html');
 const navigation = read('src/app-shell/navigation.html');
-const legacyApp = read('src/legacy/app.js');
+const navigationController = read('src/ui/navigation/controller.js');
+const controllers = {
+  switchSubTab: 'src/ui/navigation/controller.js',
+  openFormModal: 'src/features/maintenance/controller.js',
+  renderRecords: 'src/features/maintenance/controller.js',
+  renderCalendar: 'src/features/calendar/controller.js',
+  changeMonth: 'src/features/calendar/controller.js',
+  renderAlerts: 'src/features/alerts/controller.js',
+  renderFuelModule: 'src/features/fuel/controller.js',
+  renderArchiveRecords: 'src/features/archive/controller.js'
+};
+const activeSources = html + Object.values(controllers).map(read).join('\n');
 const tabs = {
   dashboard: 'src/features/dashboard/view.html',
   records: 'src/features/maintenance/view.html',
@@ -17,7 +28,7 @@ const tabs = {
 
 function extractSwitchSubTabBody(source) {
   const match = source.match(
-    /function\s+switchSubTab\s*\(t\)\s*\{([\s\S]*?)\n\s*\}\n\n\s*function\s+openFormModal/
+    /function\s+switchSubTab\s*\(t\)\s*\{([\s\S]*?)\n\s*\}\s*$/
   );
 
   if (!match) throw new Error('No se encontró la implementación completa de switchSubTab');
@@ -29,8 +40,9 @@ describe('modular app shell integrity', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
     expect(html.trimEnd()).toMatch(/<\/body>\s*<\/html>$/i);
     expect(html.split('\n').length).toBeLessThan(80);
-    expect(html).toContain('src/app.js?v=1');
+    expect(html).toContain('src/app.js?v=2');
     expect(html).not.toContain('function switchSubTab');
+    expect(existsSync(resolve(process.cwd(), 'src/legacy/app.js'))).toBe(false);
   });
 
   it('loads the current sync, fuel and style assets', () => {
@@ -49,16 +61,15 @@ describe('modular app shell integrity', () => {
     expect(viewDocument.getElementById(`subtab-${tab}`)).not.toBeNull();
   });
 
-  it.each(['switchSubTab', 'openFormModal', 'renderRecords', 'renderCalendar', 'changeMonth'])(
-    'keeps the critical %s function outside index.html',
-    functionName => {
-      expect(legacyApp).toMatch(new RegExp(`function\\s+${functionName}\\s*\\(`));
+  it.each(Object.entries(controllers))(
+    'keeps %s in its dedicated controller',
+    (functionName, controllerPath) => {
+      expect(read(controllerPath)).toMatch(new RegExp(`function\\s+${functionName}\\s*\\(`));
       expect(html).not.toMatch(new RegExp(`function\\s+${functionName}\\s*\\(`));
     }
   );
 
   it('does not keep inactive login, likes or rescue implementations', () => {
-    const activeSources = html + legacyApp;
     expect(activeSources).not.toContain('OAVIX SYNC RESCUE');
     expect(activeSources).not.toContain('OAVIX HOTFIX');
     expect(activeSources).not.toMatch(/function\s+handleLoginSubmit\s*\(/);
@@ -73,7 +84,7 @@ describe('main tab navigation', () => {
   });
 
   it('shows the selected panel and updates the active button', () => {
-    const switchSubTab = new Function('t', extractSwitchSubTabBody(legacyApp));
+    const switchSubTab = new Function('t', extractSwitchSubTabBody(navigationController));
 
     switchSubTab('calendar');
 
