@@ -15,6 +15,15 @@ function extractSwitchSubTabBody(source) {
   return match[1];
 }
 
+function extractCheckLoginStateBody(source) {
+  const match = source.match(
+    /function\s+checkLoginState\s*\(\)\s*\{([\s\S]*?)\n\s*\}\n\n\s*function\s+togglePasswordVisibility/
+  );
+
+  if (!match) throw new Error('No se encontró la implementación completa de checkLoginState');
+  return match[1];
+}
+
 describe('index.html integrity', () => {
   it('has a complete HTML document instead of a truncated file', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
@@ -23,7 +32,7 @@ describe('index.html integrity', () => {
 
   it('loads the current sync and fuel modules', () => {
     expect(html).toContain('oavix-sync-config.js?v=8');
-    expect(html).toContain('oavix-sync.js?v=8');
+    expect(html).toContain('oavix-sync.js?v=9');
     expect(html).toContain('oavix-fuel-module.js?v=3');
   });
 
@@ -39,6 +48,15 @@ describe('index.html integrity', () => {
       expect(html).toMatch(new RegExp(`function\\s+${functionName}\\s*\\(`));
     }
   );
+});
+
+describe('session bootstrap fallback', () => {
+  it('does not stop app initialization when the sync modal is not mounted yet', () => {
+    document.body.innerHTML = '';
+    const checkLoginState = new Function('currentUserName', extractCheckLoginStateBody(html));
+
+    expect(() => checkLoginState('')).not.toThrow();
+  });
 });
 
 describe('main tab navigation', () => {

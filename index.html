@@ -220,7 +220,7 @@
 
   <!-- OAVIX Google Drive Sync -->
   <script src="oavix-sync-config.js?v=8"></script>
-  <script src="oavix-sync.js?v=8"></script>
+  <script src="oavix-sync.js?v=9"></script>
   <!-- OAVIX Fuel Module -->
   <script src="oavix-fuel-module.js?v=3"></script>
 </head>
@@ -900,14 +900,16 @@
       const bannerTag = document.getElementById('banner-username-tag');
 
       if (!currentUserName) {
-        modal.classList.remove('hidden');
+        if (modal) modal.classList.remove('hidden');
       } else {
-        modal.classList.add('hidden');
-        badge.innerHTML = `
-          <i class="fa-solid fa-user-circle text-indigo-400 text-sm"></i>
-          <span class="font-extrabold">${currentUserName}</span>
-          <button onclick="logoutSession()" class="px-2.5 py-1 rounded-lg bg-rose-600/40 hover:bg-rose-600 text-white text-[10px] transition font-extrabold" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
-        `;
+        if (modal) modal.classList.add('hidden');
+        if (badge) {
+          badge.innerHTML = `
+            <i class="fa-solid fa-user-circle text-indigo-400 text-sm"></i>
+            <span class="font-extrabold">${currentUserName}</span>
+            <button onclick="logoutSession()" class="px-2.5 py-1 rounded-lg bg-rose-600/40 hover:bg-rose-600 text-white text-[10px] transition font-extrabold" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
+          `;
+        }
         if (bannerTag) bannerTag.textContent = `Usuario: ${currentUserName}`;
       }
     }
