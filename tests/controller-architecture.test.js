@@ -22,7 +22,7 @@ const controllerPaths = [
 ];
 
 const ownership = {
-  'src/features/dashboard/controller.js': ['setDistanceUnit', 'renderMileageComparison', 'renderStats'],
+  'src/features/dashboard/controller.js': ['setDistanceUnit', 'saveCurrentMileageInput', 'renderMileageComparison', 'renderStats'],
   'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'renderRecords', 'openFormModal', 'handleFormSubmit'],
   'src/features/archive/controller.js': ['renderArchiveRecords'],
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
@@ -143,6 +143,51 @@ describe('controller architecture', () => {
     expect(document.getElementById('records-list').textContent).toContain('No hay registros activos');
     expect(document.getElementById('calendar-month-year').textContent).not.toBe('');
     expect(document.querySelectorAll('.nav-btn')).toHaveLength(6);
+  });
+
+  it('accepts only digits in the main mileage field', () => {
+    document.body.innerHTML = `
+      <div id="mileage-comparison-list"></div>
+      <div id="stats-container"></div>
+    `;
+    const storage = new Map();
+    const context = createContext({
+      document,
+      JSON,
+      Number,
+      String,
+      localStorage: {
+        getItem: key => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, String(value))
+      }
+    });
+    context.window = context;
+    context.mileageInput = { value: '12a3,4 km' };
+
+    new Script(read('src/core/utils.js')).runInContext(context);
+    new Script(read('src/core/state.js')).runInContext(context);
+    new Script(read('src/features/dashboard/controller.js')).runInContext(context);
+    new Script('saveCurrentMileageInput(mileageInput)').runInContext(context);
+
+    expect(context.mileageInput.value).toBe('1,234');
+    expect(storage.get('oavix_auto_mileage')).toBe('1234');
+    expect(new Script('currentVehicleMileage').runInContext(context)).toBe(1234);
+
+    context.mileageInput.value = 'solo letras';
+    new Script('saveCurrentMileageInput(mileageInput)').runInContext(context);
+
+    expect(context.mileageInput.value).toBe('');
+    expect(storage.get('oavix_auto_mileage')).toBe('0');
+    expect(new Script('currentVehicleMileage').runInContext(context)).toBe(0);
+  });
+
+  it('uses the numeric keyboard hint without losing thousands formatting', () => {
+    const view = new DOMParser().parseFromString(read('src/features/dashboard/view.html'), 'text/html');
+    const input = view.getElementById('current-mileage-input');
+
+    expect(input.getAttribute('type')).toBe('text');
+    expect(input.getAttribute('inputmode')).toBe('numeric');
+    expect(input.getAttribute('pattern')).toBe('[0-9,]*');
   });
 
   it('recovers an empty category list that the user never managed', () => {

@@ -51,7 +51,7 @@ describe('modular app shell integrity', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
     expect(html.trimEnd()).toMatch(/<\/body>\s*<\/html>$/i);
     expect(html.split('\n').length).toBeLessThan(80);
-    expect(html).toContain('src/app.js?v=2');
+    expect(html).toContain('src/app.js?v=3');
     expect(html).not.toContain('function switchSubTab');
     expect(existsSync(resolve(process.cwd(), 'src/legacy/app.js'))).toBe(false);
   });

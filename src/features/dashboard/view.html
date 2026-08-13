@@ -76,7 +76,7 @@
             </div>
             <div class="w-full bg-slate-950/90 border border-cyan-500/60 rounded-2xl p-2.5 flex items-center justify-between shadow-inner gap-2">
               <span class="text-[11px] text-slate-300 font-mono font-extrabold uppercase">LECTURA:</span>
-              <input type="text" id="current-mileage-input" oninput="saveCurrentMileageInput(this)" placeholder="000,000" class="w-full text-right font-mono text-2xl sm:text-3xl font-black text-cyan-400 tracking-widest bg-transparent focus:outline-none placeholder-slate-700">
+              <input type="text" id="current-mileage-input" inputmode="numeric" pattern="[0-9,]*" autocomplete="off" spellcheck="false" aria-label="Kilometraje actual" oninput="saveCurrentMileageInput(this)" placeholder="000,000" class="w-full text-right font-mono text-2xl sm:text-3xl font-black text-cyan-400 tracking-widest bg-transparent focus:outline-none placeholder-slate-700">
               <div class="flex items-center bg-slate-800 p-0.5 rounded-xl border border-slate-700 text-xs font-extrabold shrink-0 ml-1">
                 <button id="btn-unit-km" onclick="setDistanceUnit('km')" class="px-2 py-1 rounded-lg transition bg-cyan-600 text-white">KM</button>
                 <button id="btn-unit-mi" onclick="setDistanceUnit('mi')" class="px-2 py-1 rounded-lg transition text-slate-300 hover:text-white">MI</button>
