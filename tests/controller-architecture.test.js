@@ -23,7 +23,7 @@ const controllerPaths = [
 
 const ownership = {
   'src/features/dashboard/controller.js': ['setDistanceUnit', 'renderMileageComparison', 'renderStats'],
-  'src/features/maintenance/controller.js': ['setupCategoryDropdowns', 'renderRecords', 'openFormModal', 'handleFormSubmit'],
+  'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'renderRecords', 'openFormModal', 'handleFormSubmit'],
   'src/features/archive/controller.js': ['renderArchiveRecords'],
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
   'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
@@ -143,5 +143,45 @@ describe('controller architecture', () => {
     expect(document.getElementById('records-list').textContent).toContain('Cambio de Aceite Sintético');
     expect(document.getElementById('calendar-month-year').textContent).not.toBe('');
     expect(document.querySelectorAll('.nav-btn')).toHaveLength(6);
+  });
+
+  it('recovers an empty category list that the user never managed', () => {
+    const storage = new Map([['oavix_auto_categories', '[]']]);
+    const context = createContext({
+      Date,
+      JSON,
+      localStorage: {
+        getItem: key => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, String(value))
+      }
+    });
+    context.window = context;
+
+    new Script(read('src/core/state.js')).runInContext(context);
+    new Script(read('src/features/maintenance/controller.js')).runInContext(context);
+
+    expect(JSON.parse(storage.get('oavix_auto_categories'))).toHaveLength(5);
+    expect(storage.get('oavix_auto_categories_initialized')).toBe('true');
+  });
+
+  it('preserves an intentionally emptied category list', () => {
+    const storage = new Map([
+      ['oavix_auto_categories', '[]'],
+      ['oavix_auto_categories_initialized', 'true']
+    ]);
+    const context = createContext({
+      Date,
+      JSON,
+      localStorage: {
+        getItem: key => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, String(value))
+      }
+    });
+    context.window = context;
+
+    new Script(read('src/core/state.js')).runInContext(context);
+    new Script(read('src/features/maintenance/controller.js')).runInContext(context);
+
+    expect(new Script('autoCategories.length').runInContext(context)).toBe(0);
   });
 });

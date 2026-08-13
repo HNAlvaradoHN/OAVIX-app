@@ -18,7 +18,7 @@ let tokenClientState;
 /**
  * jsdom expone localStorage a través de un Proxy que convierte cualquier
  * asignación de propiedad en un valor almacenado, así que el parche que
- * oavix-sync.js aplica sobre setItem/removeItem no se instalaría. Este doble
+ * account-storage.js aplica sobre setItem/removeItem no se instalaría. Este doble
  * cumple la misma API con propiedades normales.
  */
 function createStorage() {
@@ -72,10 +72,18 @@ function seedAccountSnapshot(email, data, updatedAt) {
 }
 
 async function loadSync() {
-  delete window.__OAVIX_SYNC_V5__;
+  delete window.__OAVIX_SYNC_V6__;
+  delete window.OAVIXSyncInternal;
   delete window.OAVIXDriveSync;
   vi.resetModules();
-  await import('../oavix-sync.js');
+  await import('../src/services/sync/context.js');
+  await import('../src/services/sync/account-storage.js');
+  await import('../src/services/sync/feedback.js');
+  await import('../src/services/sync/google-auth.js');
+  await import('../src/services/sync/drive-client.js');
+  await import('../src/services/sync/synchronizer.js');
+  await import('../src/services/sync/ui.js');
+  await import('../src/services/sync/bootstrap.js');
   return window.OAVIXDriveSync;
 }
 
@@ -102,11 +110,6 @@ beforeEach(() => {
   setOnline(true);
   window.OAVIX_GOOGLE_CLIENT_ID = 'test-client-id.apps.googleusercontent.com';
   window.showToast = vi.fn();
-  delete window.autoCategories;
-  delete window.setupCategoryDropdowns;
-  delete window.addNewCategory;
-  delete window.deleteCategory;
-  delete window.__OAVIX_CATEGORY_WRAPPED__;
   fetchMock = vi.fn();
   window.fetch = fetchMock;
   tokenClientState = stubGoogleIdentity();
@@ -802,54 +805,5 @@ describe('token client failures', () => {
 
     // El segundo intento se descarta: solo se abre un flujo de Google.
     await vi.waitFor(() => expect(openRequests).toHaveLength(1));
-  });
-});
-
-describe('maintenance category fixes', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  it('seeds the categories and mirrors them into the page array', async () => {
-    window.autoCategories = ['viejo'];
-    window.setupCategoryDropdowns = vi.fn();
-
-    await loadSync();
-    await vi.advanceTimersByTimeAsync(10);
-
-    expect(JSON.parse(localStorage.getItem(CATEGORY_KEY))).toContain('Cambio de Aceite');
-    expect(window.autoCategories).toEqual(JSON.parse(localStorage.getItem(CATEGORY_KEY)));
-    expect(window.setupCategoryDropdowns).toHaveBeenCalled();
-    expect(localStorage.getItem('oavix_auto_categories_initialized')).toBe('true');
-  });
-
-  it('recovers an empty list that the user never managed', async () => {
-    localStorage.setItem(CATEGORY_KEY, JSON.stringify([]));
-
-    await loadSync();
-    await vi.advanceTimersByTimeAsync(10);
-
-    expect(JSON.parse(localStorage.getItem(CATEGORY_KEY))).toHaveLength(5);
-  });
-
-  it('marks the list as user managed once categories are added or deleted', async () => {
-    const add = vi.fn();
-    const remove = vi.fn();
-    window.addNewCategory = add;
-    window.deleteCategory = remove;
-
-    await loadSync();
-    await vi.advanceTimersByTimeAsync(10);
-    localStorage.removeItem('oavix_auto_categories_initialized');
-
-    window.addNewCategory('Nueva');
-    expect(add).toHaveBeenCalledWith('Nueva');
-    expect(localStorage.getItem('oavix_auto_categories_initialized')).toBe('true');
-
-    localStorage.removeItem('oavix_auto_categories_initialized');
-    window.deleteCategory(0);
-    expect(remove).toHaveBeenCalledWith(0);
-    expect(localStorage.getItem('oavix_auto_categories_initialized')).toBe('true');
-    expect(window.__OAVIX_CATEGORY_WRAPPED__).toBe(true);
   });
 });

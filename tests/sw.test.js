@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const CACHE = 'oavix-shell-v6';
+const CACHE = 'oavix-shell-v7';
 
 function createCache() {
   const store = new Map();
@@ -71,8 +71,15 @@ describe('service worker lifecycle', () => {
     expect(cache.addAll).toHaveBeenCalledWith([
       './',
       './index.html',
-      './oavix-sync.js',
       './oavix-sync-config.js',
+      './src/services/sync/context.js',
+      './src/services/sync/account-storage.js',
+      './src/services/sync/feedback.js',
+      './src/services/sync/google-auth.js',
+      './src/services/sync/drive-client.js',
+      './src/services/sync/synchronizer.js',
+      './src/services/sync/ui.js',
+      './src/services/sync/bootstrap.js',
       './oavix-fuel-module.js',
       './src/app.js',
       './src/config/tailwind.js',
@@ -160,7 +167,7 @@ describe('service worker fetch strategy', () => {
     const cached = { body: 'cached' };
     self.fetch.mockRejectedValue(new Error('offline'));
     self.caches.match.mockResolvedValue(cached);
-    const event = fetchEvent(sameOrigin('/oavix-sync.js'));
+    const event = fetchEvent(sameOrigin('/src/services/sync/synchronizer.js'));
 
     listeners.fetch(event);
     await expect(event.response).resolves.toBe(cached);
