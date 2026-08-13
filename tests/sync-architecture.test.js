@@ -28,11 +28,11 @@ const responsibilities = {
 describe('sync service architecture', () => {
   it('loads the sync modules synchronously in dependency order', () => {
     const html = read('index.html');
-    const positions = modules.map(path => html.indexOf(`${path}?v=2`));
+    const positions = modules.map(path => html.indexOf(path));
 
     expect(positions.every(position => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
-    expect(html.indexOf('src/services/sync/bootstrap.js')).toBeLessThan(html.indexOf('oavix-fuel-module.js'));
+    expect(html.indexOf('src/services/sync/bootstrap.js')).toBeLessThan(html.indexOf('src/features/fuel/module.js'));
   });
 
   it('removes the old authentication and sync monolith', () => {

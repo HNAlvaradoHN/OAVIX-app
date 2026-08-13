@@ -18,6 +18,8 @@
       'oavix_is_light',
       'oavix_triggered_alarms',
       'oavix_fuel_history',
+      'oavix_fuel_vehicles',
+      'oavix_fuel_preferences',
       'oavix_fuel_vehicle_config'
     ],
     sessionKey: 'oavix_google_session',

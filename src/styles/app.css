@@ -302,3 +302,1111 @@
     @media (min-width: 641px) and (max-width: 1024px) {
       .floating-nav { bottom: max(1.25rem, env(safe-area-inset-bottom, 0px)); }
     }
+
+    /* Combustibles: módulo autónomo, adaptable de 320 px a escritorio. */
+    .fuel-shell {
+      --fuel-surface: rgba(15, 23, 42, 0.78);
+      --fuel-surface-strong: rgba(15, 23, 42, 0.96);
+      --fuel-surface-soft: rgba(30, 41, 59, 0.66);
+      --fuel-line: rgba(148, 163, 184, 0.18);
+      --fuel-muted: #94a3b8;
+      --fuel-title: #f8fafc;
+      --fuel-cyan: #22d3ee;
+      --fuel-violet: #a78bfa;
+      --fuel-amber: #fbbf24;
+      --fuel-emerald: #34d399;
+      --fuel-danger: #fb7185;
+      width: 100%;
+      min-width: 0;
+      padding-bottom: 0.5rem;
+      color: var(--fuel-title);
+    }
+
+    .light-theme .fuel-shell {
+      --fuel-surface: rgba(255, 255, 255, 0.94);
+      --fuel-surface-strong: #ffffff;
+      --fuel-surface-soft: rgba(241, 245, 249, 0.9);
+      --fuel-line: rgba(71, 85, 105, 0.17);
+      --fuel-muted: #64748b;
+      --fuel-title: #0f172a;
+      --fuel-cyan: #0891b2;
+      --fuel-violet: #7c3aed;
+      --fuel-amber: #d97706;
+      --fuel-emerald: #059669;
+      --fuel-danger: #e11d48;
+    }
+
+    .fuel-shell *,
+    .fuel-shell *::before,
+    .fuel-shell *::after { box-sizing: border-box; }
+
+    .fuel-shell.hidden,
+    .fuel-shell .hidden { display: none !important; }
+
+    .fuel-shell button,
+    .fuel-shell input,
+    .fuel-shell select,
+    .fuel-shell textarea { font: inherit; }
+
+    .fuel-shell button,
+    .fuel-shell select { cursor: pointer; }
+
+    .fuel-shell button:focus-visible,
+    .fuel-shell input:focus-visible,
+    .fuel-shell select:focus-visible,
+    .fuel-shell textarea:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--fuel-cyan) 56%, transparent);
+      outline-offset: 2px;
+    }
+
+    .fuel-hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      min-width: 0;
+      padding: clamp(1rem, 3vw, 1.75rem);
+      background:
+        linear-gradient(135deg, rgba(8, 47, 73, 0.88), rgba(30, 27, 75, 0.88)),
+        var(--fuel-surface-strong);
+      border-color: rgba(34, 211, 238, 0.55);
+    }
+
+    .light-theme .fuel-hero {
+      background:
+        linear-gradient(135deg, rgba(236, 254, 255, 0.97), rgba(245, 243, 255, 0.98)),
+        #fff;
+      border-color: rgba(8, 145, 178, 0.28);
+    }
+
+    .fuel-hero:hover { transform: none; }
+
+    .fuel-hero-glow {
+      position: absolute;
+      z-index: -1;
+      width: 14rem;
+      height: 14rem;
+      border-radius: 999px;
+      filter: blur(55px);
+      opacity: 0.27;
+      pointer-events: none;
+    }
+
+    .fuel-hero-glow-one { top: -8rem; right: -3rem; background: #22d3ee; }
+    .fuel-hero-glow-two { bottom: -10rem; left: 18%; background: #8b5cf6; }
+
+    .fuel-hero-content {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .fuel-hero h2 {
+      margin: 0.55rem 0 0.35rem;
+      color: var(--fuel-title);
+      font-size: clamp(1.45rem, 4vw, 2.2rem);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      overflow-wrap: anywhere;
+    }
+
+    .fuel-hero p {
+      max-width: 46rem;
+      margin: 0;
+      color: var(--fuel-muted);
+      font-size: clamp(0.84rem, 2vw, 0.96rem);
+      line-height: 1.55;
+    }
+
+    .fuel-kicker,
+    .fuel-source-badge,
+    .fuel-quality-pill,
+    .fuel-calc-source,
+    .fuel-preferred-label,
+    .fuel-full-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      max-width: 100%;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+    }
+
+    .fuel-kicker {
+      padding: 0.38rem 0.64rem;
+      background: rgba(34, 211, 238, 0.13);
+      color: var(--fuel-cyan);
+      text-transform: uppercase;
+    }
+
+    .fuel-source-badge {
+      padding: 0.38rem 0.62rem;
+      border: 1px solid var(--fuel-line);
+      background: rgba(15, 23, 42, 0.32);
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
+    .light-theme .fuel-source-badge { background: rgba(255, 255, 255, 0.72); color: #475569; }
+
+    .fuel-status-dot {
+      width: 0.44rem;
+      height: 0.44rem;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 0.2rem color-mix(in srgb, currentColor 14%, transparent);
+    }
+
+    .fuel-source-loading { color: var(--fuel-amber); }
+    .fuel-source-official { color: var(--fuel-emerald); }
+    .fuel-source-cache { color: var(--fuel-amber); }
+    .fuel-source-error { color: var(--fuel-danger); }
+
+    .fuel-primary-action,
+    .fuel-secondary-action,
+    .fuel-cancel-button,
+    .fuel-danger-button,
+    .fuel-new-vehicle-button,
+    .fuel-calc-button {
+      min-height: 2.75rem;
+      border: 0;
+      border-radius: 0.86rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.68rem 0.95rem;
+      font-size: 0.82rem;
+      font-weight: 900;
+      line-height: 1.15;
+      transition: transform 0.18s ease, filter 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .fuel-primary-action {
+      flex: 0 0 auto;
+      background: linear-gradient(135deg, #06b6d4, #2563eb);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(6, 182, 212, 0.2);
+    }
+
+    .fuel-primary-action:hover,
+    .fuel-calc-button:hover { transform: translateY(-1px); filter: brightness(1.08); }
+
+    .fuel-secondary-action,
+    .fuel-cancel-button,
+    .fuel-new-vehicle-button {
+      border: 1px solid var(--fuel-line);
+      background: var(--fuel-surface-soft);
+      color: var(--fuel-title);
+    }
+
+    .fuel-secondary-action:hover,
+    .fuel-cancel-button:hover,
+    .fuel-new-vehicle-button:hover { border-color: color-mix(in srgb, var(--fuel-cyan) 58%, transparent); }
+
+    .fuel-danger-button {
+      border: 1px solid color-mix(in srgb, var(--fuel-danger) 38%, transparent);
+      background: color-mix(in srgb, var(--fuel-danger) 12%, transparent);
+      color: var(--fuel-danger);
+    }
+
+    .fuel-secondary-action:disabled { cursor: wait; opacity: 0.62; }
+    .fuel-secondary-action.loading i { animation: fuelSpin 0.8s linear infinite; }
+
+    @keyframes fuelSpin { to { transform: rotate(360deg); } }
+
+    .fuel-vehicle-switcher {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1.1rem;
+      padding: 0.7rem;
+      border: 1px solid rgba(148, 163, 184, 0.17);
+      border-radius: 1rem;
+      background: rgba(2, 6, 23, 0.26);
+      min-width: 0;
+    }
+
+    .light-theme .fuel-vehicle-switcher { background: rgba(255, 255, 255, 0.64); }
+
+    .fuel-vehicle-identity {
+      display: grid;
+      grid-template-columns: 2.65rem minmax(0, 1fr);
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .fuel-vehicle-icon,
+    .fuel-icon-action,
+    .fuel-official-icon,
+    .fuel-modal-close,
+    .fuel-close-inline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.85rem;
+    }
+
+    .fuel-vehicle-icon {
+      width: 2.65rem;
+      height: 2.65rem;
+      background: linear-gradient(145deg, rgba(34, 211, 238, 0.19), rgba(139, 92, 246, 0.18));
+      color: var(--fuel-cyan);
+      font-size: 1.15rem;
+    }
+
+    .fuel-vehicle-identity label,
+    .fuel-shell label {
+      display: block;
+      margin-bottom: 0.36rem;
+      color: var(--fuel-muted);
+      font-size: 0.69rem;
+      font-weight: 900;
+      letter-spacing: 0.025em;
+    }
+
+    .fuel-vehicle-identity select {
+      width: 100%;
+      max-width: 28rem;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--fuel-title);
+      font-size: 0.98rem;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fuel-vehicle-identity option { color: #0f172a; }
+
+    .fuel-vehicle-identity p {
+      margin-top: 0.15rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.68rem;
+    }
+
+    .fuel-icon-action,
+    .fuel-modal-close,
+    .fuel-close-inline {
+      width: 2.6rem;
+      height: 2.6rem;
+      flex: 0 0 auto;
+      border: 1px solid var(--fuel-line);
+      background: var(--fuel-surface-soft);
+      color: var(--fuel-title);
+    }
+
+    .fuel-panel-tabs {
+      position: sticky;
+      top: max(0.45rem, env(safe-area-inset-top, 0px));
+      z-index: 24;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.3rem;
+      width: 100%;
+      min-width: 0;
+      padding: 0.36rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 1rem;
+      background: color-mix(in srgb, var(--fuel-surface-strong) 92%, transparent);
+      box-shadow: 0 10px 26px rgba(2, 6, 23, 0.18);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+    }
+
+    .fuel-panel-tab {
+      min-width: 0;
+      min-height: 2.65rem;
+      padding: 0.55rem 0.38rem;
+      border: 0;
+      border-radius: 0.72rem;
+      background: transparent;
+      color: var(--fuel-muted);
+      font-size: 0.72rem;
+      font-weight: 900;
+      line-height: 1.1;
+      transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+
+    .fuel-panel-tab i { margin-right: 0.32rem; }
+
+    .fuel-panel-tab.active {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(99, 102, 241, 0.18));
+      color: var(--fuel-cyan);
+      box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.18);
+    }
+
+    .fuel-panel { min-width: 0; }
+
+    .fuel-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .fuel-metric-card,
+    .fuel-card {
+      min-width: 0;
+      border: 1px solid var(--fuel-line);
+      background: var(--fuel-surface);
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.13);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .fuel-metric-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 7.35rem;
+      padding: 0.85rem;
+      border-radius: 1rem;
+    }
+
+    .fuel-metric-card::after {
+      content: '';
+      position: absolute;
+      right: -2rem;
+      bottom: -2.7rem;
+      width: 6rem;
+      height: 6rem;
+      border-radius: 50%;
+      background: currentColor;
+      filter: blur(32px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    .fuel-tone-cyan { color: var(--fuel-cyan); }
+    .fuel-tone-violet { color: var(--fuel-violet); }
+    .fuel-tone-amber { color: var(--fuel-amber); }
+    .fuel-tone-emerald { color: var(--fuel-emerald); }
+
+    .fuel-metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      color: var(--fuel-muted);
+      font-size: 0.66rem;
+      font-weight: 900;
+    }
+
+    .fuel-metric-top i { color: currentColor; font-size: 0.88rem; }
+
+    .fuel-metric-card > strong {
+      display: block;
+      margin: 0.68rem 0 0.27rem;
+      color: var(--fuel-title);
+      font-size: clamp(1.05rem, 4vw, 1.45rem);
+      font-weight: 950;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .fuel-metric-card small {
+      display: block;
+      color: var(--fuel-muted);
+      font-size: 0.62rem;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .fuel-overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    .fuel-card {
+      padding: clamp(0.9rem, 2.4vw, 1.3rem);
+      border-radius: 1.15rem;
+    }
+
+    .fuel-card-heading,
+    .fuel-official-card,
+    .fuel-history-heading,
+    .fuel-source-card {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .fuel-card-heading > div,
+    .fuel-official-summary,
+    .fuel-source-card > div { min-width: 0; }
+
+    .fuel-card h3,
+    .fuel-modal h3 {
+      margin: 0.14rem 0 0;
+      color: var(--fuel-title);
+      font-size: clamp(1rem, 2.6vw, 1.22rem);
+      font-weight: 950;
+      line-height: 1.2;
+      letter-spacing: -0.018em;
+      overflow-wrap: anywhere;
+    }
+
+    .fuel-card p { color: var(--fuel-muted); font-size: 0.77rem; line-height: 1.5; }
+
+    .fuel-eyebrow {
+      color: var(--fuel-cyan);
+      font-size: 0.61rem;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .fuel-projection {
+      flex: 0 0 auto;
+      text-align: right;
+    }
+
+    .fuel-projection span { display: block; color: var(--fuel-muted); font-size: 0.6rem; }
+    .fuel-projection strong { color: var(--fuel-title); font-size: 0.98rem; font-weight: 950; }
+
+    .fuel-spend-chart {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      align-items: end;
+      gap: clamp(0.26rem, 1.5vw, 0.75rem);
+      min-height: 12.5rem;
+      margin-top: 1.1rem;
+      padding-top: 1.7rem;
+    }
+
+    .fuel-chart-column {
+      display: grid;
+      grid-template-rows: 1.3rem 8.4rem 1rem;
+      gap: 0.3rem;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .fuel-chart-value {
+      align-self: end;
+      overflow: hidden;
+      color: var(--fuel-muted);
+      font-size: clamp(0.48rem, 1.7vw, 0.6rem);
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .fuel-chart-track {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      border-radius: 0.55rem 0.55rem 0.25rem 0.25rem;
+      background: linear-gradient(to top, rgba(148, 163, 184, 0.07), transparent);
+    }
+
+    .fuel-chart-track span {
+      width: 100%;
+      min-height: 3px;
+      border-radius: 0.5rem 0.5rem 0.2rem 0.2rem;
+      background: linear-gradient(to top, #2563eb, #22d3ee);
+      box-shadow: 0 -5px 20px rgba(34, 211, 238, 0.24);
+    }
+
+    .fuel-chart-column strong {
+      overflow: hidden;
+      color: var(--fuel-muted);
+      font-size: 0.58rem;
+      text-overflow: ellipsis;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .fuel-empty-note { margin: 1.3rem 0 0; text-align: center; }
+
+    .fuel-quality-pill,
+    .fuel-calc-source {
+      flex: 0 0 auto;
+      padding: 0.35rem 0.57rem;
+      background: color-mix(in srgb, var(--fuel-amber) 12%, transparent);
+      color: var(--fuel-amber);
+    }
+
+    .fuel-quality-pill.measured {
+      background: color-mix(in srgb, var(--fuel-emerald) 12%, transparent);
+      color: var(--fuel-emerald);
+    }
+
+    .fuel-insight-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .fuel-insight-grid > div {
+      min-width: 0;
+      padding: 0.75rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.85rem;
+      background: var(--fuel-surface-soft);
+    }
+
+    .fuel-insight-grid span { display: block; color: var(--fuel-muted); font-size: 0.62rem; }
+    .fuel-insight-grid strong { display: block; margin-top: 0.24rem; color: var(--fuel-title); font-size: 0.82rem; font-weight: 950; overflow-wrap: anywhere; }
+
+    .fuel-guidance {
+      display: grid;
+      grid-template-columns: 1.2rem minmax(0, 1fr);
+      gap: 0.55rem;
+      margin-top: 0.85rem;
+      padding: 0.7rem;
+      border: 1px solid rgba(34, 211, 238, 0.17);
+      border-radius: 0.82rem;
+      background: rgba(34, 211, 238, 0.07);
+      color: var(--fuel-cyan);
+    }
+
+    .fuel-guidance p { margin: 0; color: var(--fuel-muted); font-size: 0.68rem; line-height: 1.45; }
+    .fuel-guidance-success { border-color: rgba(52, 211, 153, 0.2); background: rgba(52, 211, 153, 0.07); color: var(--fuel-emerald); }
+    .fuel-guidance-warning { border-color: rgba(251, 191, 36, 0.25); background: rgba(251, 191, 36, 0.08); color: var(--fuel-amber); }
+
+    .fuel-calculator-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .fuel-calc-box {
+      display: grid;
+      align-content: start;
+      min-width: 0;
+      padding: 0.9rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 1rem;
+      background: var(--fuel-surface-soft);
+    }
+
+    .fuel-calc-box h4 { margin: 0; color: var(--fuel-title); font-size: 0.93rem; font-weight: 950; }
+    .fuel-calc-box p { margin: 0.22rem 0 0.85rem; font-size: 0.68rem; }
+
+    .fuel-calc-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.4rem;
+      height: 2.4rem;
+      margin-bottom: 0.65rem;
+      border-radius: 0.76rem;
+      background: color-mix(in srgb, currentColor 12%, transparent);
+    }
+
+    .fuel-shell input:not([type='checkbox']):not([type='radio']),
+    .fuel-shell select,
+    .fuel-shell textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 2.75rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.78rem;
+      background: color-mix(in srgb, var(--fuel-surface-strong) 78%, transparent);
+      color: var(--fuel-title);
+      padding: 0.68rem 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .fuel-shell select option { color: #0f172a; background: #fff; }
+    .fuel-shell textarea { min-height: 5.6rem; resize: vertical; line-height: 1.45; }
+    .fuel-shell input::placeholder,
+    .fuel-shell textarea::placeholder { color: color-mix(in srgb, var(--fuel-muted) 72%, transparent); font-weight: 650; }
+
+    .fuel-input-with-unit { position: relative; min-width: 0; }
+    .fuel-input-with-unit input { padding-right: 3.4rem !important; }
+    .fuel-input-with-unit > span {
+      position: absolute;
+      top: 50%;
+      right: 0.7rem;
+      max-width: 3rem;
+      transform: translateY(-50%);
+      color: var(--fuel-cyan);
+      font-size: 0.68rem;
+      font-weight: 950;
+      pointer-events: none;
+    }
+
+    .fuel-check-row {
+      display: flex !important;
+      align-items: center;
+      gap: 0.52rem;
+      min-height: 2rem;
+      margin: 0.5rem 0 0.65rem !important;
+      color: var(--fuel-muted) !important;
+      cursor: pointer;
+    }
+
+    .fuel-check-row input { width: 1rem; height: 1rem; accent-color: var(--fuel-cyan); }
+    .fuel-calc-spacer { min-height: 2rem; }
+
+    .fuel-calc-button {
+      width: 100%;
+      margin-top: auto;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(37, 99, 235, 0.22));
+      color: var(--fuel-cyan);
+      box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.18);
+    }
+
+    .fuel-calc-result {
+      display: grid;
+      gap: 0.12rem;
+      margin-top: 0.72rem;
+      padding: 0.7rem;
+      border-radius: 0.78rem;
+      background: rgba(52, 211, 153, 0.08);
+      color: var(--fuel-muted);
+    }
+
+    .fuel-calc-result span,
+    .fuel-calc-result small { font-size: 0.62rem; }
+    .fuel-calc-result strong { color: var(--fuel-emerald); font-size: 1.1rem; font-weight: 950; }
+
+    .fuel-official-card { align-items: center; }
+
+    .fuel-official-summary {
+      display: grid;
+      grid-template-columns: 2.7rem minmax(0, 1fr);
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .fuel-official-icon {
+      width: 2.7rem;
+      height: 2.7rem;
+      background: color-mix(in srgb, var(--fuel-emerald) 12%, transparent);
+      color: var(--fuel-emerald);
+    }
+
+    .fuel-official-summary p,
+    .fuel-history-heading p,
+    .fuel-price-heading p { margin: 0.22rem 0 0; }
+
+    .fuel-price-filters {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    .fuel-search-field { position: relative; }
+    .fuel-search-field i {
+      position: absolute;
+      top: 50%;
+      left: 0.8rem;
+      transform: translateY(-50%);
+      color: var(--fuel-muted);
+      font-size: 0.72rem;
+      pointer-events: none;
+    }
+    .fuel-search-field input { padding-left: 2.15rem !important; }
+
+    .fuel-price-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.68rem;
+      margin-top: 1rem;
+    }
+
+    .fuel-price-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 0;
+      min-height: 10rem;
+      padding: 0.9rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 1rem;
+      background: var(--fuel-surface-soft);
+      color: var(--fuel-title);
+      text-align: left;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .fuel-price-card:hover { transform: translateY(-2px); border-color: rgba(34, 211, 238, 0.38); }
+    .fuel-price-card.preferred { border-color: rgba(52, 211, 153, 0.45); background: linear-gradient(145deg, rgba(52, 211, 153, 0.09), var(--fuel-surface-soft)); }
+
+    .fuel-price-location {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      overflow: hidden;
+      color: var(--fuel-muted);
+      font-size: 0.7rem;
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .fuel-price-location i { color: var(--fuel-cyan); }
+
+    .fuel-preferred-label {
+      position: absolute;
+      top: 0.66rem;
+      right: 0.66rem;
+      padding: 0.28rem 0.45rem;
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--fuel-emerald);
+    }
+
+    .fuel-price-card > strong { margin-top: 1.35rem; color: var(--fuel-title); font-size: 1.55rem; font-weight: 950; letter-spacing: -0.035em; }
+    .fuel-price-card > small { color: var(--fuel-muted); font-size: 0.64rem; }
+
+    .fuel-price-card-footer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.35rem;
+      margin-top: auto;
+      padding-top: 0.85rem;
+      color: var(--fuel-muted);
+      font-size: 0.61rem;
+      font-weight: 850;
+    }
+
+    .fuel-price-delta { display: inline-flex; align-items: center; gap: 0.28rem; }
+    .fuel-delta-up { color: var(--fuel-danger); }
+    .fuel-delta-down { color: var(--fuel-emerald); }
+    .fuel-delta-neutral { color: var(--fuel-muted); }
+
+    .fuel-empty-state {
+      display: grid;
+      justify-items: center;
+      gap: 0.35rem;
+      padding: 2.3rem 1rem;
+      color: var(--fuel-muted);
+      text-align: center;
+    }
+    .fuel-empty-state > i { margin-bottom: 0.3rem; color: var(--fuel-cyan); font-size: 1.7rem; }
+    .fuel-empty-state strong { color: var(--fuel-title); font-size: 0.9rem; }
+    .fuel-empty-state p { max-width: 28rem; margin: 0; }
+    .fuel-empty-state .fuel-primary-action { margin-top: 0.65rem; }
+
+    .fuel-map-frame,
+    .fuel-official-frame {
+      overflow: hidden;
+      width: 100%;
+      margin-top: 1rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.95rem;
+      background: var(--fuel-surface-soft);
+    }
+
+    .fuel-map-frame { min-height: 18rem; }
+    .fuel-map-frame iframe,
+    .fuel-official-frame iframe { display: block; width: 100%; border: 0; }
+    .fuel-map-frame iframe { height: 18rem; }
+    .fuel-official-frame iframe { height: min(72vh, 42rem); min-height: 28rem; }
+
+    .fuel-map-unavailable {
+      display: grid;
+      place-items: center;
+      min-height: 18rem;
+      padding: 1rem;
+      color: var(--fuel-muted);
+      text-align: center;
+    }
+
+    .fuel-source-card { align-items: center; flex-wrap: wrap; }
+    .fuel-source-card .fuel-official-frame { flex-basis: 100%; }
+
+    .fuel-history-actions { display: flex; align-items: center; gap: 0.5rem; flex: 0 0 auto; }
+    .fuel-history-actions select { width: auto; min-width: 7.4rem; }
+    .fuel-history-list { display: grid; gap: 0.68rem; margin-top: 1rem; }
+
+    .fuel-history-item {
+      display: grid;
+      grid-template-columns: 2.8rem minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 0.72rem;
+      min-width: 0;
+      padding: 0.8rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.95rem;
+      background: var(--fuel-surface-soft);
+    }
+
+    .fuel-history-date {
+      display: grid;
+      place-items: center;
+      min-height: 2.8rem;
+      border-radius: 0.75rem;
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--fuel-cyan);
+      text-align: center;
+    }
+    .fuel-history-date strong { font-size: 1rem; line-height: 1; }
+    .fuel-history-date span { font-size: 0.55rem; text-transform: uppercase; }
+
+    .fuel-history-body { min-width: 0; }
+    .fuel-history-main { display: flex; justify-content: space-between; gap: 0.6rem; min-width: 0; }
+    .fuel-history-main > div { min-width: 0; }
+    .fuel-history-main h4 { margin: 0; color: var(--fuel-title); font-size: 0.82rem; font-weight: 950; }
+    .fuel-history-main p { margin: 0.18rem 0 0; color: var(--fuel-muted); font-size: 0.65rem; overflow-wrap: anywhere; }
+    .fuel-history-main > strong { flex: 0 0 auto; color: var(--fuel-title); font-size: 0.84rem; font-weight: 950; }
+
+    .fuel-history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.42rem 0.7rem;
+      margin-top: 0.55rem;
+      color: var(--fuel-muted);
+      font-size: 0.59rem;
+    }
+    .fuel-history-meta span { display: inline-flex; align-items: center; gap: 0.28rem; }
+    .fuel-full-badge { padding: 0.24rem 0.42rem; background: rgba(52, 211, 153, 0.1); color: var(--fuel-emerald); }
+    .fuel-history-notes { margin: 0.5rem 0 0 !important; padding-top: 0.5rem; border-top: 1px dashed var(--fuel-line); font-size: 0.65rem !important; overflow-wrap: anywhere; }
+
+    .fuel-history-controls { display: flex; gap: 0.3rem; }
+    .fuel-history-controls button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.62rem;
+      background: transparent;
+      color: var(--fuel-muted);
+    }
+    .fuel-history-controls button.danger { color: var(--fuel-danger); }
+
+    .fuel-modal-open { overflow: hidden; }
+
+    .fuel-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .fuel-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    .fuel-modal-sheet {
+      position: relative;
+      width: 100%;
+      max-height: min(92dvh, 52rem);
+      overflow: auto;
+      padding: 1rem;
+      padding-bottom: max(1.2rem, env(safe-area-inset-bottom, 0px));
+      border: 1px solid var(--fuel-line);
+      border-bottom: 0;
+      border-radius: 1.3rem 1.3rem 0 0;
+      background: var(--fuel-surface-strong);
+      color: var(--fuel-title);
+      box-shadow: 0 -22px 55px rgba(2, 6, 23, 0.55);
+      overscroll-behavior: contain;
+    }
+
+    .fuel-modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.7rem;
+      margin-bottom: 1rem;
+    }
+
+    .fuel-modal-header-actions { display: flex; align-items: center; gap: 0.4rem; }
+    .fuel-new-vehicle-button { min-height: 2.6rem; padding: 0.55rem 0.72rem; }
+
+    .fuel-form { display: grid; gap: 0.9rem; }
+    .fuel-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+    .fuel-shell label small { color: var(--fuel-muted); font-size: 0.58rem; font-weight: 650; }
+
+    .fuel-archived-section {
+      padding: 0.8rem;
+      border: 1px dashed var(--fuel-line);
+      border-radius: 0.9rem;
+      background: var(--fuel-surface-soft);
+    }
+
+    .fuel-archived-list { display: grid; gap: 0.45rem; margin-top: 0.55rem; }
+    .fuel-archived-list button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7rem;
+      width: 100%;
+      min-width: 0;
+      padding: 0.62rem 0.7rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.72rem;
+      background: var(--fuel-surface-strong);
+      color: var(--fuel-muted);
+      font-size: 0.68rem;
+    }
+    .fuel-archived-list button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fuel-archived-list button strong { flex: 0 0 auto; color: var(--fuel-cyan); font-size: 0.64rem; }
+
+    .fuel-full-tank-option {
+      display: grid !important;
+      grid-template-columns: 0 minmax(2.5rem, auto) minmax(0, 1fr);
+      align-items: center;
+      gap: 0.65rem;
+      margin: 0 !important;
+      padding: 0.8rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.9rem;
+      background: var(--fuel-surface-soft);
+      cursor: pointer;
+    }
+    .fuel-full-tank-option > input { width: 0; height: 0; opacity: 0; }
+    .fuel-full-tank-check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.35rem;
+      height: 2.35rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.72rem;
+      color: transparent;
+      background: var(--fuel-surface-strong);
+      transition: color 0.18s ease, background 0.18s ease;
+    }
+    .fuel-full-tank-option > input:checked + .fuel-full-tank-check { background: var(--fuel-emerald); color: #052e2b; border-color: var(--fuel-emerald); }
+    .fuel-full-tank-option strong { display: block; color: var(--fuel-title); font-size: 0.76rem; }
+    .fuel-full-tank-option small { display: block; margin-top: 0.16rem; color: var(--fuel-muted); font-size: 0.61rem; line-height: 1.4; }
+
+    .fuel-live-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.72rem;
+      border-radius: 0.78rem;
+      background: rgba(34, 211, 238, 0.07);
+      color: var(--fuel-muted);
+      font-size: 0.7rem;
+    }
+    .fuel-live-summary strong { color: var(--fuel-cyan); font-size: 0.9rem; }
+
+    .fuel-form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.55rem;
+      padding-top: 0.25rem;
+    }
+    .fuel-form-actions-split { justify-content: space-between; }
+    .fuel-form-actions-split > div { display: flex; gap: 0.55rem; }
+
+    .fuel-type-choice {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.6rem;
+    }
+    .fuel-type-choice label { margin: 0; cursor: pointer; }
+    .fuel-type-choice input { position: absolute; opacity: 0; }
+    .fuel-type-choice span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 3rem;
+      padding: 0.65rem;
+      border: 1px solid var(--fuel-line);
+      border-radius: 0.85rem;
+      background: var(--fuel-surface-soft);
+      color: var(--fuel-muted);
+    }
+    .fuel-type-choice input:checked + span { border-color: rgba(34, 211, 238, 0.5); background: rgba(34, 211, 238, 0.1); color: var(--fuel-cyan); }
+
+    @media (max-width: 379px) {
+      .fuel-hero-content { display: grid; }
+      .fuel-hero-content .fuel-primary-action { width: 100%; }
+      .fuel-source-badge { white-space: normal; }
+      .fuel-panel-tab { font-size: 0.64rem; }
+      .fuel-panel-tab i { display: block; margin: 0 0 0.25rem; font-size: 0.82rem; }
+      .fuel-metric-grid { grid-template-columns: minmax(0, 1fr); }
+      .fuel-metric-card { min-height: 6.3rem; }
+      .fuel-card-heading,
+      .fuel-official-card,
+      .fuel-history-heading { display: grid; }
+      .fuel-projection { text-align: left; }
+      .fuel-official-card .fuel-secondary-action,
+      .fuel-history-actions,
+      .fuel-history-actions select,
+      .fuel-history-actions .fuel-secondary-action { width: 100%; }
+      .fuel-history-actions { display: grid; }
+      .fuel-history-item { grid-template-columns: 2.6rem minmax(0, 1fr); }
+      .fuel-history-controls { grid-column: 2; justify-content: flex-end; }
+      .fuel-history-main { display: grid; }
+      .fuel-form-actions,
+      .fuel-form-actions-split,
+      .fuel-form-actions-split > div { display: grid; width: 100%; }
+      .fuel-form-actions > *,
+      .fuel-form-actions-split > *,
+      .fuel-form-actions-split > div > * { width: 100%; }
+      .fuel-form-actions-split .fuel-danger-button { grid-row: 2; }
+    }
+
+    @media (min-width: 540px) {
+      .fuel-price-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fuel-price-filters > div:last-child { grid-column: 1 / -1; }
+      .fuel-price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fuel-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fuel-field-wide { grid-column: 1 / -1; }
+    }
+
+    @media (min-width: 640px) {
+      .fuel-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .fuel-calculator-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fuel-panel-tab { font-size: 0.78rem; }
+      .fuel-modal { align-items: center; padding: 1.25rem; }
+      .fuel-modal-sheet {
+        width: min(43rem, 100%);
+        max-height: min(90dvh, 52rem);
+        padding: 1.35rem;
+        border-bottom: 1px solid var(--fuel-line);
+        border-radius: 1.3rem;
+        box-shadow: 0 25px 70px rgba(2, 6, 23, 0.58);
+      }
+    }
+
+    @media (min-width: 760px) {
+      .fuel-price-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .fuel-price-filters > div:last-child { grid-column: auto; }
+      .fuel-price-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (min-width: 1024px) {
+      .fuel-overview-grid { grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.85fr); }
+      .fuel-price-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .fuel-card { padding: 1.35rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fuel-shell *,
+      .fuel-shell *::before,
+      .fuel-shell *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    }

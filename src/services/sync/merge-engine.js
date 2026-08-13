@@ -6,7 +6,8 @@
   const EPOCH = '1970-01-01T00:00:00.000Z';
   const entityKeys = Object.freeze([
     'oavix_auto_records',
-    'oavix_fuel_history'
+    'oavix_fuel_history',
+    'oavix_fuel_vehicles'
   ]);
   const legacyDataKeys = constants.dataKeys.filter(key => !key.startsWith('oavix_fuel_'));
 

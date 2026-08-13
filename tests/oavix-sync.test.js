@@ -638,10 +638,14 @@ describe('cross-device pull', () => {
     setOnline(false);
 
     localStorage.setItem('oavix_fuel_history', '[{"id":"1","gallons":5}]');
+    localStorage.setItem('oavix_fuel_vehicles', '[{"id":"car","name":"Auto familiar"}]');
+    localStorage.setItem('oavix_fuel_preferences', '{"activeVehicleId":"car"}');
 
     expect(localStorage.getItem(PENDING_KEY)).toBe('true');
     const snapshot = JSON.parse(localStorage.getItem(metaKey(EMAIL)));
     expect(snapshot.data.oavix_fuel_history).toBe('[{"id":"1","gallons":5}]');
+    expect(snapshot.data.oavix_fuel_vehicles).toBe('[{"id":"car","name":"Auto familiar"}]');
+    expect(snapshot.data.oavix_fuel_preferences).toBe('{"activeVehicleId":"car"}');
   });
 });
 

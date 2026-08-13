@@ -27,7 +27,7 @@ const ownership = {
   'src/features/archive/controller.js': ['renderArchiveRecords'],
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
   'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
-  'src/features/fuel/controller.js': ['renderFuelModule', 'calculateTankFill', 'refreshFuelPrices'],
+  'src/features/fuel/controller.js': ['renderFuelModule', 'calculateFuelTrip', 'refreshFuelPrices', 'saveFuelFill'],
   'src/ui/navigation/controller.js': ['switchSubTab'],
   'src/ui/theme/controller.js': ['toggleTheme', 'applyCustomTheme'],
   'src/ui/toasts/controller.js': ['showToast']
