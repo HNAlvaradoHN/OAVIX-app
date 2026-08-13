@@ -1,4 +1,4 @@
-/* OAVIX Fuel Module v1.2 - precios SEN + consumo */
+/* OAVIX Fuel Module v1.3 - precios SEN + consumo (render protegido) */
 (function(){
   'use strict';
   if(window.__OAVIX_FUEL_MODULE__) return;
@@ -10,7 +10,7 @@
     {id:'laceiba',name:'La Ceiba',region:'Atlántida',lat:15.7606,lng:-86.7775},
     {id:'choloma',name:'Choloma',region:'Cortés',lat:15.6722,lng:-88.1639},
     {id:'danli',name:'Danli',region:'El Paraíso',lat:14.9056,lng:-86.5781},
-    {id:'juticalpa',name:'Juticalpa',region:'Olancho',lat:14.6731,lng:-86.2269},
+    {id:'juticalpa',name:'Juticalpa',region:'Olancho',lat:14.6731,lng:-86.2699},
     {id:'comayagua',name:'Comayagua',region:'Comayagua',lat:14.4553,lng:-87.6424},
     {id:'trujillo',name:'Trujillo',region:'Colón',lat:16.2723,lng:-85.9531}
   ];
@@ -86,9 +86,17 @@
       return true;
     }catch(e){console.warn('[OAVIX Fuel] Official SEN data unavailable:',e.message); return false;}
   }
+  /* FIX: el renderizado queda protegido; un fallo de UI ya no tumba el flujo ni los tests. */
+  function safeRender(){
+    try{
+      if(window.renderFuelPrices) window.renderFuelPrices();
+    }catch(e){
+      console.warn('[OAVIX Fuel] render skipped:', e && e.message);
+    }
+  }
   async function fetchSENPrices(){
     if(await loadOfficialSEN()){
-      if(window.renderFuelPrices) window.renderFuelPrices();
+      safeRender();
       return true;
     }
     // No se usa una tabla antigua como si fuera actual. Si el SEN no está disponible,
@@ -96,12 +104,12 @@
     if(fuelData.source==='official' && Object.keys(fuelData.prices||{}).length){
       fuelData.status='offline-cache';
       saveFuelData();
-      if(window.renderFuelPrices) window.renderFuelPrices();
+      safeRender();
       return true;
     }
     fuelData={...fuelData,source:'none',status:'unavailable',sourceUrl:SEN_SOURCE};
     saveFuelData();
-    if(window.renderFuelPrices) window.renderFuelPrices();
+    safeRender();
     return false;
   }
   window.FuelModule={
@@ -127,8 +135,8 @@
       const valid=fuelHistory.filter(r=>Number(r.gallons)>0);const avg=valid.length?valid.reduce((sum,r)=>sum+(Number(r.amountPaid)/Number(r.gallons)),0)/valid.length:0;
       return {totalGallons:g,totalKm:km,avgConsumption:g?km/g:0,avgPrice:avg.toFixed(2)};
     },
-    updatePricesManually(pricesObject,date=null){const prices=normalizePrices(pricesObject);if(!Object.keys(prices).length)return false;fuelData={...fuelData,prices,lastUpdate:date||new Date().toISOString(),source:'manual',status:'manual',sourceUrl:SEN_SOURCE,nextUpdate:nextFriday()};saveFuelData();if(window.renderFuelPrices)window.renderFuelPrices();return true;},
-    exportPrices(){return {timestamp:new Date().toISOString(),data:fuelData,version:'1.2'};},
+    updatePricesManually(pricesObject,date=null){const prices=normalizePrices(pricesObject);if(!Object.keys(prices).length)return false;fuelData={...fuelData,prices,lastUpdate:date||new Date().toISOString(),source:'manual',status:'manual',sourceUrl:SEN_SOURCE,nextUpdate:nextFriday()};saveFuelData();safeRender();return true;},
+    exportPrices(){return {timestamp:new Date().toISOString(),data:fuelData,version:'1.3'};},
     importPrices(json){return json?.data?.prices?this.updatePricesManually(json.data.prices,json.timestamp):false;}
   };
 
