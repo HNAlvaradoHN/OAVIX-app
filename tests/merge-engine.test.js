@@ -46,6 +46,33 @@ beforeEach(() => {
 });
 
 describe('record-level Drive merge', () => {
+  it('migrates only the exact legacy demo entry and leaves real records intact', async () => {
+    const merge = await loadMergeEngine();
+    const time = '2026-08-10T10:00:00.000Z';
+    const demo = {
+      id: '1',
+      title: 'Cambio de Aceite Sintético',
+      category: 'Cambio de Aceite',
+      amount: 60,
+      mileage: 86000,
+      provider: 'Taller San Pedro',
+      date: '2026-06-01',
+      notes: 'Filtro nuevo'
+    };
+    const real = { ...demo, id: 'real', notes: 'Trabajo real del usuario' };
+    const oldCopy = {
+      schemaVersion: 5,
+      updatedAt: time,
+      data: { [RECORDS]: JSON.stringify([demo, real]) }
+    };
+
+    const normalized = merge.normalizePayload(oldCopy, EMAIL);
+
+    expect(merge.containsLegacyDemo(oldCopy)).toBe(true);
+    expect(JSON.parse(normalized.data[RECORDS])).toEqual([real]);
+    expect(normalized.metadata.entities[RECORDS]['1'].deletedAt).toBe(time);
+  });
+
   it('keeps independent maintenance records created on two devices', async () => {
     const merge = await loadMergeEngine();
     const phoneTime = '2026-08-10T10:00:00.000Z';

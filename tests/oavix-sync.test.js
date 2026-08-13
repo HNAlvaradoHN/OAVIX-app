@@ -458,6 +458,36 @@ describe('cross-device pull', () => {
     expect(reload).toHaveBeenCalled();
   });
 
+  it('removes the exact old demo record from an existing Drive file', async () => {
+    seedSession();
+    const demo = {
+      id: '1',
+      title: 'Cambio de Aceite Sintético',
+      category: 'Cambio de Aceite',
+      amount: 60,
+      mileage: 86000,
+      provider: 'Taller San Pedro',
+      date: '2026-06-01',
+      notes: 'Filtro nuevo'
+    };
+    const real = { id: 'real', title: 'Mi mantenimiento' };
+    const calls = driveBackend({
+      files: [{ id: 'file-1', name: 'oavix-data.json', modifiedTime: '2026-08-10T10:00:00.000Z' }],
+      content: {
+        schemaVersion: 5,
+        updatedAt: '2026-08-10T10:00:00.000Z',
+        data: { oavix_auto_records: JSON.stringify([demo, real]) }
+      }
+    });
+    const sync = await loadSync();
+
+    await sync.syncNow();
+
+    expect(JSON.parse(localStorage.getItem('oavix_auto_records'))).toEqual([real]);
+    const patchCall = calls.find(call => call.url.includes('uploadType=media'));
+    expect(JSON.parse(JSON.parse(patchCall.options.body).data.oavix_auto_records)).toEqual([real]);
+  });
+
   it('still pulls first when the user edited something before the sync ran', async () => {
     vi.useFakeTimers();
     seedSession();

@@ -107,7 +107,6 @@
       if (!email) throw new Error('Google no devolvió el correo de la cuenta.');
 
       const oldEmail = state.accountEmail;
-      storage.removeLegacyDemoData();
       const firstMigration = !oldEmail && storage.legacyMigrationAllowed() && storage.hasLegacyData();
       if (firstMigration) {
         const timestamp = new Date().toISOString();

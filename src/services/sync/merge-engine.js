@@ -50,6 +50,27 @@
     }
   }
 
+  function isLegacyDemoRecord(record) {
+    return record && String(record.id) === '1' &&
+      record.title === 'Cambio de Aceite Sintético' &&
+      record.category === 'Cambio de Aceite' &&
+      Number(record.amount) === 60 &&
+      Number(record.mileage) === 86000 &&
+      record.provider === 'Taller San Pedro' &&
+      record.date === '2026-06-01' &&
+      record.notes === 'Filtro nuevo';
+  }
+
+  function legacyDemoIds(raw) {
+    const records = parseArray(raw);
+    if (!records) return [];
+    return records.filter(isLegacyDemoRecord).map(record => String(record.id));
+  }
+
+  function containsLegacyDemo(copy) {
+    return Boolean(copy && copy.data && legacyDemoIds(copy.data.oavix_auto_records).length);
+  }
+
   function recordMap(raw) {
     const records = parseArray(raw);
     if (!records) return null;
@@ -118,6 +139,10 @@
       }
 
       if (!entityKeys.includes(key)) return;
+      const removedDemoIds = key === 'oavix_auto_records' ? legacyDemoIds(data[key]) : [];
+      if (removedDemoIds.length) {
+        data[key] = JSON.stringify(parseArray(data[key]).filter(record => !isLegacyDemoRecord(record)));
+      }
       const normalized = normalizeEntityMetadata(
         sourceMetadata,
         key,
@@ -125,6 +150,11 @@
         keyTimestamp,
         legacy
       );
+      removedDemoIds.forEach(id => {
+        const previous = normalized.entities[id] || {};
+        const deletedAt = latestTimestamp(previous.updatedAt, previous.deletedAt, keyTimestamp);
+        normalized.entities[id] = { updatedAt: deletedAt, deletedAt };
+      });
       metadata.entities[key] = normalized.entities;
       const savedBaseline = sourceMetadata.legacyEntityBaselines &&
         sourceMetadata.legacyEntityBaselines[key];
@@ -364,6 +394,7 @@
     recordMutation,
     fingerprint,
     dataFingerprint,
+    containsLegacyDemo,
     latestTimestamp
   };
 })(window);
