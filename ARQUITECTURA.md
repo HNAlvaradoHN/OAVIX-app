@@ -12,13 +12,11 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/features/dashboard/` | Vista del panel principal. |
 | `src/features/maintenance/` | Vista y ventanas de mantenimiento. |
 | `src/features/calendar/` | Vista del calendario. |
-| `src/features/alerts/` | Vista y ventanas de alertas. |
+| `src/features/alerts/` | Avisos internos, próximos y vencidos, sin sonido ni servicios externos. |
 | `src/features/fuel/` | Vista, interacción, vehículos y cálculos de Combustibles. |
 | `src/features/export/` | Exportación independiente de informes Excel y PDF, con selección previa de mantenimientos y sin imágenes pesadas. |
 | `src/features/archive/` | Vista del archivo. |
-| `src/ui/settings/` | Centro de control enfocado con fondo desenfocado para sincronización, alarmas, apariencia y exportaciones. |
-| `src/services/push/` | Suscripción Web Push y sincronización autenticada de recordatorios por dispositivo. |
-| `firebase/functions/` | Backend programado que verifica la cuenta, guarda recordatorios y envía avisos en segundo plano. |
+| `src/ui/settings/` | Centro de control enfocado con fondo desenfocado para sincronización, apariencia y exportaciones. |
 | `src/ui/` | Tema, navegación y notificaciones visuales compartidas. |
 | `src/styles/` | Estilos generales. |
 | `src/core/` | Estado, almacenamiento, utilidades y arranque compartidos. |
@@ -26,7 +24,7 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/ui/*/controller.js` | Lógica de navegación, tema y avisos visuales. |
 | `src/services/sync/context.js` | Configuración y estado temporal de la sesión remota. |
 | `src/services/sync/merge-engine.js` | Combinación por registro, fechas por campo y marcas de borrado. |
-| `src/services/sync/account-storage.js` | Datos locales separados por cuenta. |
+| `src/services/sync/account-storage.js` | Datos locales separados por cuenta y borrado seguro al cerrar sesión. |
 | `src/services/sync/google-auth.js` | Inicio y cierre de sesión con Google. |
 | `src/services/sync/drive-client.js` | Comunicación de bajo nivel con Google Drive. |
 | `src/services/sync/synchronizer.js` | Flujo Drive-first: descargar, combinar y después guardar. |

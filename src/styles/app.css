@@ -407,21 +407,10 @@
       white-space: nowrap;
     }
 
-    #btn-notif-perm[data-state="active"] .oavix-settings-icon-notification {
-      color: #34d399;
-      background: rgba(52, 211, 153, 0.14);
-      box-shadow: 0 0 14px rgba(52, 211, 153, 0.22);
-    }
-    #btn-notif-perm[data-state="active"] .oavix-settings-state,
     .settings-state-ready {
       border-color: rgba(52, 211, 153, 0.3);
       background: rgba(52, 211, 153, 0.12);
       color: #6ee7b7;
-    }
-    #btn-notif-perm[data-state="inactive"] .oavix-settings-icon-notification {
-      color: #fb7185;
-      background: rgba(244, 63, 94, 0.13);
-      box-shadow: 0 0 12px rgba(244, 63, 94, 0.16);
     }
     .settings-state-working {
       border-color: rgba(34, 211, 238, 0.3);
@@ -437,7 +426,6 @@
     .settings-state-inactive { color: #fda4af; }
     .light-theme .oavix-settings-state,
     .light-theme .settings-state-inactive { color: #be123c; }
-    .light-theme #btn-notif-perm[data-state="active"] .oavix-settings-state,
     .light-theme .settings-state-ready { color: #047857; }
     .light-theme .settings-state-working { color: #0e7490; }
     .light-theme .settings-state-pending { color: #a16207; }

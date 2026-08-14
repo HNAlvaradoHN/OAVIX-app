@@ -36,16 +36,24 @@ function repairMaintenanceCategories() {
     function setupCategoryDropdowns() {
       const filterSel = document.getElementById('filter-category');
       const formSel = document.getElementById('form-category');
+      const makeOption = (label, value) => {
+        const option = document.createElement('option');
+        option.textContent = label;
+        option.value = value;
+        return option;
+      };
 
       if (filterSel) {
-        filterSel.innerHTML = '<option value="ALL">Todas las Categorías</option>';
-        autoCategories.forEach(c => filterSel.innerHTML += `<option value="${c}">${c}</option>`);
+        filterSel.replaceChildren(makeOption('Todas las Categorías', 'ALL'));
+        autoCategories.forEach(category => filterSel.add(makeOption(String(category), String(category))));
       }
 
       if (formSel) {
-        formSel.innerHTML = '';
-        autoCategories.forEach(c => formSel.innerHTML += `<option value="${c}">${c}</option>`);
-        formSel.innerHTML += `<option value="__ADD_NEW__" class="text-cyan-400 font-black">+ Agregar / Gestionar Categorías...</option>`;
+        formSel.replaceChildren();
+        autoCategories.forEach(category => formSel.add(makeOption(String(category), String(category))));
+        const manage = makeOption('+ Agregar / Gestionar Categorías...', '__ADD_NEW__');
+        manage.className = 'text-cyan-400 font-black';
+        formSel.add(manage);
       }
     }
 
@@ -70,7 +78,7 @@ function repairMaintenanceCategories() {
       const container = document.getElementById('categories-manage-list');
       container.innerHTML = autoCategories.map((cat, idx) => `
         <div class="flex items-center justify-between bg-slate-800 p-2 rounded-xl text-xs font-extrabold">
-          <span>${cat}</span>
+          <span>${escapeHtml(cat)}</span>
           <button type="button" onclick="deleteCategory(${idx})" class="text-rose-400 hover:text-rose-300 px-2 py-1"><i class="fa-solid fa-trash"></i></button>
         </div>
       `).join('');
@@ -274,8 +282,22 @@ function repairMaintenanceCategories() {
     }
 
     function openImageViewer(src) {
-      document.getElementById('image-viewer-src').src = src;
+      const safeSource = safeImageSource(src);
+      if (!safeSource) return;
+      document.getElementById('image-viewer-src').src = safeSource;
       document.getElementById('modal-image-viewer').classList.remove('hidden');
+    }
+
+    function openImageViewerFromButton(button) {
+      openImageViewer(button?.dataset.photo || '');
+    }
+
+    function maintenanceActionFromButton(button, action) {
+      const id = decodeHtmlData(button?.dataset.recordId);
+      if (!id) return;
+      if (action === 'edit') openFormModal(id);
+      else if (action === 'validate') toggleValidateRecord(id);
+      else if (action === 'delete') deleteRecord(id);
     }
 
     function renderRecords() {
@@ -287,31 +309,34 @@ function repairMaintenanceCategories() {
         return;
       }
 
-      list.innerHTML = activeRecords.map(r => `
-        <div data-maintenance-record-id="${r.id}" class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2">
+      list.innerHTML = activeRecords.map(r => {
+        const photo = safeImageSource(r.photo);
+        const encodedId = encodeHtmlData(r.id);
+        return `
+        <div data-maintenance-record-id="${encodedId}" class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2">
           <div class="min-h-14 flex justify-between items-start gap-3">
             <div class="min-w-0 flex-1">
-              <h4 class="font-black text-sm truncate">${r.title}</h4>
+              <h4 class="font-black text-sm truncate">${escapeHtml(r.title)}</h4>
               <span class="font-black text-cyan-400 text-sm">${formatMoney(r.amount, r.currency || 'USD')}</span>
             </div>
-            ${r.photo ? `
-              <button type="button" class="shrink-0 w-14 h-14 rounded-xl overflow-hidden cursor-zoom-in border-2 border-slate-500 shadow-lg group relative" onclick="openImageViewer('${r.photo}')" aria-label="Ampliar foto de ${escapeHtml(r.title)}">
-                <img src="${r.photo}" class="w-full h-full object-cover" alt="Vista previa de ${escapeHtml(r.title)}">
+            ${photo ? `
+              <button type="button" data-photo="${escapeHtml(photo)}" class="shrink-0 w-14 h-14 rounded-xl overflow-hidden cursor-zoom-in border-2 border-slate-500 shadow-lg group relative" onclick="openImageViewerFromButton(this)" aria-label="Ampliar foto de ${escapeHtml(r.title)}">
+                <img src="${escapeHtml(photo)}" class="w-full h-full object-cover" alt="Vista previa de ${escapeHtml(r.title)}">
                 <span class="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-black transition">Ampliar</span>
               </button>
             ` : '<span class="shrink-0 w-14 h-14" aria-hidden="true"></span>'}
           </div>
           <div>
-            <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${r.date} | ${r.category}</p>
-            ${r.notes ? `<p class="text-[11px] font-bold italic p-2 mt-2 rounded-lg bg-slate-900/20 line-clamp-2">${r.notes}</p>` : ''}
+            <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${escapeHtml(r.date)} | ${escapeHtml(r.category)}</p>
+            ${r.notes ? `<p class="text-[11px] font-bold italic p-2 mt-2 rounded-lg bg-slate-900/20 line-clamp-2">${escapeHtml(r.notes)}</p>` : ''}
           </div>
           <div class="pt-2 border-t border-slate-600/60 flex justify-end space-x-2">
-            <button onclick="openFormModal('${r.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
-            <button onclick="toggleValidateRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-black">Validar / Archivar</button>
-            <button onclick="deleteRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs font-black">Eliminar</button>
+            <button data-record-id="${encodedId}" onclick="maintenanceActionFromButton(this, 'edit')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
+            <button data-record-id="${encodedId}" onclick="maintenanceActionFromButton(this, 'validate')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-black">Validar / Archivar</button>
+            <button data-record-id="${encodedId}" onclick="maintenanceActionFromButton(this, 'delete')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs font-black">Eliminar</button>
           </div>
         </div>
-      `).join('');
+      `; }).join('');
     }
 
     function startNewMaintenance() {
@@ -321,7 +346,7 @@ function repairMaintenanceCategories() {
 
     function revealMaintenanceRecord(id) {
       const card = Array.from(document.querySelectorAll('[data-maintenance-record-id]'))
-        .find(element => element.dataset.maintenanceRecordId === String(id));
+        .find(element => decodeHtmlData(element.dataset.maintenanceRecordId) === String(id));
       if (!card) return;
 
       card.classList.add('maintenance-record-highlight');
@@ -350,7 +375,6 @@ function repairMaintenanceCategories() {
           document.getElementById('form-provider').value = item.provider || '';
           document.getElementById('form-date').value = item.date;
           document.getElementById('form-alert-date').value = item.alertDate || '';
-          document.getElementById('form-alert-time').value = item.alertTime || '';
           document.getElementById('form-notes').value = item.notes || '';
 
           if (item.photo) {
@@ -378,18 +402,6 @@ function repairMaintenanceCategories() {
       }
 
       const alertDate = document.getElementById('form-alert-date').value;
-      const alertTime = document.getElementById('form-alert-time').value;
-      if (alertTime && !alertDate) {
-        showToast('Falta la fecha', 'Selecciona una fecha para la hora de la alarma.', 'amber');
-        return;
-      }
-      if (alertDate) {
-        const alarmDateTime = new Date(`${alertDate}T${alertTime || '00:00'}:00`);
-        if (Number.isNaN(alarmDateTime.getTime()) || alarmDateTime.getTime() <= Date.now()) {
-          showToast('Alarma en el pasado', 'Elige una fecha y hora futuras, o elimina la alarma.', 'amber');
-          return;
-        }
-      }
 
       const id = document.getElementById('record-id').value || Date.now().toString();
       const r = {
@@ -402,7 +414,6 @@ function repairMaintenanceCategories() {
         provider: document.getElementById('form-provider').value,
         date: document.getElementById('form-date').value,
         alertDate,
-        alertTime,
         notes: document.getElementById('form-notes').value,
         photo: currentBase64Image,
         validated: false

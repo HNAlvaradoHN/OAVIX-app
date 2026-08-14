@@ -10,11 +10,13 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect x="24" y="24" width="464" height="464" rx="96" fill="none" stroke="#06b6d4" stroke-opacity=".35" stroke-width="8"/>
-  <path d="M78 300c66-4 102-35 154-58 54-24 110-20 202 24" fill="none" stroke="url(#cyan)" stroke-width="28" stroke-linecap="round"/>
-  <path d="M105 334h302" stroke="#67e8f9" stroke-opacity=".35" stroke-width="10" stroke-linecap="round"/>
-  <circle cx="145" cy="350" r="30" fill="#030712" stroke="#67e8f9" stroke-width="12"/>
-  <circle cx="367" cy="350" r="30" fill="#030712" stroke="#67e8f9" stroke-width="12"/>
-  <text x="256" y="190" text-anchor="middle" fill="#f8fafc" font-family="Arial,Helvetica,sans-serif" font-size="112" font-weight="900" letter-spacing="14">OAVIX</text>
-  <path d="M126 245h260" stroke="#06b6d4" stroke-width="10" stroke-linecap="round"/>
+  <g transform="translate(51.2 51.2) scale(.8)">
+    <rect x="24" y="24" width="464" height="464" rx="96" fill="none" stroke="#06b6d4" stroke-opacity=".35" stroke-width="8"/>
+    <path d="M78 300c66-4 102-35 154-58 54-24 110-20 202 24" fill="none" stroke="url(#cyan)" stroke-width="28" stroke-linecap="round"/>
+    <path d="M105 334h302" stroke="#67e8f9" stroke-opacity=".35" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="145" cy="350" r="30" fill="#030712" stroke="#67e8f9" stroke-width="12"/>
+    <circle cx="367" cy="350" r="30" fill="#030712" stroke="#67e8f9" stroke-width="12"/>
+    <text x="256" y="190" text-anchor="middle" fill="#f8fafc" font-family="Arial,Helvetica,sans-serif" font-size="112" font-weight="900" letter-spacing="14">OAVIX</text>
+    <path d="M126 245h260" stroke="#06b6d4" stroke-width="10" stroke-linecap="round"/>
+  </g>
 </svg>

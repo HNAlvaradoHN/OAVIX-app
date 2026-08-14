@@ -122,7 +122,6 @@
     function refreshSettingsMenuState() {
       refreshSettingsThemeState();
       refreshSettingsSyncState();
-      if (typeof checkNotifPermissionState === 'function') checkNotifPermissionState();
     }
 
     function initializeSettingsMenu() {

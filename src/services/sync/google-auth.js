@@ -138,14 +138,10 @@
   }
 
   function logoutSession() {
-    if (state.accountEmail) {
-      const snapshot = storage.accountSnapshot(state.accountEmail);
-      storage.saveAccountSnapshot(
-        state.accountEmail,
-        nativeStorage.get(localUpdatedKey(state.accountEmail)) ||
-          snapshot && snapshot.updatedAt ||
-          new Date().toISOString()
-      );
+    const signedOutEmail = state.accountEmail;
+    const tokenToRevoke = state.accessToken;
+    if (tokenToRevoke && root.google?.accounts?.oauth2?.revoke) {
+      root.google.accounts.oauth2.revoke(tokenToRevoke, () => {});
     }
     state.accessToken = null;
     state.tokenExpiresAt = 0;
@@ -154,6 +150,7 @@
     nativeStorage.remove('oavix_current_user_name');
     nativeStorage.remove('oavix_current_user_pin');
     storage.clearActiveData();
+    storage.purgeAccount(signedOutEmail);
     state.accountEmail = '';
     setTimeout(() => root.location.reload(), 100);
   }

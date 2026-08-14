@@ -798,7 +798,7 @@ describe('sign in and sign out', () => {
     expect(reload).toHaveBeenCalled();
   });
 
-  it('restores an already known account and drops the previous data', async () => {
+  it('does not restore a stale local snapshot when signing into an account', async () => {
     localStorage.setItem('oavix_migration_v5', 'done');
     seedAccountSnapshot(EMAIL, { oavix_auto_unit: 'km' }, '2025-04-01T00:00:00.000Z');
     driveBackend();
@@ -806,7 +806,7 @@ describe('sign in and sign out', () => {
 
     await sync.loginWithGoogle();
 
-    expect(localStorage.getItem('oavix_auto_unit')).toBe('km');
+    expect(localStorage.getItem('oavix_auto_unit')).toBeNull();
   });
 
   it('starts empty for an unknown account', async () => {
@@ -832,7 +832,7 @@ describe('sign in and sign out', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it('clears the session, keeps the account snapshot and reloads on logout', async () => {
+  it('clears the session, local account snapshot and active data on logout', async () => {
     vi.useFakeTimers();
     seedSession();
     seedAccountSnapshot(EMAIL, { oavix_auto_unit: 'km' }, '2025-04-01T00:00:00.000Z');
@@ -844,7 +844,7 @@ describe('sign in and sign out', () => {
     expect(localStorage.getItem(SESSION_KEY)).toBeNull();
     expect(localStorage.getItem('oavix_current_user_pin')).toBeNull();
     expect(localStorage.getItem('oavix_auto_unit')).toBeNull();
-    expect(JSON.parse(localStorage.getItem(metaKey(EMAIL))).data.oavix_auto_unit).toBe('km');
+    expect(localStorage.getItem(metaKey(EMAIL))).toBeNull();
 
     await vi.advanceTimersByTimeAsync(200);
     expect(reload).toHaveBeenCalled();
@@ -878,7 +878,7 @@ describe('UI wiring on DOMContentLoaded', () => {
     expect(modal.style.display).toBe('flex');
     expect(document.getElementById('oavix-google-login')).not.toBeNull();
     expect(document.getElementById('oavix-v5-css')).not.toBeNull();
-    expect(document.querySelector('link[rel=manifest]').getAttribute('href')).toBe('manifest.webmanifest?v=5');
+    expect(document.querySelector('link[rel=manifest]').getAttribute('href')).toBe('manifest.webmanifest?v=6');
     expect(document.querySelector('meta[name="theme-color"]').content).toBe('#030712');
   });
 
@@ -916,7 +916,7 @@ describe('UI wiring on DOMContentLoaded', () => {
     expect(document.querySelector('button[onclick="giveAppLike()"]')).toBeNull();
     expect(document.getElementById('global-likes-count')).toBeNull();
     expect(document.getElementById('user-session-badge')).toBeNull();
-    expect(document.getElementById('banner-username-tag').textContent).toBe('Usuario: ' + EMAIL);
+    expect(document.getElementById('banner-username-tag').textContent).toBe('Cuenta conectada');
 
     const driveButton = document.getElementById('oavix-drive-control');
     driveButton.click();

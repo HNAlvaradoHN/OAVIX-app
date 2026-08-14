@@ -76,12 +76,12 @@
         return `
           <div data-service-state="${state}" class="p-3 rounded-xl border ${tone.border} ${tone.background} flex justify-between items-center text-xs transition-colors">
             <div>
-              <span class="font-black flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ${tone.dot}"></span>${r.title}</span>
+              <span class="font-black flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ${tone.dot}"></span>${escapeHtml(r.title)}</span>
               <p class="text-[10px] font-extrabold opacity-80">Objetivo: ${formatNumber(target)} ${unitText}</p>
             </div>
             <div class="flex items-center space-x-2">
               <span class="font-black ${tone.text}">${tone.label}</span>
-              <button onclick="toggleValidateRecord('${r.id}')" class="px-2 py-1 rounded bg-cyan-600/35 hover:bg-cyan-600/60 text-cyan-300 text-[10px] font-black" title="Validar y Archivar">✓</button>
+              <button data-record-id="${encodeHtmlData(r.id)}" onclick="maintenanceActionFromButton(this, 'validate')" class="px-2 py-1 rounded bg-cyan-600/35 hover:bg-cyan-600/60 text-cyan-300 text-[10px] font-black" title="Validar y Archivar">✓</button>
             </div>
           </div>
         `;

@@ -77,7 +77,6 @@
           oavixExportText(record.currency || 'HNL'),
           oavixExportText(record.provider),
           oavixExportDateLabel(record.alertDate),
-          oavixExportText(record.alertTime),
           record.validated ? 'Archivado' : 'Activo',
           record.photo ? 'Sí' : 'No',
           oavixExportText(record.notes)
@@ -129,7 +128,7 @@
       try {
         const data = buildOavixExportData(options);
         const workbook = window.XLSX.utils.book_new();
-        const maintenanceHeaders = ['Fecha', 'Mantenimiento', 'Categoría', 'Kilometraje', 'Monto', 'Moneda', 'Proveedor', 'Fecha de alerta', 'Hora', 'Estado', 'Foto', 'Notas'];
+        const maintenanceHeaders = ['Fecha', 'Mantenimiento', 'Categoría', 'Kilometraje', 'Monto', 'Moneda', 'Proveedor', 'Fecha de aviso', 'Estado', 'Foto', 'Notas'];
         const fillHeaders = ['Fecha', 'Vehículo', 'Combustible', 'Odómetro', 'Unidad distancia', 'Cantidad', 'Unidad volumen', 'Total HNL', 'Tanque lleno', 'Departamento', 'Municipio', 'Estación', 'Notas'];
         const vehicleHeaders = ['Vehículo', 'Tipo', 'Combustible', 'Distancia', 'Volumen', 'Capacidad tanque', 'Rendimiento esperado', 'Departamento', 'Municipio', 'Estado'];
 

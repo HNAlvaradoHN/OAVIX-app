@@ -86,6 +86,7 @@
 
   function initializeSession() {
     const existingSession = session();
+    purgeInactiveAccounts(existingSession && existingSession.email || '');
     if (existingSession && existingSession.email) {
       state.accountEmail = existingSession.email;
       if (!restoreAccount(state.accountEmail)) {
@@ -119,7 +120,6 @@
     nativeStorage.set(localUpdatedKey(state.accountEmail), changedAt);
     nativeStorage.set(constants.pendingKey, 'true');
     scheduleSync();
-    if (key === 'oavix_auto_records' && root.OAVIXPush) root.OAVIXPush.scheduleSync();
   }
 
   function installMutationHooks(scheduleSync) {
@@ -139,6 +139,22 @@
     };
   }
 
+  function purgeAccount(email) {
+    if (!email) return;
+    nativeStorage.remove(metaKey(email));
+    nativeStorage.remove(localUpdatedKey(email));
+    nativeStorage.remove(needsPullKey(email));
+  }
+
+  function purgeInactiveAccounts(activeEmail) {
+    const activePrefix = activeEmail
+      ? constants.accountPrefix + encodeURIComponent(activeEmail.toLowerCase()) + '__'
+      : '';
+    nativeStorage.keys()
+      .filter(key => key.startsWith(constants.accountPrefix) && (!activePrefix || !key.startsWith(activePrefix)))
+      .forEach(key => nativeStorage.remove(key));
+  }
+
   runtime.storage = {
     dataSnapshot,
     accountSnapshot,
@@ -150,6 +166,8 @@
     legacyMigrationAllowed,
     initializeSession,
     installMutationHooks,
+    purgeAccount,
+    purgeInactiveAccounts,
     localUpdatedKey,
     needsPullKey
   };
