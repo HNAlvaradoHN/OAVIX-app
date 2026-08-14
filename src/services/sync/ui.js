@@ -16,7 +16,7 @@
     }
 
     modal.innerHTML = `
-      <div class="animated-glass-card rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-5 border border-cyan-500/50 text-center">
+      <div class="animated-glass-card rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-5 border border-cyan-500/50 text-center max-h-[92vh] overflow-y-auto">
         <div class="mx-auto w-16 h-16 rounded-2xl bg-slate-900 border border-cyan-500/40 flex items-center justify-center">
           <i class="fa-solid fa-car-side text-cyan-400 text-2xl"></i>
         </div>
@@ -24,6 +24,19 @@
           <h3 class="text-2xl font-black text-white">Bienvenido a OAVIX</h3>
           <p class="text-sm text-slate-300 font-bold mt-2">Elige cómo quieres usar la aplicación.</p>
         </div>
+
+        <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-left space-y-2">
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-emerald-300 mt-0.5" aria-hidden="true"></i>
+            <div class="space-y-1.5">
+              <p class="text-xs font-black text-emerald-100">Tu privacidad está protegida</p>
+              <p class="text-[11px] leading-relaxed font-bold text-slate-300">Al vincular Google, OAVIX usa un espacio privado de Google Drive reservado para los datos de la aplicación. Allí crea el archivo de respaldo de tus mantenimientos, kilometraje, combustible y configuraciones para recuperarlos y sincronizarlos entre tus dispositivos.</p>
+              <p class="text-[11px] leading-relaxed font-bold text-slate-300"><strong class="text-white">OAVIX no solicita acceso general a tus archivos personales de Drive.</strong> La conexión se realiza directamente con Google y OAVIX no recibe tu contraseña.</p>
+              <p class="text-[10px] leading-relaxed font-bold text-slate-400">Puedes retirar el permiso desde tu cuenta de Google cuando quieras.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="space-y-2.5">
           <button id="oavix-google-login" type="button" class="w-full py-3 px-4 rounded-2xl bg-white text-slate-900 font-black flex items-center justify-center gap-3 hover:bg-slate-100 transition">
             <span class="text-lg font-black">G</span><span>Continuar con Google</span>
@@ -33,8 +46,8 @@
           </button>
         </div>
         <div class="space-y-1 text-[11px] font-bold text-slate-400">
-          <p>Con Google: respaldo y sincronización entre dispositivos.</p>
-          <p>Como invitado: los datos permanecen únicamente en este dispositivo.</p>
+          <p>Con Google: respaldo privado y sincronización entre dispositivos.</p>
+          <p>Como invitado: los datos permanecen únicamente en este dispositivo y no se crea respaldo en Drive.</p>
         </div>
       </div>`;
     modal.classList.remove('hidden');
@@ -155,7 +168,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=19').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=20').catch(() => {});
     }
     bindInstallInvitation();
     renderInstallInvitation();

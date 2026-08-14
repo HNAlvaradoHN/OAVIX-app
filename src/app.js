@@ -13,6 +13,7 @@ export const controllerScripts = [
   'src/features/calendar/controller.js',
   'src/features/alerts/controller.js',
   'src/features/fuel/controller.js',
+  'src/core/stability-guards.js',
   'src/ui/settings/controller.js',
   'src/ui/navigation/controller.js',
   'src/core/bootstrap.js'
@@ -40,7 +41,7 @@ function loadClassicScript(path) {
 
 async function loadControllers() {
   for (const path of controllerScripts) {
-    await loadClassicScript(`${path}?v=10`);
+    await loadClassicScript(`${path}?v=11`);
   }
 }
 

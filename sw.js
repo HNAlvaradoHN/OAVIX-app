@@ -1,4 +1,4 @@
-const CACHE = 'oavix-shell-v19';
+const CACHE = 'oavix-shell-v20';
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const APP_SHELL = [
   './src/services/sync/ui.js',
   './src/services/sync/bootstrap.js',
   './src/features/fuel/module.js',
+  './src/features/fuel/storage-guard.js',
   './data/sen-prices.json',
   './src/app.js',
   './src/config/tailwind.js',
@@ -20,6 +21,7 @@ const APP_SHELL = [
   './src/core/utils.js',
   './src/core/state.js',
   './src/core/storage.js',
+  './src/core/stability-guards.js',
   './src/core/bootstrap.js',
   './src/ui/toasts/controller.js',
   './src/ui/theme/controller.js',
