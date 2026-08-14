@@ -86,13 +86,20 @@
 
   function initializeSession() {
     const existingSession = session();
+    const isGuest = Boolean(existingSession && existingSession.mode === 'guest');
     purgeInactiveAccounts(existingSession && existingSession.email || '');
+
+    state.guestMode = isGuest;
     if (existingSession && existingSession.email) {
       state.accountEmail = existingSession.email;
       if (!restoreAccount(state.accountEmail)) {
         clearActiveData();
         nativeStorage.set(needsPullKey(state.accountEmail), 'true');
       }
+    } else if (isGuest) {
+      state.accountEmail = '';
+      nativeStorage.remove(constants.pendingKey);
+      nativeStorage.remove(constants.lastSyncKey);
     } else if (!legacyMigrationAllowed()) {
       clearActiveData();
     }
