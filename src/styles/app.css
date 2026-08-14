@@ -17,6 +17,13 @@
 
     body {
       background-color: var(--bg-dynamic);
+      background-image:
+        radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--border-neon) 18%, transparent), transparent 34%),
+        radial-gradient(circle at 88% 78%, color-mix(in srgb, var(--bg-dynamic) 72%, #8b5cf6), transparent 42%),
+        linear-gradient(135deg, var(--bg-dynamic), color-mix(in srgb, var(--bg-dynamic) 86%, var(--border-neon)));
+      background-size: 165% 165%, 180% 180%, 150% 150%;
+      background-attachment: fixed;
+      animation: oavixBackgroundDrift 28s ease-in-out infinite;
       color: var(--text-color);
       font-family: 'Inter', sans-serif;
       margin: 0;
@@ -24,6 +31,24 @@
       text-shadow: var(--text-shadow);
       font-weight: 600;
       transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    @keyframes oavixBackgroundDrift {
+      0%, 100% { background-position: 0% 20%, 100% 80%, 0% 50%; }
+      50% { background-position: 75% 55%, 20% 25%, 100% 50%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body { animation: none; }
+    }
+
+    .light-theme body {
+      background-color: #f3f4f6;
+      background-image:
+        radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--bg-dynamic) 16%, transparent), transparent 34%),
+        radial-gradient(circle at 90% 85%, color-mix(in srgb, var(--border-neon) 9%, transparent), transparent 38%),
+        linear-gradient(145deg, #ffffff, color-mix(in srgb, var(--bg-dynamic) 12%, #f8fafc) 55%, #e2e8f0);
+      color: #111827;
     }
 
     html {
@@ -70,12 +95,27 @@
     }
 
     .cluster-housing {
-      background: radial-gradient(ellipse at center, color-mix(in srgb, var(--bg-dynamic) 70%, #030712) 0%, var(--bg-dynamic) 100%);
+      background: linear-gradient(145deg, color-mix(in srgb, var(--card-bg) 96%, white), var(--card-bg));
       border: 3px solid var(--border-neon);
       animation: neonPulseGlow 5s ease-in-out infinite;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
       border-radius: 1.5rem;
     }
+
+    .dashboard-surface { isolation: isolate; }
+    .light-theme .animated-glass-card,
+    .light-theme .cluster-housing {
+      background: rgba(255, 255, 255, 0.94);
+      color: #111827;
+      border-color: color-mix(in srgb, var(--border-neon) 42%, #cbd5e1);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+    }
+    .light-theme .dashboard-surface .bg-slate-950\/80,
+    .light-theme .dashboard-surface .bg-slate-950\/90 { background-color: rgba(226, 232, 240, 0.9) !important; }
+    .light-theme .dashboard-surface .bg-slate-800 { background-color: #e2e8f0 !important; }
+    .light-theme .dashboard-surface .border-slate-800,
+    .light-theme .dashboard-surface .border-slate-700 { border-color: #cbd5e1 !important; }
+    .light-theme .dashboard-surface .text-slate-300 { color: #334155 !important; }
 
     .lcd-odometer {
       background: var(--card-bg);
@@ -147,6 +187,21 @@
     }
 
     /* Centro de control: reúne ajustes, sincronización y exportaciones. */
+    .oavix-settings-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 47;
+      background: rgba(2, 6, 23, 0.34);
+      backdrop-filter: blur(9px) saturate(0.78);
+      -webkit-backdrop-filter: blur(9px) saturate(0.78);
+      animation: oavixBackdropIn 0.2s ease-out;
+    }
+    .oavix-settings-backdrop.hidden { display: none !important; }
+    .light-theme .oavix-settings-backdrop { background: rgba(226, 232, 240, 0.42); }
+    body.oavix-settings-open,
+    body.oavix-export-picker-open { overflow: hidden; }
+    @keyframes oavixBackdropIn { from { opacity: 0; } }
+
     .oavix-settings-hub {
       position: fixed;
       top: max(0.7rem, calc(env(safe-area-inset-top, 0px) + 0.55rem));
@@ -422,6 +477,50 @@
       .oavix-settings-toggle { width: 3.15rem; height: 3.15rem; }
       .oavix-settings-panel { top: calc(100% + 0.75rem); padding: 1rem; }
     }
+
+    .oavix-export-picker {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+    .oavix-export-picker.hidden { display: none !important; }
+    .oavix-export-picker-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.72); backdrop-filter: blur(9px); }
+    .oavix-export-picker-card {
+      position: relative;
+      width: min(36rem, 100%);
+      max-height: min(82dvh, 42rem);
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--border-neon) 50%, #475569);
+      border-radius: 1.35rem;
+      background: rgba(8, 15, 30, 0.98);
+      color: #f8fafc;
+      box-shadow: 0 28px 80px rgba(2, 6, 23, 0.72);
+    }
+    .light-theme .oavix-export-picker-card { background: #fff; color: #111827; border-color: #cbd5e1; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18); }
+    .oavix-export-picker-heading { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem; border-bottom: 1px solid rgba(148, 163, 184, 0.18); }
+    .oavix-export-picker-heading h2 { margin: 0.1rem 0 0; font-size: 1rem; font-weight: 900; }
+    .oavix-export-picker-heading p { margin: 0.25rem 0 0; color: #94a3b8; font-size: 0.68rem; }
+    .oavix-export-picker-actions { display: flex; align-items: center; gap: 0.45rem; padding: 0.7rem 1rem; border-bottom: 1px solid rgba(148, 163, 184, 0.14); }
+    .oavix-export-picker-actions button { color: var(--border-neon); font-size: 0.64rem; font-weight: 900; }
+    .oavix-export-picker-actions strong { margin-left: auto; color: #94a3b8; font-size: 0.62rem; }
+    .oavix-export-maintenance-list { display: grid; gap: 0.5rem; overflow: auto; padding: 0.8rem 1rem; }
+    .oavix-export-maintenance-option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; padding: 0.72rem; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 0.85rem; background: rgba(30, 41, 59, 0.52); cursor: pointer; }
+    .light-theme .oavix-export-maintenance-option { background: #f8fafc; border-color: #e2e8f0; }
+    .oavix-export-maintenance-option input { width: 1rem; height: 1rem; accent-color: var(--border-neon); }
+    .oavix-export-maintenance-option strong { display: block; font-size: 0.72rem; }
+    .oavix-export-maintenance-option small { display: block; margin-top: 0.15rem; color: #94a3b8; font-size: 0.6rem; }
+    .oavix-export-maintenance-option > span:last-child { color: #94a3b8; font-size: 0.6rem; font-weight: 800; }
+    .oavix-export-empty { padding: 2rem 1rem; color: #94a3b8; text-align: center; font-size: 0.75rem; }
+    .oavix-export-picker-footer { display: flex; justify-content: flex-end; gap: 0.55rem; padding: 0.85rem 1rem; border-top: 1px solid rgba(148, 163, 184, 0.18); }
+    .oavix-export-picker-footer button { min-height: 2.5rem; padding: 0.55rem 0.85rem; border-radius: 0.75rem; font-size: 0.68rem; font-weight: 900; }
+    .oavix-export-cancel { background: rgba(148, 163, 184, 0.12); }
+    .oavix-export-confirm { background: linear-gradient(135deg, #0891b2, #2563eb); color: #fff; }
+    .oavix-export-confirm:disabled { cursor: not-allowed; opacity: 0.45; }
 
     .oavix-print-report { display: none; }
 

@@ -9,6 +9,8 @@
       const toggle = settingsElement('oavix-settings-toggle');
       if (!panel || !toggle) return;
       panel.classList.remove('hidden');
+      settingsElement('oavix-settings-backdrop')?.classList.remove('hidden');
+      document.body.classList.add('oavix-settings-open');
       toggle.classList.add('active');
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Cerrar configuración');
@@ -21,6 +23,8 @@
       const toggle = settingsElement('oavix-settings-toggle');
       if (!panel || !toggle) return;
       panel.classList.add('hidden');
+      settingsElement('oavix-settings-backdrop')?.classList.add('hidden');
+      document.body.classList.remove('oavix-settings-open');
       toggle.classList.remove('active');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Abrir configuración');

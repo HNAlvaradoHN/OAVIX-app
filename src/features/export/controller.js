@@ -24,8 +24,23 @@
       return Number.isFinite(date.getTime()) ? date.toLocaleDateString('es-HN') : String(value);
     }
 
-    function buildOavixExportData() {
-      const maintenance = readOavixStoredArray('oavix_auto_records');
+    let oavixExportFormat = 'excel';
+
+    function oavixMaintenanceKey(record, index) {
+      return String(record && record.id != null ? record.id : `maintenance-${index}`);
+    }
+
+    function selectedOavixMaintenanceKeys() {
+      return Array.from(document.querySelectorAll('#oavix-export-maintenance-list input:checked'))
+        .map(input => input.value);
+    }
+
+    function buildOavixExportData(options = {}) {
+      const allMaintenance = readOavixStoredArray('oavix_auto_records');
+      const selectedKeys = Array.isArray(options.maintenanceKeys) ? new Set(options.maintenanceKeys.map(String)) : null;
+      const maintenance = selectedKeys
+        ? allMaintenance.filter((record, index) => selectedKeys.has(oavixMaintenanceKey(record, index)))
+        : allMaintenance;
       const fills = readOavixStoredArray('oavix_fuel_history');
       const vehicles = readOavixStoredArray('oavix_fuel_vehicles');
       const vehicleNames = new Map(vehicles.map(vehicle => [String(vehicle.id), vehicle.name || 'Vehículo']));
@@ -104,7 +119,7 @@
       return sheet;
     }
 
-    function exportOavixExcel() {
+    function exportOavixExcel(options = {}) {
       closeSettingsMenu();
       if (!window.XLSX || !window.XLSX.utils || typeof window.XLSX.writeFile !== 'function') {
         showToast('Excel no está disponible', 'Comprueba tu conexión y recarga la aplicación.', 'rose');
@@ -112,7 +127,7 @@
       }
 
       try {
-        const data = buildOavixExportData();
+        const data = buildOavixExportData(options);
         const workbook = window.XLSX.utils.book_new();
         const maintenanceHeaders = ['Fecha', 'Mantenimiento', 'Categoría', 'Kilometraje', 'Monto', 'Moneda', 'Proveedor', 'Fecha de alerta', 'Hora', 'Estado', 'Foto', 'Notas'];
         const fillHeaders = ['Fecha', 'Vehículo', 'Combustible', 'Odómetro', 'Unidad distancia', 'Cantidad', 'Unidad volumen', 'Total HNL', 'Tanque lleno', 'Departamento', 'Municipio', 'Estación', 'Notas'];
@@ -190,7 +205,7 @@
       return report;
     }
 
-    function exportOavixPdf() {
+    function exportOavixPdf(options = {}) {
       closeSettingsMenu();
       if (typeof window.print !== 'function') {
         showToast('PDF no disponible', 'Este navegador no permite imprimir el informe.', 'rose');
@@ -198,7 +213,7 @@
       }
 
       try {
-        const data = buildOavixExportData();
+        const data = buildOavixExportData(options);
         const report = createOavixPrintReport(data);
         const previousTitle = document.title;
         document.title = `OAVIX-informe-${data.generatedAt.slice(0, 10)}`;
@@ -221,4 +236,62 @@
         showToast('No se pudo preparar el PDF', 'Tus datos siguen intactos.', 'rose');
         return false;
       }
+    }
+
+    function updateOavixExportPickerCount() {
+      const selected = selectedOavixMaintenanceKeys().length;
+      const count = document.getElementById('oavix-export-picker-count');
+      const confirm = document.getElementById('oavix-export-confirm');
+      if (count) count.textContent = `${selected} seleccionado${selected === 1 ? '' : 's'}`;
+      if (confirm) confirm.disabled = selected === 0;
+    }
+
+    function openOavixExportPicker(format) {
+      oavixExportFormat = format === 'pdf' ? 'pdf' : 'excel';
+      closeSettingsMenu();
+      const picker = document.getElementById('oavix-export-picker');
+      const list = document.getElementById('oavix-export-maintenance-list');
+      const title = document.getElementById('oavix-export-picker-title');
+      const caption = document.getElementById('oavix-export-picker-caption');
+      const confirm = document.getElementById('oavix-export-confirm');
+      if (!picker || !list) return false;
+
+      const records = readOavixStoredArray('oavix_auto_records');
+      if (title) title.textContent = `Elegir mantenimientos para ${oavixExportFormat === 'pdf' ? 'PDF' : 'Excel'}`;
+      if (caption) caption.textContent = 'Combustibles y vehículos se incluirán completos; tú eliges los mantenimientos.';
+      if (confirm) confirm.textContent = `Exportar en ${oavixExportFormat === 'pdf' ? 'PDF' : 'Excel'}`;
+      list.innerHTML = records.length ? records.map((record, index) => `
+        <label class="oavix-export-maintenance-option">
+          <input type="checkbox" value="${oavixPrintEscape(oavixMaintenanceKey(record, index))}" checked onchange="updateOavixExportPickerCount()">
+          <span><strong>${oavixPrintEscape(record.title || 'Mantenimiento sin título')}</strong><small>${oavixPrintEscape(oavixExportDateLabel(record.date) || 'Sin fecha')} · ${oavixPrintEscape(record.category || 'Sin categoría')}</small></span>
+          <span>${record.validated ? 'Archivado' : 'Activo'}</span>
+        </label>`).join('') : '<p class="oavix-export-empty">Todavía no hay mantenimientos para exportar.</p>';
+      picker.classList.remove('hidden');
+      document.body.classList.add('oavix-export-picker-open');
+      updateOavixExportPickerCount();
+      list.querySelector('input')?.focus({ preventScroll: true });
+      return true;
+    }
+
+    function closeOavixExportPicker() {
+      document.getElementById('oavix-export-picker')?.classList.add('hidden');
+      document.body.classList.remove('oavix-export-picker-open');
+    }
+
+    function setAllOavixExportMaintenance(selected) {
+      document.querySelectorAll('#oavix-export-maintenance-list input[type="checkbox"]')
+        .forEach(input => { input.checked = Boolean(selected); });
+      updateOavixExportPickerCount();
+    }
+
+    function confirmOavixExport() {
+      const maintenanceKeys = selectedOavixMaintenanceKeys();
+      if (!maintenanceKeys.length) {
+        showToast('Selecciona un mantenimiento', 'Marca al menos un registro para continuar.', 'amber');
+        return false;
+      }
+      closeOavixExportPicker();
+      return oavixExportFormat === 'pdf'
+        ? exportOavixPdf({ maintenanceKeys })
+        : exportOavixExcel({ maintenanceKeys });
     }

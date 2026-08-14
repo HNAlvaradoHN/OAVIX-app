@@ -37,7 +37,7 @@ describe('centro de control', () => {
     for (const id of [
       'oavix-settings-toggle', 'oavix-drive-control', 'btn-notif-perm',
       'settings-customize', 'settings-theme-toggle', 'settings-export-excel',
-      'settings-export-pdf'
+      'settings-export-pdf', 'oavix-settings-backdrop', 'oavix-export-picker'
     ]) expect(view.getElementById(id), id).not.toBeNull();
 
     expect(header).not.toContain('btn-notif-perm');
@@ -55,10 +55,14 @@ describe('centro de control', () => {
     controller.toggleSettingsMenu();
     expect(panel.classList.contains('hidden')).toBe(false);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.getElementById('oavix-settings-backdrop').classList.contains('hidden')).toBe(false);
+    expect(document.body.classList.contains('oavix-settings-open')).toBe(true);
 
     controller.closeSettingsMenu();
     expect(panel.classList.contains('hidden')).toBe(true);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById('oavix-settings-backdrop').classList.contains('hidden')).toBe(true);
+    expect(document.body.classList.contains('oavix-settings-open')).toBe(false);
   });
 
   it('conecta el botón de Drive con la sincronización visible del centro de control', async () => {
@@ -93,11 +97,16 @@ describe('centro de control', () => {
   });
 
   it('protege el menú en móvil pequeño, tableta y escritorio', () => {
+    const dashboard = read('src/features/dashboard/view.html');
     expect(styles).toMatch(/\.oavix-settings-panel[\s\S]*width:\s*min\(23rem,\s*calc\(100vw\s*-\s*1\.2rem\)\)/);
     expect(styles).toMatch(/max-height:[^;]*var\(--bottom-nav-clearance\)/);
     expect(styles).toMatch(/@media\s*\(max-width:\s*379px\)[\s\S]*\.oavix-settings-grid\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
     expect(styles).toMatch(/@media\s*\(min-width:\s*640px\)[\s\S]*\.oavix-settings-panel/);
     expect(styles).toContain('#btn-notif-perm[data-state="active"]');
     expect(styles).toContain('#btn-notif-perm[data-state="inactive"]');
+    expect(styles).toMatch(/\.oavix-settings-backdrop[\s\S]*backdrop-filter:\s*blur\(9px\)/);
+    expect(styles).toContain('@keyframes oavixBackgroundDrift');
+    expect(styles).toContain('.light-theme .animated-glass-card');
+    expect(dashboard).toContain('dashboard-surface');
   });
 });
