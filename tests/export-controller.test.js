@@ -6,7 +6,9 @@ const source = readFileSync(resolve(process.cwd(), 'src/features/export/controll
 
 function loadController() {
   return new Function(`${source}; return {
-    buildOavixExportData, exportOavixExcel, exportOavixPdf
+    buildOavixExportData, exportOavixExcel, exportOavixPdf,
+    openOavixExportPicker, closeOavixExportPicker, setAllOavixExportMaintenance,
+    confirmOavixExport, updateOavixExportPickerCount
   };`)();
 }
 
@@ -25,7 +27,7 @@ function xlsxStub() {
 
 beforeEach(() => {
   localStorage.clear();
-  document.body.innerHTML = '';
+  document.body.innerHTML = `<div id="oavix-export-picker" class="hidden"><h2 id="oavix-export-picker-title"></h2><p id="oavix-export-picker-caption"></p><div id="oavix-export-maintenance-list"></div><span id="oavix-export-picker-count"></span><button id="oavix-export-confirm"></button></div>`;
   document.title = 'OAVIX';
   window.showToast = vi.fn();
   window.closeSettingsMenu = vi.fn();
@@ -35,6 +37,9 @@ beforeEach(() => {
     id: 'maintenance', title: '=Cambio de aceite', category: 'Aceite', amount: 800,
     currency: 'HNL', date: '2026-08-13', mileage: 54000,
     photo: `data:image/webp;base64,${'A'.repeat(200)}`, validated: false
+  }, {
+    id: 'brakes', title: 'Cambio de frenos', category: 'Frenos', amount: 1200,
+    currency: 'HNL', date: '2026-08-10', mileage: 53000, validated: true
   }]));
   localStorage.setItem('oavix_fuel_vehicles', JSON.stringify([{
     id: 'car', name: 'Auto familiar', type: 'car', fuelType: 'REGULAR',
@@ -56,13 +61,31 @@ describe('exportaciones OAVIX', () => {
     const controller = loadController();
     const data = controller.buildOavixExportData();
 
-    expect(data.maintenance).toHaveLength(1);
+    expect(data.maintenance).toHaveLength(2);
     expect(data.fills).toHaveLength(1);
     expect(data.vehicles).toHaveLength(1);
-    expect(data.maintenanceTotals.HNL).toBe(800);
+    expect(data.maintenanceTotals.HNL).toBe(2000);
     expect(data.maintenance[0][1]).toBe("'=Cambio de aceite");
     expect(JSON.stringify(data)).not.toContain('data:image/webp');
     expect(data.fills[0][1]).toBe('Auto familiar');
+  });
+
+  it('permite elegir los mantenimientos antes de exportar', () => {
+    const controller = loadController();
+    window.closeSettingsMenu = vi.fn();
+    window.XLSX = xlsxStub().api;
+
+    expect(controller.openOavixExportPicker('excel')).toBe(true);
+    const options = document.querySelectorAll('#oavix-export-maintenance-list input');
+    expect(options).toHaveLength(2);
+    options[1].checked = false;
+    controller.updateOavixExportPickerCount();
+    expect(document.getElementById('oavix-export-picker-count').textContent).toBe('1 seleccionado');
+
+    const data = controller.buildOavixExportData({ maintenanceKeys: ['maintenance'] });
+    expect(data.maintenance).toHaveLength(1);
+    expect(data.maintenance[0][1]).toBe("'=Cambio de aceite");
+    expect(data.maintenanceTotals.HNL).toBe(800);
   });
 
   it('crea un libro Excel con resumen, mantenimientos, combustibles y vehículos', () => {

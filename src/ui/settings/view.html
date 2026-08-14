@@ -1,3 +1,6 @@
+<div id="oavix-settings-backdrop" class="oavix-settings-backdrop hidden" aria-hidden="true"
+  onclick="closeSettingsMenu({ restoreFocus: true })"></div>
+
 <div id="oavix-settings-hub" class="oavix-settings-hub">
   <button id="oavix-settings-toggle" type="button" class="oavix-settings-toggle"
     aria-label="Abrir configuración" aria-haspopup="menu" aria-expanded="false"
@@ -80,7 +83,7 @@
       <div class="oavix-settings-grid">
         <button id="settings-export-excel" type="button"
           class="oavix-settings-item oavix-settings-item-compact settings-export-excel"
-          onclick="exportOavixExcel()">
+          onclick="openOavixExportPicker('excel')">
           <span class="oavix-settings-item-icon"><i class="fa-solid fa-file-excel" aria-hidden="true"></i></span>
           <span class="oavix-settings-item-copy">
             <strong>Excel</strong>
@@ -90,7 +93,7 @@
 
         <button id="settings-export-pdf" type="button"
           class="oavix-settings-item oavix-settings-item-compact settings-export-pdf"
-          onclick="exportOavixPdf()">
+          onclick="openOavixExportPicker('pdf')">
           <span class="oavix-settings-item-icon"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span>
           <span class="oavix-settings-item-copy">
             <strong>PDF</strong>
@@ -105,4 +108,31 @@
       Tus datos privados permanecen vinculados a tu cuenta.
     </p>
   </div>
+</div>
+
+<div id="oavix-export-picker" class="oavix-export-picker hidden" role="dialog" aria-modal="true"
+  aria-labelledby="oavix-export-picker-title">
+  <div class="oavix-export-picker-backdrop" onclick="closeOavixExportPicker()"></div>
+  <section class="oavix-export-picker-card">
+    <header class="oavix-export-picker-heading">
+      <div>
+        <span class="oavix-settings-kicker">EXPORTAR</span>
+        <h2 id="oavix-export-picker-title">Elegir mantenimientos</h2>
+        <p id="oavix-export-picker-caption">Selecciona los registros que deseas incluir.</p>
+      </div>
+      <button type="button" class="oavix-settings-close" aria-label="Cerrar selector" onclick="closeOavixExportPicker()">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </header>
+    <div class="oavix-export-picker-actions">
+      <button type="button" onclick="setAllOavixExportMaintenance(true)">Seleccionar todos</button>
+      <button type="button" onclick="setAllOavixExportMaintenance(false)">Limpiar</button>
+      <strong id="oavix-export-picker-count">0 seleccionados</strong>
+    </div>
+    <div id="oavix-export-maintenance-list" class="oavix-export-maintenance-list"></div>
+    <footer class="oavix-export-picker-footer">
+      <button type="button" class="oavix-export-cancel" onclick="closeOavixExportPicker()">Cancelar</button>
+      <button id="oavix-export-confirm" type="button" class="oavix-export-confirm" onclick="confirmOavixExport()">Exportar seleccionados</button>
+    </footer>
+  </section>
 </div>
