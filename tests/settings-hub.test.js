@@ -9,7 +9,8 @@ const styles = read('src/styles/app.css');
 
 function settingsController() {
   return new Function(`${settingsSource}; return {
-    openSettingsMenu, closeSettingsMenu, toggleSettingsMenu, initializeSettingsMenu
+    openSettingsMenu, closeSettingsMenu, toggleSettingsMenu, initializeSettingsMenu,
+    refreshSettingsMenuState, refreshSettingsAccountState, confirmSettingsLogout
   };`)();
 }
 
@@ -18,6 +19,18 @@ beforeEach(() => {
   document.documentElement.className = 'dark';
   window.showToast = vi.fn();
   window.refreshSettingsSyncState = vi.fn();
+  window.OAVIXSyncInternal = {
+    context: {
+      state: { accountEmail: '', guestMode: false },
+      session: () => null,
+      nativeStorage: { get: vi.fn(() => null) },
+      constants: { lastSyncKey: 'oavix_sync_last' }
+    },
+    auth: {
+      loginWithGoogle: vi.fn(),
+      logoutSession: vi.fn()
+    }
+  };
 });
 
 describe('centro de control', () => {
@@ -25,16 +38,20 @@ describe('centro de control', () => {
     const view = new DOMParser().parseFromString(viewSource, 'text/html');
     const header = read('src/app-shell/header.html');
     const dashboard = read('src/features/dashboard/view.html');
+    const syncUi = read('src/services/sync/ui.js');
 
     for (const id of [
-      'oavix-settings-toggle', 'oavix-drive-control',
-      'settings-customize', 'settings-theme-toggle', 'settings-export-excel',
-      'settings-export-pdf', 'oavix-settings-backdrop', 'oavix-export-picker'
+      'oavix-settings-toggle', 'oavix-drive-control', 'settings-account-google',
+      'settings-account-logout', 'settings-account-label', 'settings-customize',
+      'settings-theme-toggle', 'settings-export-excel', 'settings-export-pdf',
+      'oavix-settings-backdrop', 'oavix-export-picker'
     ]) expect(view.getElementById(id), id).not.toBeNull();
 
     expect(header).not.toContain('btn-notif-perm');
     expect(header).not.toContain('openThemeModal()');
     expect(dashboard).not.toContain('openExportModal');
+    expect(syncUi).not.toContain("logout.textContent = 'Cerrar sesión'");
+    expect(syncUi).not.toContain("link.textContent = 'Vincular Google'");
     expect(view.querySelector('#oavix-settings-toggle .fa-gear')).not.toBeNull();
   });
 
@@ -57,9 +74,49 @@ describe('centro de control', () => {
     expect(document.body.classList.contains('oavix-settings-open')).toBe(false);
   });
 
+  it('muestra cerrar sesión dentro del engranaje para una cuenta Google', () => {
+    window.OAVIXSyncInternal.context.state.accountEmail = 'usuario@oavix.hn';
+    window.OAVIXSyncInternal.context.session = () => ({ email: 'usuario@oavix.hn' });
+    const controller = settingsController();
+    controller.initializeSettingsMenu();
+
+    expect(document.getElementById('settings-account-label').textContent).toBe('Cuenta de Google conectada');
+    expect(document.getElementById('settings-account-caption').textContent).toBe('usuario@oavix.hn');
+    expect(document.getElementById('settings-account-logout').classList.contains('hidden')).toBe(false);
+    expect(document.getElementById('settings-account-google').classList.contains('hidden')).toBe(true);
+  });
+
+  it('muestra vincular Google dentro del engranaje para modo invitado', () => {
+    window.OAVIXSyncInternal.context.state.guestMode = true;
+    const controller = settingsController();
+    controller.initializeSettingsMenu();
+
+    expect(document.getElementById('settings-account-label').textContent).toBe('Modo invitado');
+    expect(document.getElementById('settings-account-google').classList.contains('hidden')).toBe(false);
+    expect(document.getElementById('settings-account-logout').classList.contains('hidden')).toBe(true);
+    expect(document.getElementById('settings-sync-state').textContent).toBe('Local');
+  });
+
+  it('pide confirmación antes de cerrar sesión', () => {
+    window.OAVIXSyncInternal.context.state.accountEmail = 'usuario@oavix.hn';
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const controller = settingsController();
+    controller.initializeSettingsMenu();
+
+    document.getElementById('settings-account-logout').onclick();
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(window.OAVIXSyncInternal.auth.logoutSession).not.toHaveBeenCalled();
+
+    confirm.mockReturnValue(true);
+    document.getElementById('settings-account-logout').onclick();
+    expect(window.OAVIXSyncInternal.auth.logoutSession).toHaveBeenCalledTimes(1);
+    confirm.mockRestore();
+  });
+
   it('conecta el botón de Drive con la sincronización visible del centro de control', async () => {
     const controller = settingsController();
     const syncNow = vi.fn().mockResolvedValue({ status: 'synced' });
+    window.OAVIXSyncInternal.context.state.accountEmail = 'usuario@oavix.hn';
     window.OAVIXDriveSync = { syncNow };
     controller.initializeSettingsMenu();
 
