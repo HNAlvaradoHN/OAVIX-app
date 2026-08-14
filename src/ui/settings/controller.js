@@ -79,11 +79,66 @@
       if (detail && caption) detail.textContent = caption;
     }
 
+    function refreshSettingsAccountState() {
+      const runtime = window.OAVIXSyncInternal;
+      const state = runtime && runtime.context && runtime.context.state;
+      const session = runtime && runtime.context && typeof runtime.context.session === 'function'
+        ? runtime.context.session()
+        : null;
+      const label = settingsElement('settings-account-label');
+      const caption = settingsElement('settings-account-caption');
+      const badge = settingsElement('settings-account-state');
+      const icon = settingsElement('settings-account-icon');
+      const google = settingsElement('settings-account-google');
+      const logout = settingsElement('settings-account-logout');
+
+      google?.classList.add('hidden');
+      logout?.classList.add('hidden');
+
+      if (state && state.accountEmail) {
+        if (label) label.textContent = 'Cuenta de Google conectada';
+        if (caption) caption.textContent = session?.email || state.accountEmail;
+        if (badge) {
+          badge.className = 'oavix-settings-state settings-state-ready';
+          badge.textContent = 'Conectada';
+        }
+        if (icon) icon.className = 'fa-solid fa-user-check';
+        logout?.classList.remove('hidden');
+        return;
+      }
+
+      if (state && state.guestMode) {
+        if (label) label.textContent = 'Modo invitado';
+        if (caption) caption.textContent = 'Los datos se guardan solamente en este dispositivo';
+        if (badge) {
+          badge.className = 'oavix-settings-state settings-state-pending';
+          badge.textContent = 'Local';
+        }
+        if (icon) icon.className = 'fa-solid fa-user';
+        google?.classList.remove('hidden');
+        return;
+      }
+
+      if (label) label.textContent = 'Sin sesión';
+      if (caption) caption.textContent = 'Conecta Google o continúa como invitado';
+      if (badge) {
+        badge.className = 'oavix-settings-state settings-state-inactive';
+        badge.textContent = 'Inactiva';
+      }
+      if (icon) icon.className = 'fa-solid fa-user';
+      google?.classList.remove('hidden');
+    }
+
     function refreshSettingsSyncState() {
       const runtime = window.OAVIXSyncInternal;
-      const email = runtime && runtime.context && runtime.context.state.accountEmail;
+      const state = runtime && runtime.context && runtime.context.state;
+      const email = state && state.accountEmail;
       if (!email) {
-        setSettingsSyncState('inactive', 'Sin sesión', 'Inicia sesión para usar Google Drive');
+        if (state && state.guestMode) {
+          setSettingsSyncState('inactive', 'Local', 'Vincula Google para activar la sincronización');
+        } else {
+          setSettingsSyncState('inactive', 'Sin sesión', 'Inicia sesión para usar Google Drive');
+        }
         return;
       }
       const lastSync = runtime.context.nativeStorage.get(runtime.context.constants.lastSyncKey);
@@ -96,6 +151,11 @@
 
     async function triggerSettingsSync() {
       const button = settingsElement('oavix-drive-control');
+      const runtime = window.OAVIXSyncInternal;
+      if (runtime?.context?.state?.guestMode) {
+        showToast('Modo invitado', 'Vincula una cuenta de Google para activar la sincronización.', 'cyan');
+        return { status: 'guest' };
+      }
       if (!window.OAVIXDriveSync || typeof window.OAVIXDriveSync.syncNow !== 'function') {
         showToast('Sincronización no disponible', 'Recarga la aplicación e inténtalo nuevamente.', 'rose');
         return false;
@@ -119,8 +179,32 @@
       }
     }
 
+    function linkSettingsGoogleAccount() {
+      const login = window.OAVIXSyncInternal?.auth?.loginWithGoogle;
+      if (typeof login !== 'function') {
+        showToast('Inicio de sesión no disponible', 'Recarga la aplicación e inténtalo nuevamente.', 'rose');
+        return false;
+      }
+      closeSettingsMenu();
+      return login();
+    }
+
+    function confirmSettingsLogout() {
+      const logout = window.OAVIXSyncInternal?.auth?.logoutSession;
+      if (typeof logout !== 'function') {
+        showToast('Cierre de sesión no disponible', 'Recarga la aplicación e inténtalo nuevamente.', 'rose');
+        return false;
+      }
+      const accepted = window.confirm('¿Seguro que deseas cerrar sesión en OAVIX?');
+      if (!accepted) return false;
+      closeSettingsMenu();
+      logout();
+      return true;
+    }
+
     function refreshSettingsMenuState() {
       refreshSettingsThemeState();
+      refreshSettingsAccountState();
       refreshSettingsSyncState();
     }
 
@@ -128,7 +212,11 @@
       if (settingsMenuInitialized || !settingsElement('oavix-settings-hub')) return;
       settingsMenuInitialized = true;
       const syncButton = settingsElement('oavix-drive-control');
+      const googleButton = settingsElement('settings-account-google');
+      const logoutButton = settingsElement('settings-account-logout');
       if (syncButton) syncButton.onclick = triggerSettingsSync;
+      if (googleButton) googleButton.onclick = linkSettingsGoogleAccount;
+      if (logoutButton) logoutButton.onclick = confirmSettingsLogout;
       document.addEventListener('pointerdown', event => {
         const hub = settingsElement('oavix-settings-hub');
         const panel = settingsElement('oavix-settings-panel');
