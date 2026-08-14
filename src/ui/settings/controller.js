@@ -189,12 +189,64 @@
       return login();
     }
 
-    function confirmSettingsLogout() {
-      const logout = window.OAVIXSyncInternal?.auth?.logoutSession;
+    async function confirmSettingsLogout() {
+      const runtime = window.OAVIXSyncInternal;
+      const logout = runtime?.auth?.logoutSession;
       if (typeof logout !== 'function') {
         showToast('Cierre de sesión no disponible', 'Recarga la aplicación e inténtalo nuevamente.', 'rose');
         return false;
       }
+
+      const context = runtime.context;
+      const pendingKey = context?.constants?.pendingKey;
+      const hasPendingChanges = Boolean(
+        pendingKey && context?.nativeStorage?.get(pendingKey) === 'true'
+      );
+
+      if (hasPendingChanges) {
+        const accepted = window.confirm(
+          'Tienes cambios que todavía no están respaldados en Google Drive. OAVIX intentará sincronizarlos antes de cerrar sesión. ¿Deseas continuar?'
+        );
+        if (!accepted) return false;
+
+        if (!window.navigator.onLine) {
+          showToast(
+            'Cierre protegido',
+            'Estás sin conexión y hay cambios pendientes. Conéctate a Internet y sincroniza antes de cerrar sesión.',
+            'amber'
+          );
+          return false;
+        }
+
+        const syncNow = runtime?.synchronizer?.syncNow;
+        if (typeof syncNow !== 'function') {
+          showToast(
+            'Cierre protegido',
+            'No se pudo comprobar el respaldo. Tus datos permanecen en este dispositivo.',
+            'amber'
+          );
+          return false;
+        }
+
+        closeSettingsMenu();
+        setSettingsSyncState('working', 'Respaldando', 'Guardando los cambios pendientes antes de cerrar sesión…');
+        const result = await syncNow(true, { reload: false });
+        const stillPending = context.nativeStorage.get(pendingKey) === 'true';
+        const failed = !result || ['offline', 'error', 'busy', 'signed-out'].includes(result.status) || stillPending;
+        if (failed) {
+          setSettingsSyncState('pending', 'Pendiente', 'Tus cambios siguen guardados en este dispositivo');
+          showToast(
+            'No se cerró la sesión',
+            'OAVIX no pudo confirmar el respaldo de tus cambios. Inténtalo nuevamente cuando la sincronización esté disponible.',
+            'amber'
+          );
+          return false;
+        }
+
+        logout();
+        return true;
+      }
+
       const accepted = window.confirm('¿Seguro que deseas cerrar sesión en OAVIX?');
       if (!accepted) return false;
       closeSettingsMenu();
