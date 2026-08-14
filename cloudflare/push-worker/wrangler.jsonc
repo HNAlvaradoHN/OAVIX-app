@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "oavix-push",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "limits": { "cpu_ms": 10 },
+  "vars": {
+    "ALLOWED_ORIGIN": "https://hnalvaradohn.github.io",
+    "VAPID_SUBJECT": "mailto:REEMPLAZAR@correo.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "oavix-push",
+      "database_id": "REEMPLAZAR_CON_ID_D1"
+    }
+  ],
+  "triggers": { "crons": ["* * * * *"] }
+}

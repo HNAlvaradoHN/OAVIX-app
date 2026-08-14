@@ -57,7 +57,9 @@ describe('notificaciones push reales', () => {
     expect(pushManager.subscribe).toHaveBeenCalledTimes(1);
     const request = window.fetch.mock.calls[0];
     expect(request[1].headers.Authorization).toBe('Bearer google-token');
-    expect(JSON.parse(request[1].body).reminders).toHaveLength(1);
+    const reminders = JSON.parse(request[1].body).reminders;
+    expect(reminders).toHaveLength(1);
+    expect(reminders[0].dueAt).toMatch(/^2026-08-20T\d{2}:30:00\.000Z$/);
     expect(localStorage.getItem('oavix_push_enabled')).toBe('true');
   });
 

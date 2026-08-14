@@ -27,6 +27,13 @@
     }
   }
 
+  function dueAt(record) {
+    const date = String(record.alertDate || '');
+    const time = String(record.alertTime || '09:00');
+    const localDate = new Date(`${date}T${time}:00`);
+    return Number.isNaN(localDate.getTime()) ? '' : localDate.toISOString();
+  }
+
   async function googleAccessToken(interactive) {
     const runtime = root.OAVIXSyncInternal;
     if (!runtime || !runtime.context.state.accountEmail || !runtime.auth) {
@@ -59,7 +66,8 @@
           title: String(record.title || 'Mantenimiento programado'),
           category: String(record.category || ''),
           alertDate: String(record.alertDate || ''),
-          alertTime: String(record.alertTime || '09:00')
+          alertTime: String(record.alertTime || '09:00'),
+          dueAt: dueAt(record)
         })),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Tegucigalpa'
       })

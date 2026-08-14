@@ -1,7 +1,5 @@
 node_modules/
 coverage/
 .firebaserc
-firebase/functions/.env
-firebase/functions/.secret.local
-.firebase/
-firebase-debug.log
+cloudflare/push-worker/.dev.vars
+cloudflare/push-worker/.wrangler/
