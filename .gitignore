@@ -1,2 +1,5 @@
 node_modules/
 coverage/
+.firebaserc
+cloudflare/push-worker/.dev.vars
+cloudflare/push-worker/.wrangler/

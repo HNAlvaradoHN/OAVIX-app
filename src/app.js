@@ -6,6 +6,7 @@ export const controllerScripts = [
   'src/core/storage.js',
   'src/ui/toasts/controller.js',
   'src/ui/theme/controller.js',
+  'src/services/push/controller.js',
   'src/features/export/controller.js',
   'src/features/dashboard/controller.js',
   'src/features/maintenance/controller.js',

@@ -15,6 +15,18 @@
       checkNotifPermissionState();
 
       if (permission === 'granted') {
+        try {
+          const push = window.OAVIXPush && await window.OAVIXPush.enable();
+          if (push && push.status !== 'not-configured') {
+            showToast('Alertas push activadas', 'Los avisos llegarán aunque OAVIX no esté abierta.', 'emerald');
+            if (typeof closeSettingsMenu === 'function') closeSettingsMenu();
+            checkNotifPermissionState();
+            return permission;
+          }
+        } catch (error) {
+          console.warn('[OAVIX Push]', error && error.message);
+          showToast('Permiso concedido', error.message || 'No se pudo activar el servicio push.', 'amber');
+        }
         showToast('Alertas activadas', 'Recibirás notificaciones de tus mantenimientos programados.', 'emerald');
       } else {
         showToast(

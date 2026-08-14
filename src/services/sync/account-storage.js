@@ -119,6 +119,7 @@
     nativeStorage.set(localUpdatedKey(state.accountEmail), changedAt);
     nativeStorage.set(constants.pendingKey, 'true');
     scheduleSync();
+    if (key === 'oavix_auto_records' && root.OAVIXPush) root.OAVIXPush.scheduleSync();
   }
 
   function installMutationHooks(scheduleSync) {
