@@ -17,6 +17,8 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/features/export/` | Exportación independiente de informes Excel y PDF, con selección previa de mantenimientos y sin imágenes pesadas. |
 | `src/features/archive/` | Vista del archivo. |
 | `src/ui/settings/` | Centro de control enfocado con fondo desenfocado para sincronización, alarmas, apariencia y exportaciones. |
+| `src/services/push/` | Suscripción Web Push y sincronización autenticada de recordatorios por dispositivo. |
+| `firebase/functions/` | Backend programado que verifica la cuenta, guarda recordatorios y envía avisos en segundo plano. |
 | `src/ui/` | Tema, navegación y notificaciones visuales compartidas. |
 | `src/styles/` | Estilos generales. |
 | `src/core/` | Estado, almacenamiento, utilidades y arranque compartidos. |

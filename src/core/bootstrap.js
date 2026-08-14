@@ -10,6 +10,7 @@
       renderArchiveRecords();
       checkNotifPermissionState();
       initializeSettingsMenu();
+      window.OAVIXPush?.sync().catch(error => console.warn('[OAVIX Push]', error.message));
 
       const savedBg = localStorage.getItem('oavix_custom_bg');
       const savedNeon = localStorage.getItem('oavix_custom_neon');

@@ -1,8 +1,9 @@
-const CACHE = 'oavix-shell-v16';
+const CACHE = 'oavix-shell-v17';
 const APP_SHELL = [
   './',
   './index.html',
   './oavix-sync-config.js',
+  './oavix-push-config.js',
   './src/services/sync/context.js',
   './src/services/sync/merge-engine.js',
   './src/services/sync/account-storage.js',
@@ -23,6 +24,7 @@ const APP_SHELL = [
   './src/core/bootstrap.js',
   './src/ui/toasts/controller.js',
   './src/ui/theme/controller.js',
+  './src/services/push/controller.js',
   './src/features/export/controller.js',
   './src/ui/settings/controller.js',
   './src/ui/navigation/controller.js',
@@ -79,4 +81,28 @@ self.addEventListener('fetch', event => {
       })
       .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
   );
+});
+
+self.addEventListener('push', event => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch { payload = {}; }
+  const title = payload.title || 'OAVIX: mantenimiento pendiente';
+  event.waitUntil(self.registration.showNotification(title, {
+    body: payload.body || 'Tienes un mantenimiento programado.',
+    icon: './icon.svg',
+    badge: './icon.svg',
+    tag: payload.tag || 'oavix-maintenance',
+    data: { url: payload.url || './?tab=alerts' },
+    requireInteraction: true
+  }));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = new URL(event.notification.data && event.notification.data.url || './?tab=alerts', self.location.href).href;
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+    const visible = windows.find(client => client.url.startsWith(self.location.origin));
+    if (visible) return visible.focus().then(() => visible.navigate(target));
+    return clients.openWindow(target);
+  }));
 });

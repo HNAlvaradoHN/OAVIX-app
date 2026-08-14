@@ -1,2 +1,7 @@
 node_modules/
 coverage/
+.firebaserc
+firebase/functions/.env
+firebase/functions/.secret.local
+.firebase/
+firebase-debug.log
