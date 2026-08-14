@@ -18,20 +18,29 @@
     modal.innerHTML = `
       <div class="animated-glass-card rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-5 border border-cyan-500/50 text-center">
         <div class="mx-auto w-16 h-16 rounded-2xl bg-slate-900 border border-cyan-500/40 flex items-center justify-center">
-          <i class="fa-solid fa-cloud text-cyan-400 text-2xl"></i>
+          <i class="fa-solid fa-car-side text-cyan-400 text-2xl"></i>
         </div>
         <div>
           <h3 class="text-2xl font-black text-white">Bienvenido a OAVIX</h3>
-          <p class="text-sm text-slate-300 font-bold mt-2">Inicia sesión con tu cuenta de Google para sincronizar tus datos.</p>
+          <p class="text-sm text-slate-300 font-bold mt-2">Elige cómo quieres usar la aplicación.</p>
         </div>
-        <button id="oavix-google-login" type="button" class="w-full py-3 px-4 rounded-2xl bg-white text-slate-900 font-black flex items-center justify-center gap-3 hover:bg-slate-100 transition">
-          <span class="text-lg font-black">G</span><span>Continuar con Google</span>
-        </button>
-        <p class="text-[11px] text-slate-400">Tus datos de OAVIX se guardan en el espacio privado de la cuenta seleccionada.</p>
+        <div class="space-y-2.5">
+          <button id="oavix-google-login" type="button" class="w-full py-3 px-4 rounded-2xl bg-white text-slate-900 font-black flex items-center justify-center gap-3 hover:bg-slate-100 transition">
+            <span class="text-lg font-black">G</span><span>Continuar con Google</span>
+          </button>
+          <button id="oavix-guest-login" type="button" class="w-full py-3 px-4 rounded-2xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-100 font-black flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition">
+            <i class="fa-solid fa-user text-cyan-300"></i><span>Usar como invitado</span>
+          </button>
+        </div>
+        <div class="space-y-1 text-[11px] font-bold text-slate-400">
+          <p>Con Google: respaldo y sincronización entre dispositivos.</p>
+          <p>Como invitado: los datos permanecen únicamente en este dispositivo.</p>
+        </div>
       </div>`;
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
     document.getElementById('oavix-google-login').onclick = runtime.auth.loginWithGoogle;
+    document.getElementById('oavix-guest-login').onclick = runtime.auth.enterGuestMode;
   }
 
   function hideLogin() {
@@ -61,25 +70,51 @@
 
     const bannerTag = document.getElementById('banner-username-tag');
     if (bannerTag) {
-      bannerTag.textContent = state.accountEmail ? 'Cuenta conectada' : '';
-      if (state.accountEmail) bannerTag.style.display = 'inline-flex';
       const wrapper = bannerTag.parentElement;
-      if (wrapper && state.accountEmail && !document.getElementById('oavix-banner-logout')) {
-        const logout = document.createElement('button');
-        logout.id = 'oavix-banner-logout';
-        logout.type = 'button';
-        logout.className = 'px-2 py-0.5 rounded border border-rose-500/40 bg-rose-500/15 text-rose-300 hover:bg-rose-500/30 text-[10px] font-extrabold transition';
-        logout.textContent = 'Cerrar sesión';
-        logout.onclick = runtime.auth.logoutSession;
-        wrapper.appendChild(logout);
+      document.getElementById('oavix-banner-logout')?.remove();
+      document.getElementById('oavix-banner-link-google')?.remove();
+
+      if (state.accountEmail) {
+        bannerTag.textContent = 'Cuenta conectada';
+        bannerTag.style.display = 'inline-flex';
+        if (wrapper) {
+          const logout = document.createElement('button');
+          logout.id = 'oavix-banner-logout';
+          logout.type = 'button';
+          logout.className = 'px-2 py-0.5 rounded border border-rose-500/40 bg-rose-500/15 text-rose-300 hover:bg-rose-500/30 text-[10px] font-extrabold transition';
+          logout.textContent = 'Cerrar sesión';
+          logout.onclick = runtime.auth.logoutSession;
+          wrapper.appendChild(logout);
+        }
+      } else if (state.guestMode) {
+        bannerTag.textContent = 'Modo invitado · solo este dispositivo';
+        bannerTag.style.display = 'inline-flex';
+        if (wrapper) {
+          const link = document.createElement('button');
+          link.id = 'oavix-banner-link-google';
+          link.type = 'button';
+          link.className = 'px-2 py-0.5 rounded border border-cyan-500/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/30 text-[10px] font-extrabold transition';
+          link.textContent = 'Vincular Google';
+          link.onclick = runtime.auth.loginWithGoogle;
+          wrapper.appendChild(link);
+        }
+      } else {
+        bannerTag.textContent = '';
+        bannerTag.style.display = 'none';
       }
     }
 
     const driveButton = document.getElementById('oavix-drive-control');
     if (driveButton) {
-      driveButton.onclick = () => typeof root.triggerSettingsSync === 'function'
-        ? root.triggerSettingsSync()
-        : runtime.synchronizer.syncNow(true);
+      driveButton.onclick = () => {
+        if (state.guestMode) {
+          root.showToast?.('Modo invitado', 'Vincula una cuenta de Google para activar la sincronización.', 'cyan', 6000);
+          return;
+        }
+        return typeof root.triggerSettingsSync === 'function'
+          ? root.triggerSettingsSync()
+          : runtime.synchronizer.syncNow(true);
+      };
     }
     if (typeof root.refreshSettingsSyncState === 'function') root.refreshSettingsSyncState();
   }
@@ -88,7 +123,7 @@
     if (document.getElementById('oavix-v5-css')) return;
     const style = document.createElement('style');
     style.id = 'oavix-v5-css';
-    style.textContent = '#oavix-banner-logout{white-space:nowrap}';
+    style.textContent = '#oavix-banner-logout,#oavix-banner-link-google{white-space:nowrap}';
     document.head.appendChild(style);
   }
 
@@ -211,12 +246,12 @@
     addSyncStyles();
     cleanHeader();
     installPwa();
-    if (state.accountEmail) hideLogin();
+    if (state.accountEmail || state.guestMode) hideLogin();
     else buildLogin();
     root.handleLoginSubmit = () => false;
     root.logoutSession = runtime.auth.logoutSession;
     root.checkLoginState = function checkLoginState() {
-      if (state.accountEmail) hideLogin();
+      if (state.accountEmail || state.guestMode) hideLogin();
       else buildLogin();
     };
   }

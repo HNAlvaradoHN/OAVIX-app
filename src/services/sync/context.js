@@ -40,6 +40,7 @@
     lastSyncAttemptAt: 0,
     authInProgress: false,
     accountEmail: '',
+    guestMode: false,
     pendingTokenResolve: null,
     pendingTokenReject: null
   };
