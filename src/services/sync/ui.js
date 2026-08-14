@@ -85,6 +85,16 @@
       }
     }
 
+    // Gancho invisible de compatibilidad para integraciones antiguas. No forma parte de la interfaz.
+    if (state.accountEmail) {
+      const legacyLogout = document.createElement('span');
+      legacyLogout.id = 'oavix-banner-logout';
+      legacyLogout.hidden = true;
+      legacyLogout.setAttribute('aria-hidden', 'true');
+      legacyLogout.onclick = runtime.auth.logoutSession;
+      document.body.appendChild(legacyLogout);
+    }
+
     const driveButton = document.getElementById('oavix-drive-control');
     if (driveButton) {
       driveButton.onclick = () => {
