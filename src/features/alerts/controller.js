@@ -68,10 +68,7 @@
 
     function checkScheduledAlarms() {
       const now = new Date();
-      const todayStr = now.toISOString().split('T')[0];
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const currentTimeStr = `${hours}:${minutes}`;
+      const staleAlarmGraceMs = 2 * 60 * 1000;
 
       let triggeredAlarms = JSON.parse(localStorage.getItem('oavix_triggered_alarms')) || [];
 
@@ -80,11 +77,16 @@
         const alarmKey = `${r.id}_${r.alertDate}_${r.alertTime || '00:00'}`;
         if (triggeredAlarms.includes(alarmKey)) return;
 
-        const isToday = r.alertDate === todayStr;
-        const isPastDate = r.alertDate < todayStr;
-        const isTimeReached = !r.alertTime || r.alertTime <= currentTimeStr;
+        const dueAt = new Date(`${r.alertDate}T${r.alertTime || '00:00'}:00`);
+        if (Number.isNaN(dueAt.getTime()) || dueAt.getTime() > now.getTime()) return;
 
-        if (isPastDate || (isToday && isTimeReached)) {
+        if (now.getTime() - dueAt.getTime() > staleAlarmGraceMs) {
+          triggeredAlarms.push(alarmKey);
+          localStorage.setItem('oavix_triggered_alarms', JSON.stringify(triggeredAlarms));
+          return;
+        }
+
+        if (dueAt.getTime() <= now.getTime()) {
           triggeredAlarms.push(alarmKey);
           localStorage.setItem('oavix_triggered_alarms', JSON.stringify(triggeredAlarms));
 

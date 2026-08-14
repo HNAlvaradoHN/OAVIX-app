@@ -28,7 +28,7 @@ const ownership = {
   'src/features/dashboard/controller.js': ['setDistanceUnit', 'saveCurrentMileageInput', 'renderMileageComparison', 'renderStats'],
   'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'compressMaintenanceImage', 'previewImageFile', 'renderRecords', 'startNewMaintenance', 'openFormModal', 'handleFormSubmit'],
   'src/features/archive/controller.js': ['renderArchiveRecords'],
-  'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
+  'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'openCalendarEntryDetails', 'changeMonth'],
   'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
   'src/features/fuel/controller.js': ['renderFuelModule', 'calculateFuelTrip', 'refreshFuelPrices', 'saveFuelFill'],
   'src/features/export/controller.js': ['buildOavixExportData', 'exportOavixExcel', 'exportOavixPdf'],
@@ -303,5 +303,46 @@ describe('controller architecture', () => {
     new Script(read('src/features/maintenance/controller.js')).runInContext(context);
 
     expect(new Script('autoCategories.length').runInContext(context)).toBe(0);
+  });
+
+  it('renders preventive services with green, yellow and red states', () => {
+    document.body.innerHTML = '<div id="mileage-comparison-list"></div>';
+    const storage = new Map([
+      ['oavix_auto_mileage', '1000'],
+      ['oavix_auto_records', JSON.stringify([
+        { id: 'safe', title: 'Lejano', mileage: 3000, validated: false },
+        { id: 'near', title: 'Cercano', mileage: 1500, validated: false },
+        { id: 'overdue', title: 'Pasado', mileage: 900, validated: false }
+      ])]
+    ]);
+    const context = createContext({
+      document,
+      JSON,
+      Number,
+      String,
+      localStorage: {
+        getItem: key => storage.get(key) ?? null,
+        setItem: (key, value) => storage.set(key, String(value))
+      }
+    });
+    context.window = context;
+
+    new Script(read('src/core/utils.js')).runInContext(context);
+    new Script(read('src/core/state.js')).runInContext(context);
+    new Script(read('src/features/dashboard/controller.js')).runInContext(context);
+    new Script('renderMileageComparison()').runInContext(context);
+
+    expect(Array.from(document.querySelectorAll('[data-service-state]')).map(node => node.dataset.serviceState))
+      .toEqual(['safe', 'near', 'overdue']);
+  });
+
+  it('uses a compact photo preview and opens calendar details before editing', () => {
+    const maintenance = read('src/features/maintenance/controller.js');
+    const calendar = read('src/features/calendar/controller.js');
+
+    expect(maintenance).toContain('w-14 h-14');
+    expect(maintenance).not.toContain('w-full h-28');
+    expect(calendar).toContain('openCalendarEntryDetails(dayEntries[0].id)');
+    expect(calendar).toContain('id="calendar-detail-edit"');
   });
 });

@@ -1,3 +1,31 @@
+    function refreshOavixFromStorage() {
+      currentUnit = localStorage.getItem('oavix_auto_unit') || 'km';
+      const storedMileage = localStorage.getItem('oavix_auto_mileage');
+      currentVehicleMileage = storedMileage === null ? 85400 : Number(storedMileage) || 0;
+      try {
+        const categories = JSON.parse(localStorage.getItem('oavix_auto_categories') || '[]');
+        autoCategories = Array.isArray(categories) ? categories : [];
+      } catch (_) { autoCategories = []; }
+      try {
+        const records = JSON.parse(localStorage.getItem('oavix_auto_records') || '[]');
+        autoRecords = Array.isArray(records) ? records : [];
+      } catch (_) { autoRecords = []; }
+
+      repairMaintenanceCategories();
+      document.getElementById('current-mileage-input').value = formatNumber(currentVehicleMileage);
+      updateUnitUI();
+      setupCategoryDropdowns();
+      renderMileageComparison();
+      renderStats();
+      renderRecords();
+      renderCalendar();
+      renderAlerts();
+      renderArchiveRecords();
+      if (window.OAVIXFuel?.reloadLocalState) window.OAVIXFuel.reloadLocalState();
+    }
+
+    window.OAVIXRefreshFromStorage = refreshOavixFromStorage;
+
     function initializeOavixApp() {
       document.getElementById('current-mileage-input').value = formatNumber(currentVehicleMileage);
       updateUnitUI();

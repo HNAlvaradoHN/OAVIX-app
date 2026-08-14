@@ -145,6 +145,7 @@ beforeEach(() => {
   setOnline(true);
   window.OAVIX_GOOGLE_CLIENT_ID = 'test-client-id.apps.googleusercontent.com';
   window.showToast = vi.fn();
+  window.OAVIXRefreshFromStorage = vi.fn();
   fetchMock = vi.fn();
   window.fetch = fetchMock;
   tokenClientState = stubGoogleIdentity();
@@ -455,7 +456,8 @@ describe('cross-device pull', () => {
     expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
     expect(localStorage.getItem(localUpdatedKey(EMAIL))).toBe('2025-04-09T00:00:00.000Z');
     await vi.advanceTimersByTimeAsync(1000);
-    expect(reload).toHaveBeenCalled();
+    expect(window.OAVIXRefreshFromStorage).toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
   });
 
   it('removes the exact old demo record from an existing Drive file', async () => {
@@ -533,7 +535,8 @@ describe('cross-device pull', () => {
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(localStorage.getItem('oavix_auto_records')).toBe('[{"id":9}]');
-    expect(reload).toHaveBeenCalled();
+    expect(window.OAVIXRefreshFromStorage).toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
   });
 
   it('syncs on load for a signed-in account even without pending changes', async () => {

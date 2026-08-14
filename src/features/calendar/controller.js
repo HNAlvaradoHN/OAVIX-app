@@ -36,7 +36,7 @@
         return;
       }
       if (dayEntries.length === 1) {
-        openFormModal(dayEntries[0].id);
+        openCalendarEntryDetails(dayEntries[0].id);
         return;
       }
 
@@ -59,12 +59,64 @@
 
       document.getElementById('day-entries-title').textContent = `Registros del ${dateStr}`;
       document.getElementById('day-entries-list').innerHTML = dayEntries.map(entry => `
-        <button onclick="document.getElementById('modal-day-entries').classList.add('hidden'); openFormModal('${entry.id}')" class="w-full text-left p-3 rounded-xl border border-slate-600 bg-slate-900/60 hover:border-cyan-500 transition text-xs">
+        <button onclick="document.getElementById('modal-day-entries').classList.add('hidden'); openCalendarEntryDetails('${entry.id}')" class="w-full text-left p-3 rounded-xl border border-slate-600 bg-slate-900/60 hover:border-cyan-500 transition text-xs">
           <span class="font-black">${escapeHtml(entry.title)}</span>
           <p class="text-[10px] opacity-80 font-bold">${escapeHtml(entry.category)} • ${formatMoney(entry.amount, entry.currency || 'USD')}</p>
         </button>
       `).join('');
       modal.classList.remove('hidden');
+    }
+
+    function openCalendarEntryDetails(id) {
+      const entry = autoRecords.find(record => String(record.id) === String(id));
+      if (!entry) return;
+
+      let modal = document.getElementById('modal-calendar-details');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-calendar-details';
+        modal.className = 'fixed inset-0 z-[65] hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4';
+        modal.innerHTML = `
+          <article class="animated-glass-card w-full max-w-md rounded-2xl p-5 shadow-2xl">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-700 pb-3">
+              <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-cyan-400">Detalle del mantenimiento</p>
+                <h3 id="calendar-detail-title" class="mt-1 text-base font-black"></h3>
+              </div>
+              <button type="button" onclick="closeCalendarEntryDetails()" class="p-2 opacity-70 hover:opacity-100" aria-label="Cerrar detalles"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="calendar-detail-content" class="mt-4 space-y-3 text-xs"></div>
+            <div class="mt-5 flex justify-end gap-2 border-t border-slate-700 pt-3">
+              <button type="button" onclick="closeCalendarEntryDetails()" class="px-3 py-1.5 rounded-lg bg-slate-800 font-extrabold">Cerrar</button>
+              <button id="calendar-detail-edit" type="button" class="px-3 py-1.5 rounded-lg bg-indigo-600/35 text-indigo-200 font-black"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
+            </div>
+          </article>
+        `;
+        document.body.appendChild(modal);
+      }
+
+      document.getElementById('calendar-detail-title').textContent = entry.title || 'Mantenimiento';
+      document.getElementById('calendar-detail-content').innerHTML = `
+        ${entry.photo ? `<button type="button" onclick="openImageViewer('${entry.photo}')" class="block w-20 h-20 overflow-hidden rounded-xl border border-slate-600 cursor-zoom-in"><img src="${entry.photo}" alt="Vista previa" class="w-full h-full object-cover"></button>` : ''}
+        <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
+          <dt class="font-black opacity-70">CategorÃ­a</dt><dd>${escapeHtml(entry.category || 'Sin categorÃ­a')}</dd>
+          <dt class="font-black opacity-70">Fecha</dt><dd>${escapeHtml(entry.date || 'Sin fecha')}</dd>
+          <dt class="font-black opacity-70">Alarma</dt><dd>${entry.alertDate ? `${escapeHtml(entry.alertDate)} ${escapeHtml(entry.alertTime || '')}` : 'No programada'}</dd>
+          <dt class="font-black opacity-70">Costo</dt><dd>${formatMoney(entry.amount, entry.currency || 'USD')}</dd>
+          <dt class="font-black opacity-70">Objetivo</dt><dd>${entry.mileage ? `${formatNumber(entry.mileage)} ${currentUnit.toUpperCase()}` : 'No definido'}</dd>
+          <dt class="font-black opacity-70">Proveedor</dt><dd>${escapeHtml(entry.provider || 'No indicado')}</dd>
+        </dl>
+        ${entry.notes ? `<div class="rounded-xl bg-slate-900/40 p-3"><p class="mb-1 font-black opacity-70">Notas</p><p class="whitespace-pre-wrap">${escapeHtml(entry.notes)}</p></div>` : ''}
+      `;
+      document.getElementById('calendar-detail-edit').onclick = () => {
+        closeCalendarEntryDetails();
+        openFormModal(entry.id);
+      };
+      modal.classList.remove('hidden');
+    }
+
+    function closeCalendarEntryDetails() {
+      document.getElementById('modal-calendar-details')?.classList.add('hidden');
     }
 
     function changeMonth(d) {

@@ -56,7 +56,7 @@
     function renderMileageComparison() {
       const container = document.getElementById('mileage-comparison-list');
       const unitText = currentUnit.toUpperCase();
-      const activeRecords = autoRecords.filter(r => !r.validated);
+      const activeRecords = autoRecords.filter(r => !r.validated && Number(r.mileage || 0) > 0);
 
       if (activeRecords.length === 0) {
         container.innerHTML = `<p class="text-xs font-extrabold col-span-full opacity-90">No hay servicios pendientes en el semáforo.</p>`;
@@ -66,14 +66,21 @@
       container.innerHTML = activeRecords.map(r => {
         const target = Number(r.mileage || 0);
         const diff = target - currentVehicleMileage;
+        const nearThreshold = currentUnit === 'mi' ? 600 : 1000;
+        const state = diff < 0 ? 'overdue' : diff <= nearThreshold ? 'near' : 'safe';
+        const tone = state === 'overdue'
+          ? { border: 'border-rose-500/70', background: 'bg-rose-950/45', text: 'text-rose-300', dot: 'bg-rose-400', label: 'Vencido' }
+          : state === 'near'
+            ? { border: 'border-amber-500/70', background: 'bg-amber-950/35', text: 'text-amber-300', dot: 'bg-amber-400', label: `Faltan ${formatNumber(diff)} ${unitText}` }
+            : { border: 'border-emerald-500/60', background: 'bg-emerald-950/35', text: 'text-emerald-300', dot: 'bg-emerald-400', label: `Faltan ${formatNumber(diff)} ${unitText}` };
         return `
-          <div class="p-3 rounded-xl border border-slate-600 bg-slate-900/60 dark:bg-slate-900/80 flex justify-between items-center text-xs">
+          <div data-service-state="${state}" class="p-3 rounded-xl border ${tone.border} ${tone.background} flex justify-between items-center text-xs transition-colors">
             <div>
-              <span class="font-black">${r.title}</span>
+              <span class="font-black flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ${tone.dot}"></span>${r.title}</span>
               <p class="text-[10px] font-extrabold opacity-80">Objetivo: ${formatNumber(target)} ${unitText}</p>
             </div>
             <div class="flex items-center space-x-2">
-              <span class="font-black ${diff < 0 ? 'text-rose-400' : 'text-emerald-400'}">${diff < 0 ? 'Vencido' : 'Faltan ' + formatNumber(diff) + ' ' + unitText}</span>
+              <span class="font-black ${tone.text}">${tone.label}</span>
               <button onclick="toggleValidateRecord('${r.id}')" class="px-2 py-1 rounded bg-cyan-600/35 hover:bg-cyan-600/60 text-cyan-300 text-[10px] font-black" title="Validar y Archivar">✓</button>
             </div>
           </div>

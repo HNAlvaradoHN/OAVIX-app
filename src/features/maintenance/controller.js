@@ -289,18 +289,22 @@ function repairMaintenanceCategories() {
 
       list.innerHTML = activeRecords.map(r => `
         <div data-maintenance-record-id="${r.id}" class="animated-glass-card rounded-2xl p-4 shadow-lg space-y-2">
-          ${r.photo ? `
-            <div class="w-full h-28 rounded-xl overflow-hidden mb-2 cursor-pointer border border-slate-600 relative group" onclick="openImageViewer('${r.photo}')">
-              <img src="${r.photo}" class="w-full h-full object-cover">
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-black transition">Ver HD</div>
+          <div class="min-h-14 flex justify-between items-start gap-3">
+            <div class="min-w-0 flex-1">
+              <h4 class="font-black text-sm truncate">${r.title}</h4>
+              <span class="font-black text-cyan-400 text-sm">${formatMoney(r.amount, r.currency || 'USD')}</span>
             </div>
-          ` : ''}
-          <div class="flex justify-between items-start">
-            <h4 class="font-black text-sm">${r.title}</h4>
-            <span class="font-black text-cyan-400 text-sm">${formatMoney(r.amount, r.currency || 'USD')}</span>
+            ${r.photo ? `
+              <button type="button" class="shrink-0 w-14 h-14 rounded-xl overflow-hidden cursor-zoom-in border-2 border-slate-500 shadow-lg group relative" onclick="openImageViewer('${r.photo}')" aria-label="Ampliar foto de ${escapeHtml(r.title)}">
+                <img src="${r.photo}" class="w-full h-full object-cover" alt="Vista previa de ${escapeHtml(r.title)}">
+                <span class="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-black transition">Ampliar</span>
+              </button>
+            ` : '<span class="shrink-0 w-14 h-14" aria-hidden="true"></span>'}
           </div>
-          <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${r.date} | ${r.category}</p>
-          ${r.notes ? `<p class="text-[11px] font-bold italic p-2 rounded-lg bg-slate-900/20">${r.notes}</p>` : ''}
+          <div>
+            <p class="text-xs font-extrabold opacity-90"><i class="fa-regular fa-calendar mr-1"></i>${r.date} | ${r.category}</p>
+            ${r.notes ? `<p class="text-[11px] font-bold italic p-2 mt-2 rounded-lg bg-slate-900/20 line-clamp-2">${r.notes}</p>` : ''}
+          </div>
           <div class="pt-2 border-t border-slate-600/60 flex justify-end space-x-2">
             <button onclick="openFormModal('${r.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-black">Editar</button>
             <button onclick="toggleValidateRecord('${r.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-black">Validar / Archivar</button>
@@ -373,6 +377,20 @@ function repairMaintenanceCategories() {
         return;
       }
 
+      const alertDate = document.getElementById('form-alert-date').value;
+      const alertTime = document.getElementById('form-alert-time').value;
+      if (alertTime && !alertDate) {
+        showToast('Falta la fecha', 'Selecciona una fecha para la hora de la alarma.', 'amber');
+        return;
+      }
+      if (alertDate) {
+        const alarmDateTime = new Date(`${alertDate}T${alertTime || '00:00'}:00`);
+        if (Number.isNaN(alarmDateTime.getTime()) || alarmDateTime.getTime() <= Date.now()) {
+          showToast('Alarma en el pasado', 'Elige una fecha y hora futuras, o elimina la alarma.', 'amber');
+          return;
+        }
+      }
+
       const id = document.getElementById('record-id').value || Date.now().toString();
       const r = {
         id,
@@ -383,8 +401,8 @@ function repairMaintenanceCategories() {
         mileage: document.getElementById('form-mileage').value,
         provider: document.getElementById('form-provider').value,
         date: document.getElementById('form-date').value,
-        alertDate: document.getElementById('form-alert-date').value,
-        alertTime: document.getElementById('form-alert-time').value,
+        alertDate,
+        alertTime,
         notes: document.getElementById('form-notes').value,
         photo: currentBase64Image,
         validated: false
