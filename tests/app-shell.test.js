@@ -44,8 +44,8 @@ describe('app shell bootstrap', () => {
     expect(document.getElementById('second-view')).not.toBeNull();
     expect(document.querySelector('[data-oavix-fragment]')).toBeNull();
     expect(events).toEqual(['views', 'app']);
-    expect(loadedScripts).toEqual(app.controllerScripts.map(path => `${path}?v=8`));
-    expect(loadedScripts.at(-1)).toBe('src/core/bootstrap.js?v=8');
+    expect(loadedScripts).toEqual(app.controllerScripts.map(path => `${path}?v=9`));
+    expect(loadedScripts.at(-1)).toBe('src/core/bootstrap.js?v=9');
     expect(document.documentElement.dataset.oavixReady).toBe('true');
   });
 

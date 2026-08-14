@@ -57,7 +57,10 @@
 
   function scheduleReload(options) {
     if (options && options.reload === false) return;
-    setTimeout(() => root.location.reload(), 350);
+    setTimeout(() => {
+      if (typeof root.OAVIXRefreshFromStorage === 'function') root.OAVIXRefreshFromStorage();
+      else root.location.reload();
+    }, 0);
   }
 
   async function syncNow(interactive = false, options = {}) {

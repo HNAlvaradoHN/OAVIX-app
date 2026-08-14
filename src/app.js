@@ -41,7 +41,7 @@ function loadClassicScript(path) {
 
 async function loadControllers() {
   for (const path of controllerScripts) {
-    await loadClassicScript(`${path}?v=8`);
+    await loadClassicScript(`${path}?v=9`);
   }
 }
 

@@ -21,7 +21,9 @@
   function recordsForPush() {
     try {
       const records = JSON.parse(localStorage.getItem('oavix_auto_records') || '[]');
-      return Array.isArray(records) ? records.filter(record => !record.validated && record.alertDate) : [];
+      return Array.isArray(records)
+        ? records.filter(record => !record.validated && record.alertDate && new Date(dueAt(record)).getTime() > Date.now())
+        : [];
     } catch {
       return [];
     }
