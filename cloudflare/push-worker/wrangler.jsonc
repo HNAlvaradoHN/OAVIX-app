@@ -4,16 +4,15 @@
   "main": "src/index.js",
   "compatibility_date": "2026-08-13",
   "compatibility_flags": ["nodejs_compat"],
-  "limits": { "cpu_ms": 10 },
   "vars": {
     "ALLOWED_ORIGIN": "https://hnalvaradohn.github.io",
-    "VAPID_SUBJECT": "mailto:REEMPLAZAR@correo.com"
+    "VAPID_SUBJECT": "https://hnalvaradohn.github.io/OAVIX-app/"
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "oavix-push",
-      "database_id": "REEMPLAZAR_CON_ID_D1"
+      "database_id": "f09daf5a-cd18-4cdc-80f8-24c98dd906eb"
     }
   ],
   "triggers": { "crons": ["* * * * *"] }
