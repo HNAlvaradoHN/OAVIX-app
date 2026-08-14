@@ -93,12 +93,31 @@
     return response.access_token;
   }
 
+  function enterGuestMode() {
+    state.accountEmail = '';
+    state.guestMode = true;
+    state.accessToken = null;
+    state.tokenExpiresAt = 0;
+    state.fileId = null;
+    nativeStorage.set(constants.sessionKey, JSON.stringify({ mode: 'guest' }));
+    nativeStorage.remove(constants.pendingKey);
+    nativeStorage.remove(constants.lastSyncKey);
+    nativeStorage.remove('oavix_current_user_name');
+    nativeStorage.remove('oavix_current_user_pin');
+    runtime.ui?.hideLogin?.();
+    runtime.ui?.cleanHeader?.();
+    toast('Modo invitado', 'Tus datos se guardarán solamente en este dispositivo.', 'cyan');
+  }
+
   async function loginWithGoogle() {
     if (state.authInProgress) return;
     state.authInProgress = true;
 
     try {
       if (!constants.clientId) throw new Error('Falta configurar el Client ID de Google.');
+      const migratingGuest = state.guestMode;
+      const guestData = migratingGuest ? storage.dataSnapshot() : null;
+
       await loadGIS();
       initTokenClient();
       await requestToken(true, '');
@@ -107,8 +126,21 @@
       if (!email) throw new Error('Google no devolvió el correo de la cuenta.');
 
       const oldEmail = state.accountEmail;
-      const firstMigration = !oldEmail && storage.legacyMigrationAllowed() && storage.hasLegacyData();
-      if (firstMigration) {
+      const firstMigration = !migratingGuest && !oldEmail && storage.legacyMigrationAllowed() && storage.hasLegacyData();
+      if (migratingGuest) {
+        const timestamp = new Date().toISOString();
+        state.accountEmail = email;
+        state.guestMode = false;
+        nativeStorage.set(constants.sessionKey, JSON.stringify({
+          email,
+          displayName: me.user && me.user.displayName || email
+        }));
+        nativeStorage.set('oavix_current_user_name', email);
+        nativeStorage.remove('oavix_current_user_pin');
+        storage.saveAccountSnapshot(email, timestamp, undefined, Object.keys(guestData || {}));
+        nativeStorage.set(localUpdatedKey(email), timestamp);
+        nativeStorage.set('oavix_migration_v5', 'done');
+      } else if (firstMigration) {
         const timestamp = new Date().toISOString();
         nativeStorage.set(localUpdatedKey(email), timestamp);
         storage.saveAccountSnapshot(email, timestamp, undefined, Object.keys(storage.dataSnapshot()));
@@ -120,6 +152,7 @@
       }
 
       state.accountEmail = email;
+      state.guestMode = false;
       nativeStorage.set(constants.sessionKey, JSON.stringify({
         email,
         displayName: me.user && me.user.displayName || email
@@ -146,6 +179,7 @@
     state.accessToken = null;
     state.tokenExpiresAt = 0;
     state.fileId = null;
+    state.guestMode = false;
     nativeStorage.remove(constants.sessionKey);
     nativeStorage.remove('oavix_current_user_name');
     nativeStorage.remove('oavix_current_user_pin');
@@ -161,6 +195,7 @@
     initTokenClient,
     requestToken,
     ensureToken,
+    enterGuestMode,
     loginWithGoogle,
     logoutSession
   };
