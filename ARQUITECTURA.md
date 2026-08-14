@@ -14,8 +14,10 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/features/calendar/` | Vista del calendario. |
 | `src/features/alerts/` | Vista y ventanas de alertas. |
 | `src/features/fuel/` | Vista, interacción, vehículos y cálculos de Combustibles. |
+| `src/features/export/` | Exportación independiente de informes Excel y PDF, sin imágenes pesadas. |
 | `src/features/archive/` | Vista del archivo. |
-| `src/ui/` | Tema y notificaciones visuales compartidas. |
+| `src/ui/settings/` | Centro de control para sincronización, alarmas, apariencia y exportaciones. |
+| `src/ui/` | Tema, navegación y notificaciones visuales compartidas. |
 | `src/styles/` | Estilos generales. |
 | `src/core/` | Estado, almacenamiento, utilidades y arranque compartidos. |
 | `src/features/*/controller.js` | Lógica propia de cada función. |
@@ -26,7 +28,7 @@ OAVIX se está organizando por funciones para que cada cambio tenga un alcance c
 | `src/services/sync/google-auth.js` | Inicio y cierre de sesión con Google. |
 | `src/services/sync/drive-client.js` | Comunicación de bajo nivel con Google Drive. |
 | `src/services/sync/synchronizer.js` | Flujo Drive-first: descargar, combinar y después guardar. |
-| `src/services/sync/ui.js` | Interfaz de sesión, botón de nube e instalación PWA. |
+| `src/services/sync/ui.js` | Interfaz de sesión, conexión del centro de control e instalación PWA. |
 | `src/services/sync/bootstrap.js` | Vinculación pública y eventos de sincronización. |
 | `src/features/fuel/module.js` | Modelo autónomo de Combustibles: vehículos, cargas, unidades, consumo y precios SEN. |
 | `data/sen-prices.json` | Última copia nacional validada del tablero oficial de la SEN. |

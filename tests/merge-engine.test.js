@@ -176,6 +176,52 @@ describe('record-level Drive merge', () => {
     expect(JSON.parse(combined.data[FUEL]).map(record => record.id)).toEqual(['fill-tablet', 'fill-phone']);
   });
 
+  it('keeps the newest edit when two devices changed the same fuel fill', async () => {
+    const merge = await loadMergeEngine();
+    const phoneTime = '2026-08-10T10:00:00.000Z';
+    const tabletTime = '2026-08-10T11:00:00.000Z';
+    const phone = payload({
+      updatedAt: phoneTime,
+      data: { [FUEL]: JSON.stringify([{ id: 'same-fill', amountPaid: 700, notes: 'Teléfono' }]) },
+      entities: { [FUEL]: { 'same-fill': { updatedAt: phoneTime } } }
+    });
+    const tablet = payload({
+      updatedAt: tabletTime,
+      data: { [FUEL]: JSON.stringify([{ id: 'same-fill', amountPaid: 750, notes: 'Tableta' }]) },
+      entities: { [FUEL]: { 'same-fill': { updatedAt: tabletTime } } }
+    });
+
+    const combined = merge.mergePayloads(phone, tablet, EMAIL);
+
+    expect(JSON.parse(combined.data[FUEL])).toEqual([
+      { id: 'same-fill', amountPaid: 750, notes: 'Tableta' }
+    ]);
+  });
+
+  it('does not let a stale device restore a deleted fuel fill', async () => {
+    const merge = await loadMergeEngine();
+    const oldTime = '2026-08-10T10:00:00.000Z';
+    const deleteTime = '2026-08-10T12:00:00.000Z';
+    const stale = payload({
+      updatedAt: oldTime,
+      data: { [FUEL]: JSON.stringify([{ id: 'deleted-fill', amountPaid: 500 }]) },
+      entities: { [FUEL]: { 'deleted-fill': { updatedAt: oldTime } } }
+    });
+    const deleted = payload({
+      updatedAt: deleteTime,
+      data: { [FUEL]: '[]' },
+      entities: {
+        [FUEL]: { 'deleted-fill': { updatedAt: deleteTime, deletedAt: deleteTime } }
+      }
+    });
+
+    const firstMerge = merge.mergePayloads(stale, deleted, EMAIL);
+    const secondMerge = merge.mergePayloads(firstMerge, stale, EMAIL);
+
+    expect(JSON.parse(secondMerge.data[FUEL])).toEqual([]);
+    expect(secondMerge.metadata.entities[FUEL]['deleted-fill'].deletedAt).toBe(deleteTime);
+  });
+
   it('also combines vehicles created on different devices', async () => {
     const merge = await loadMergeEngine();
     const phoneTime = '2026-08-10T10:00:00.000Z';

@@ -146,6 +146,314 @@
       }
     }
 
+    /* Centro de control: reúne ajustes, sincronización y exportaciones. */
+    .oavix-settings-hub {
+      position: fixed;
+      top: max(0.7rem, calc(env(safe-area-inset-top, 0px) + 0.55rem));
+      right: max(0.6rem, calc((100vw - 80rem) / 2 + 1.5rem));
+      z-index: 48;
+      color: #f8fafc;
+    }
+
+    .oavix-settings-toggle {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 3rem;
+      height: 3rem;
+      margin-left: auto;
+      border: 1px solid color-mix(in srgb, var(--border-neon) 58%, transparent);
+      border-radius: 1rem;
+      background: rgba(15, 23, 42, 0.84);
+      color: #e2e8f0;
+      box-shadow: 0 10px 28px rgba(2, 6, 23, 0.42), 0 0 16px color-mix(in srgb, var(--border-neon) 24%, transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .oavix-settings-toggle:hover,
+    .oavix-settings-toggle:focus-visible,
+    .oavix-settings-toggle.active {
+      outline: none;
+      border-color: var(--border-neon);
+      background: color-mix(in srgb, var(--border-neon) 18%, rgba(15, 23, 42, 0.92));
+      transform: translateY(-1px);
+    }
+
+    .oavix-settings-toggle > i { font-size: 1rem; transition: transform 0.35s ease; }
+    .oavix-settings-toggle.active > i { transform: rotate(90deg); }
+    .oavix-settings-toggle-dot {
+      position: absolute;
+      right: 0.42rem;
+      bottom: 0.42rem;
+      width: 0.46rem;
+      height: 0.46rem;
+      border: 2px solid #0f172a;
+      border-radius: 50%;
+      background: #34d399;
+      box-sizing: content-box;
+    }
+
+    .light-theme .oavix-settings-toggle {
+      background: rgba(255, 255, 255, 0.9);
+      color: #334155;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.15), 0 0 16px color-mix(in srgb, var(--border-neon) 18%, transparent);
+    }
+    .light-theme .oavix-settings-toggle-dot { border-color: #fff; }
+
+    .oavix-settings-panel {
+      position: absolute;
+      top: calc(100% + 0.65rem);
+      right: 0;
+      width: min(23rem, calc(100vw - 1.2rem));
+      max-height: calc(100vh - 5.4rem - var(--bottom-nav-clearance) - env(safe-area-inset-top, 0px));
+      max-height: calc(100dvh - 5.4rem - var(--bottom-nav-clearance) - env(safe-area-inset-top, 0px));
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: 0.85rem;
+      border: 1px solid color-mix(in srgb, var(--border-neon) 46%, rgba(148, 163, 184, 0.2));
+      border-radius: 1.25rem;
+      background: rgba(8, 15, 30, 0.96);
+      box-shadow: 0 24px 70px rgba(2, 6, 23, 0.68), 0 0 28px color-mix(in srgb, var(--border-neon) 18%, transparent);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      transform-origin: top right;
+      animation: oavixSettingsIn 0.2s ease-out;
+    }
+
+    .oavix-settings-panel.hidden { display: none !important; }
+
+    @keyframes oavixSettingsIn {
+      from { opacity: 0; transform: translateY(-0.45rem) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .light-theme .oavix-settings-panel {
+      color: #0f172a;
+      background: rgba(248, 250, 252, 0.97);
+      box-shadow: 0 24px 65px rgba(15, 23, 42, 0.2), 0 0 24px color-mix(in srgb, var(--border-neon) 15%, transparent);
+    }
+
+    .oavix-settings-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      padding: 0.2rem 0.15rem 0.75rem;
+    }
+
+    .oavix-settings-kicker {
+      display: block;
+      margin-bottom: 0.12rem;
+      color: var(--border-neon);
+      font-size: 0.56rem;
+      font-weight: 900;
+      letter-spacing: 0.22em;
+    }
+
+    .oavix-settings-heading h2 { margin: 0; color: inherit; font-size: 1rem; font-weight: 900; }
+    .oavix-settings-close {
+      display: grid;
+      place-items: center;
+      width: 2.2rem;
+      height: 2.2rem;
+      flex: 0 0 auto;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 0.72rem;
+      background: rgba(148, 163, 184, 0.08);
+      color: #94a3b8;
+      cursor: pointer;
+    }
+
+    .oavix-settings-section {
+      padding: 0.7rem 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    .oavix-settings-section h3 {
+      margin: 0 0 0.5rem 0.14rem;
+      color: #94a3b8;
+      font-size: 0.58rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .light-theme .oavix-settings-section h3 { color: #64748b; }
+    .oavix-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+
+    .oavix-settings-item {
+      display: grid;
+      grid-template-columns: 2.45rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.65rem;
+      width: 100%;
+      min-width: 0;
+      min-height: 3.8rem;
+      margin-top: 0.5rem;
+      padding: 0.58rem;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 0.92rem;
+      background: rgba(30, 41, 59, 0.52);
+      color: #f8fafc;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .oavix-settings-section > .oavix-settings-item:first-of-type { margin-top: 0; }
+    .oavix-settings-item:hover,
+    .oavix-settings-item:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--border-neon) 48%, transparent);
+      background: color-mix(in srgb, var(--border-neon) 9%, rgba(30, 41, 59, 0.72));
+    }
+    .oavix-settings-item:disabled { cursor: wait; opacity: 0.78; transform: none; }
+
+    .light-theme .oavix-settings-item {
+      color: #0f172a;
+      border-color: rgba(71, 85, 105, 0.14);
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .oavix-settings-item-icon {
+      display: grid;
+      place-items: center;
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 0.78rem;
+      background: rgba(34, 211, 238, 0.12);
+      color: #22d3ee;
+      font-size: 0.9rem;
+      transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .oavix-settings-icon-cloud { color: #38bdf8; background: rgba(56, 189, 248, 0.13); }
+    .oavix-settings-icon-palette { color: #fbbf24; background: rgba(251, 191, 36, 0.13); }
+    .oavix-settings-icon-theme { color: #a78bfa; background: rgba(167, 139, 250, 0.13); }
+
+    .oavix-settings-item-copy { min-width: 0; }
+    .oavix-settings-item-copy strong,
+    .oavix-settings-item-copy small { display: block; overflow: hidden; text-overflow: ellipsis; }
+    .oavix-settings-item-copy strong { color: inherit; font-size: 0.69rem; font-weight: 900; }
+    .oavix-settings-item-copy small { margin-top: 0.14rem; color: #94a3b8; font-size: 0.56rem; font-weight: 650; line-height: 1.35; }
+    .light-theme .oavix-settings-item-copy small { color: #64748b; }
+
+    .oavix-settings-state {
+      padding: 0.25rem 0.42rem;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: 999px;
+      background: rgba(244, 63, 94, 0.12);
+      color: #fda4af;
+      font-size: 0.52rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    #btn-notif-perm[data-state="active"] .oavix-settings-icon-notification {
+      color: #34d399;
+      background: rgba(52, 211, 153, 0.14);
+      box-shadow: 0 0 14px rgba(52, 211, 153, 0.22);
+    }
+    #btn-notif-perm[data-state="active"] .oavix-settings-state,
+    .settings-state-ready {
+      border-color: rgba(52, 211, 153, 0.3);
+      background: rgba(52, 211, 153, 0.12);
+      color: #6ee7b7;
+    }
+    #btn-notif-perm[data-state="inactive"] .oavix-settings-icon-notification {
+      color: #fb7185;
+      background: rgba(244, 63, 94, 0.13);
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.16);
+    }
+    .settings-state-working {
+      border-color: rgba(34, 211, 238, 0.3);
+      background: rgba(34, 211, 238, 0.12);
+      color: #67e8f9;
+      animation: settingsSyncPulse 0.9s ease-in-out infinite alternate;
+    }
+    .settings-state-pending {
+      border-color: rgba(251, 191, 36, 0.32);
+      background: rgba(251, 191, 36, 0.12);
+      color: #fcd34d;
+    }
+    .settings-state-inactive { color: #fda4af; }
+    .light-theme .oavix-settings-state,
+    .light-theme .settings-state-inactive { color: #be123c; }
+    .light-theme #btn-notif-perm[data-state="active"] .oavix-settings-state,
+    .light-theme .settings-state-ready { color: #047857; }
+    .light-theme .settings-state-working { color: #0e7490; }
+    .light-theme .settings-state-pending { color: #a16207; }
+    @keyframes settingsSyncPulse { to { opacity: 0.52; } }
+
+    .oavix-settings-item-compact {
+      grid-template-columns: 2.4rem minmax(0, 1fr);
+      gap: 0.58rem;
+      min-height: 4.2rem;
+      margin: 0;
+    }
+    .settings-export-excel .oavix-settings-item-icon { color: #34d399; background: rgba(52, 211, 153, 0.13); }
+    .settings-export-pdf .oavix-settings-item-icon { color: #fb7185; background: rgba(251, 113, 133, 0.13); }
+
+    .oavix-settings-footnote {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin: 0.18rem 0 0;
+      padding: 0.68rem 0.2rem 0.1rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.14);
+      color: #64748b;
+      font-size: 0.54rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .oavix-settings-footnote i { color: #34d399; }
+
+    @media (max-width: 379px) {
+      .oavix-settings-hub { right: 0.5rem; }
+      .oavix-settings-panel { width: calc(100vw - 1rem); padding: 0.7rem; }
+      .oavix-settings-grid { grid-template-columns: minmax(0, 1fr); }
+      .oavix-settings-item-compact { min-height: 3.75rem; }
+    }
+
+    @media (min-width: 640px) {
+      .oavix-settings-toggle { width: 3.15rem; height: 3.15rem; }
+      .oavix-settings-panel { top: calc(100% + 0.75rem); padding: 1rem; }
+    }
+
+    .oavix-print-report { display: none; }
+
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      body.oavix-printing { background: #fff !important; color: #0f172a !important; }
+      body.oavix-printing > *:not(#oavix-print-report) { display: none !important; }
+      body.oavix-printing #oavix-print-report {
+        display: block !important;
+        width: 100%;
+        color: #0f172a;
+        font-family: 'Inter', Arial, sans-serif;
+        font-size: 9pt;
+      }
+      .oavix-print-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; padding-bottom: 0.65rem; border-bottom: 2px solid #0891b2; }
+      .oavix-print-header span { color: #0891b2; font-size: 9pt; font-weight: 900; letter-spacing: 0.18em; }
+      .oavix-print-header h1 { margin: 0.12rem 0 0; font-size: 19pt; }
+      .oavix-print-header p { margin: 0; color: #64748b; font-size: 8pt; }
+      .oavix-print-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; margin: 0.8rem 0; }
+      .oavix-print-summary article { padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.35rem; }
+      .oavix-print-summary small { display: block; color: #64748b; font-size: 7pt; }
+      .oavix-print-summary strong { display: block; margin-top: 0.18rem; font-size: 11pt; }
+      .oavix-print-report section { break-inside: avoid; margin-top: 0.85rem; }
+      .oavix-print-report h2 { margin: 0 0 0.35rem; color: #0e7490; font-size: 12pt; }
+      .oavix-print-report table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      .oavix-print-report th,
+      .oavix-print-report td { padding: 0.32rem; border: 1px solid #cbd5e1; text-align: left; overflow-wrap: anywhere; }
+      .oavix-print-report th { background: #ecfeff; font-size: 7.5pt; }
+      .oavix-print-report td { font-size: 7.3pt; }
+      .oavix-print-report footer { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 7pt; text-align: center; }
+    }
+
     /* Estilos para la barra de navegación flotante */
     .floating-nav {
       position: fixed;

@@ -11,12 +11,14 @@ const controllerPaths = [
   'src/core/storage.js',
   'src/ui/toasts/controller.js',
   'src/ui/theme/controller.js',
+  'src/features/export/controller.js',
   'src/features/dashboard/controller.js',
   'src/features/maintenance/controller.js',
   'src/features/archive/controller.js',
   'src/features/calendar/controller.js',
   'src/features/alerts/controller.js',
   'src/features/fuel/controller.js',
+  'src/ui/settings/controller.js',
   'src/ui/navigation/controller.js',
   'src/core/bootstrap.js'
 ];
@@ -28,6 +30,8 @@ const ownership = {
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'changeMonth'],
   'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
   'src/features/fuel/controller.js': ['renderFuelModule', 'calculateFuelTrip', 'refreshFuelPrices', 'saveFuelFill'],
+  'src/features/export/controller.js': ['buildOavixExportData', 'exportOavixExcel', 'exportOavixPdf'],
+  'src/ui/settings/controller.js': ['toggleSettingsMenu', 'triggerSettingsSync', 'initializeSettingsMenu'],
   'src/ui/navigation/controller.js': ['switchSubTab'],
   'src/ui/theme/controller.js': ['toggleTheme', 'applyCustomTheme'],
   'src/ui/toasts/controller.js': ['showToast']
@@ -106,6 +110,7 @@ describe('controller architecture', () => {
       'src/features/alerts/view.html',
       'src/features/archive/view.html',
       'src/ui/theme/view.html',
+      'src/ui/settings/view.html',
       'src/features/maintenance/overlays.html',
       'src/features/alerts/overlays.html',
       'src/ui/toasts/view.html'

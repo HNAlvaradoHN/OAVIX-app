@@ -9,6 +9,7 @@
       renderAlerts();
       renderArchiveRecords();
       checkNotifPermissionState();
+      initializeSettingsMenu();
 
       const savedBg = localStorage.getItem('oavix_custom_bg');
       const savedNeon = localStorage.getItem('oavix_custom_neon');

@@ -52,7 +52,7 @@ describe('modular app shell integrity', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/i);
     expect(html.trimEnd()).toMatch(/<\/body>\s*<\/html>$/i);
     expect(html.split('\n').length).toBeLessThan(80);
-    expect(html).toContain('src/app.js?v=8');
+    expect(html).toContain('src/app.js?v=9');
     expect(html).not.toContain('function switchSubTab');
     expect(existsSync(resolve(process.cwd(), 'src/legacy/app.js'))).toBe(false);
   });
@@ -62,7 +62,7 @@ describe('modular app shell integrity', () => {
     for (const path of syncScripts) expect(html).toContain(`${path}?v=`);
     expect(html).not.toContain('src="oavix-sync.js');
     expect(html).toContain('src/features/fuel/module.js?v=1');
-    expect(html).toContain('src/styles/app.css?v=5');
+    expect(html).toContain('src/styles/app.css?v=6');
     expect(html).not.toContain('oavix-fuel-module.js');
   });
 

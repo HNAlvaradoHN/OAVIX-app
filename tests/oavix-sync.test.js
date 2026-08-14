@@ -651,6 +651,7 @@ describe('cross-device pull', () => {
 
 describe('phone, tablet and phone round trip', () => {
   it('downloads, extends and returns the combined Drive history', async () => {
+    vi.useFakeTimers();
     const drive = sharedDriveBackend();
     const phoneStorage = localStorage;
     seedSession();
@@ -687,6 +688,60 @@ describe('phone, tablet and phone round trip', () => {
 
     expect(JSON.parse(localStorage.getItem('oavix_auto_records')).map(record => record.id)).toEqual(['tablet', 'phone']);
     expect(drive.calls.filter(call => call.url.includes('uploadType=')).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('combines fuel fills and vehicles across devices without uploading the public SEN cache', async () => {
+    vi.useFakeTimers();
+    const drive = sharedDriveBackend();
+    const phoneStorage = localStorage;
+    seedSession();
+    seedAccountSnapshot(EMAIL, {}, '2026-08-10T10:00:00.000Z');
+    await loadSync();
+
+    localStorage.setItem('oavix_fuel_vehicles', JSON.stringify([
+      { id: 'car', name: 'Auto familiar', type: 'car' }
+    ]));
+    localStorage.setItem('oavix_fuel_history', JSON.stringify([
+      { id: 'fill-phone', vehicleId: 'car', date: '2026-08-10', amountPaid: 900 }
+    ]));
+    localStorage.setItem('oavix_fuel_preferences', JSON.stringify({ activeVehicleId: 'car' }));
+    localStorage.setItem('oavix_fuel_data', JSON.stringify({ status: 'official', rows: [{ price: 127 }] }));
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+
+    expect(JSON.parse(drive.content().data.oavix_fuel_history).map(record => record.id))
+      .toEqual(['fill-phone']);
+    expect(drive.content().data.oavix_fuel_data).toBeUndefined();
+
+    const tabletStorage = createStorage();
+    Object.defineProperty(window, 'localStorage', { value: tabletStorage, configurable: true, writable: true });
+    seedSession();
+    await loadSync();
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+
+    expect(JSON.parse(localStorage.getItem('oavix_fuel_vehicles')).map(vehicle => vehicle.id))
+      .toEqual(['car']);
+    expect(JSON.parse(localStorage.getItem('oavix_fuel_history')).map(record => record.id))
+      .toEqual(['fill-phone']);
+
+    localStorage.setItem('oavix_fuel_vehicles', JSON.stringify([
+      { id: 'car', name: 'Auto familiar', type: 'car' },
+      { id: 'moto', name: 'Moto de trabajo', type: 'motorcycle' }
+    ]));
+    localStorage.setItem('oavix_fuel_history', JSON.stringify([
+      { id: 'fill-phone', vehicleId: 'car', date: '2026-08-10', amountPaid: 900 },
+      { id: 'fill-tablet', vehicleId: 'moto', date: '2026-08-11', amountPaid: 250 }
+    ]));
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+
+    Object.defineProperty(window, 'localStorage', { value: phoneStorage, configurable: true, writable: true });
+    await loadSync();
+    await window.OAVIXSyncInternal.synchronizer.syncNow(false, { reload: false });
+
+    expect(JSON.parse(localStorage.getItem('oavix_fuel_vehicles')).map(vehicle => vehicle.id).sort())
+      .toEqual(['car', 'moto']);
+    expect(JSON.parse(localStorage.getItem('oavix_fuel_history')).map(record => record.id).sort())
+      .toEqual(['fill-phone', 'fill-tablet']);
+    expect(localStorage.getItem('oavix_fuel_data')).toContain('"status":"official"');
   });
 });
 
@@ -806,6 +861,7 @@ describe('UI wiring on DOMContentLoaded', () => {
         <button onclick="giveAppLike()">Like</button>
         <button title="Otro">Otro</button>
       </div></header>
+      <button id="oavix-drive-control" type="button">Sincronizar</button>
       <span id="user-session-badge">badge</span>
       <div><span id="banner-username-tag"></span></div>
       <button><span id="global-likes-count">3</span></button>`;

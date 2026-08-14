@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const CACHE = 'oavix-shell-v14';
+const CACHE = 'oavix-shell-v15';
 
 function createCache() {
   const store = new Map();
@@ -92,6 +92,8 @@ describe('service worker lifecycle', () => {
       './src/core/bootstrap.js',
       './src/ui/toasts/controller.js',
       './src/ui/theme/controller.js',
+      './src/features/export/controller.js',
+      './src/ui/settings/controller.js',
       './src/ui/navigation/controller.js',
       './src/features/dashboard/controller.js',
       './src/features/maintenance/controller.js',
@@ -110,6 +112,7 @@ describe('service worker lifecycle', () => {
       './src/features/fuel/view.html',
       './src/features/archive/view.html',
       './src/ui/theme/view.html',
+      './src/ui/settings/view.html',
       './src/ui/toasts/view.html',
       './manifest.webmanifest',
       './icon.svg'
