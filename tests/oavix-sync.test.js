@@ -861,6 +861,7 @@ describe('UI wiring on DOMContentLoaded', () => {
         <button onclick="giveAppLike()">Like</button>
         <button title="Otro">Otro</button>
       </div></header>
+      <button id="oavix-drive-control" type="button">Sincronizar</button>
       <span id="user-session-badge">badge</span>
       <div><span id="banner-username-tag"></span></div>
       <button><span id="global-likes-count">3</span></button>`;

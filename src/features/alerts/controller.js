@@ -1,18 +1,56 @@
-    function requestNotificationPermission() {
-      if (!('Notification' in window)) return;
-      Notification.requestPermission().then(permission => {
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
         checkNotifPermissionState();
-        if (permission === 'granted') {
-          showToast('Alertas Activas', 'Recibirás notificaciones flotantes en segundo plano.', 'emerald');
-        }
-      });
+        showToast('Notificaciones no disponibles', 'Este navegador no permite avisos del sistema.', 'rose');
+        return 'unsupported';
+      }
+
+      let permission = Notification.permission;
+      try {
+        if (permission === 'default') permission = await Notification.requestPermission();
+      } catch (error) {
+        permission = Notification.permission;
+        console.warn('[OAVIX Notifications]', error && error.message);
+      }
+      checkNotifPermissionState();
+
+      if (permission === 'granted') {
+        showToast('Alertas activadas', 'Recibirás notificaciones de tus mantenimientos programados.', 'emerald');
+      } else {
+        showToast(
+          'Alertas desactivadas',
+          permission === 'denied'
+            ? 'El navegador las bloqueó. Puedes habilitarlas desde los permisos del sitio.'
+            : 'No se concedió permiso para mostrar notificaciones.',
+          'rose'
+        );
+      }
+      if (typeof closeSettingsMenu === 'function') closeSettingsMenu();
+      return permission;
     }
 
     function checkNotifPermissionState() {
       const btn = document.getElementById('btn-notif-perm');
       if (!btn) return;
-      if ('Notification' in window && Notification.permission === 'granted') {
-        btn.innerHTML = '<i class="fa-solid fa-bell text-emerald-400"></i><span class="hidden md:inline">Alertas Activas</span>';
+      const supported = 'Notification' in window;
+      const active = supported && Notification.permission === 'granted';
+      const blocked = supported && Notification.permission === 'denied';
+      const icon = document.getElementById('settings-notification-icon');
+      const status = document.getElementById('settings-notification-status');
+      const caption = document.getElementById('settings-notification-caption');
+
+      btn.dataset.state = active ? 'active' : 'inactive';
+      btn.setAttribute('aria-label', active ? 'Notificaciones y alarmas activadas' : 'Notificaciones y alarmas desactivadas');
+      if (icon) icon.innerHTML = `<i class="fa-solid ${active ? 'fa-bell' : 'fa-bell-slash'}" aria-hidden="true"></i>`;
+      if (status) status.textContent = active ? 'Activadas' : 'Desactivadas';
+      if (caption) {
+        caption.textContent = active
+          ? 'Los avisos del sistema están permitidos'
+          : blocked
+            ? 'Habilítalas desde los permisos del sitio'
+            : supported
+              ? 'Toca para permitir los avisos'
+              : 'No disponibles en este navegador';
       }
     }
 

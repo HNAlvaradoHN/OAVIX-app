@@ -1,0 +1,108 @@
+<div id="oavix-settings-hub" class="oavix-settings-hub">
+  <button id="oavix-settings-toggle" type="button" class="oavix-settings-toggle"
+    aria-label="Abrir configuración" aria-haspopup="menu" aria-expanded="false"
+    aria-controls="oavix-settings-panel" onclick="toggleSettingsMenu()">
+    <i class="fa-solid fa-gear" aria-hidden="true"></i>
+    <span class="oavix-settings-toggle-dot" aria-hidden="true"></span>
+  </button>
+
+  <div id="oavix-settings-panel" class="oavix-settings-panel hidden" role="dialog"
+    aria-labelledby="oavix-settings-title">
+    <div class="oavix-settings-heading">
+      <div>
+        <span class="oavix-settings-kicker">OAVIX</span>
+        <h2 id="oavix-settings-title">Centro de control</h2>
+      </div>
+      <button type="button" class="oavix-settings-close" aria-label="Cerrar configuración"
+        onclick="closeSettingsMenu()">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <section class="oavix-settings-section" aria-labelledby="settings-account-title">
+      <h3 id="settings-account-title">Cuenta y avisos</h3>
+
+      <button id="oavix-drive-control" type="button" class="oavix-settings-item">
+        <span class="oavix-settings-item-icon oavix-settings-icon-cloud">
+          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+        </span>
+        <span class="oavix-settings-item-copy">
+          <strong>Sincronizar con Drive</strong>
+          <small id="settings-sync-caption">Guardar y descargar lo más reciente</small>
+        </span>
+        <span id="settings-sync-state" class="oavix-settings-state settings-state-ready">Listo</span>
+      </button>
+
+      <button id="btn-notif-perm" type="button" class="oavix-settings-item"
+        data-state="inactive" onclick="requestNotificationPermission()">
+        <span id="settings-notification-icon" class="oavix-settings-item-icon oavix-settings-icon-notification">
+          <i class="fa-solid fa-bell-slash" aria-hidden="true"></i>
+        </span>
+        <span class="oavix-settings-item-copy">
+          <strong>Notificaciones y alarmas</strong>
+          <small id="settings-notification-caption">Toca para permitir los avisos</small>
+        </span>
+        <span id="settings-notification-status" class="oavix-settings-state">Desactivadas</span>
+      </button>
+    </section>
+
+    <section class="oavix-settings-section" aria-labelledby="settings-appearance-title">
+      <h3 id="settings-appearance-title">Apariencia</h3>
+
+      <div class="oavix-settings-grid">
+        <button id="settings-customize" type="button" class="oavix-settings-item oavix-settings-item-compact"
+          onclick="openSettingsThemeEditor()">
+          <span class="oavix-settings-item-icon oavix-settings-icon-palette">
+            <i class="fa-solid fa-palette" aria-hidden="true"></i>
+          </span>
+          <span class="oavix-settings-item-copy">
+            <strong>Personalizar</strong>
+            <small>Fondo y color neón</small>
+          </span>
+        </button>
+
+        <button id="settings-theme-toggle" type="button" class="oavix-settings-item oavix-settings-item-compact"
+          onclick="toggleSettingsTheme()">
+          <span class="oavix-settings-item-icon oavix-settings-icon-theme">
+            <i id="theme-icon" class="fa-solid fa-moon" aria-hidden="true"></i>
+          </span>
+          <span class="oavix-settings-item-copy">
+            <strong id="settings-theme-label">Modo noche</strong>
+            <small id="settings-theme-caption">Cambiar a modo día</small>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="oavix-settings-section" aria-labelledby="settings-export-title">
+      <h3 id="settings-export-title">Exportar información</h3>
+
+      <div class="oavix-settings-grid">
+        <button id="settings-export-excel" type="button"
+          class="oavix-settings-item oavix-settings-item-compact settings-export-excel"
+          onclick="exportOavixExcel()">
+          <span class="oavix-settings-item-icon"><i class="fa-solid fa-file-excel" aria-hidden="true"></i></span>
+          <span class="oavix-settings-item-copy">
+            <strong>Excel</strong>
+            <small>Libro con todos los datos</small>
+          </span>
+        </button>
+
+        <button id="settings-export-pdf" type="button"
+          class="oavix-settings-item oavix-settings-item-compact settings-export-pdf"
+          onclick="exportOavixPdf()">
+          <span class="oavix-settings-item-icon"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span>
+          <span class="oavix-settings-item-copy">
+            <strong>PDF</strong>
+            <small>Informe listo para guardar</small>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <p class="oavix-settings-footnote">
+      <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+      Tus datos privados permanecen vinculados a tu cuenta.
+    </p>
+  </div>
+</div>

@@ -37,4 +37,5 @@
       document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-moon text-xs' : 'fa-solid fa-sun text-xs text-amber-400';
       localStorage.setItem('oavix_is_light', !isDark);
       resetDefaultTheme();
+      if (typeof refreshSettingsThemeState === 'function') refreshSettingsThemeState();
     }

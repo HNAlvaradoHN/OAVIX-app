@@ -73,23 +73,20 @@
       }
     }
 
-    let driveButton = document.getElementById('oavix-drive-control');
-    if (!driveButton) {
-      driveButton = document.createElement('button');
-      driveButton.id = 'oavix-drive-control';
-      driveButton.className = 'fixed top-[5.1rem] left-2 sm:left-6 z-40 p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shadow-lg';
-      driveButton.title = 'Sincronizar Google Drive';
-      driveButton.innerHTML = '<i class="fa-solid fa-cloud text-sm"></i>';
-      document.body.appendChild(driveButton);
+    const driveButton = document.getElementById('oavix-drive-control');
+    if (driveButton) {
+      driveButton.onclick = () => typeof root.triggerSettingsSync === 'function'
+        ? root.triggerSettingsSync()
+        : runtime.synchronizer.syncNow(true);
     }
-    driveButton.onclick = () => runtime.synchronizer.syncNow(true);
+    if (typeof root.refreshSettingsSyncState === 'function') root.refreshSettingsSyncState();
   }
 
   function addSyncStyles() {
     if (document.getElementById('oavix-v5-css')) return;
     const style = document.createElement('style');
     style.id = 'oavix-v5-css';
-    style.textContent = '#oavix-drive-control{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}#oavix-banner-logout{white-space:nowrap}@media(max-width:640px){#oavix-drive-control{top:5rem;left:.5rem}}';
+    style.textContent = '#oavix-banner-logout{white-space:nowrap}';
     document.head.appendChild(style);
   }
 
@@ -130,7 +127,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=14').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=15').catch(() => {});
     }
   }
 
