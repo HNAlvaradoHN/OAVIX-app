@@ -16,7 +16,6 @@
       'oavix_custom_bg',
       'oavix_custom_neon',
       'oavix_is_light',
-      'oavix_triggered_alarms',
       'oavix_fuel_history',
       'oavix_fuel_vehicles',
       'oavix_fuel_preferences',
@@ -48,7 +47,8 @@
   const nativeStorage = {
     get: localStorage.getItem.bind(localStorage),
     set: localStorage.setItem.bind(localStorage),
-    remove: localStorage.removeItem.bind(localStorage)
+    remove: localStorage.removeItem.bind(localStorage),
+    keys: () => Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter(Boolean)
   };
 
   const accountKey = (email, key) =>

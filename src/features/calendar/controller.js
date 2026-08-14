@@ -22,7 +22,7 @@
               ${dayEntries.length > 0 ? `<span class="w-2 h-2 rounded-full bg-cyan-500"></span>` : ''}
             </div>
             <div class="space-y-0.5 overflow-hidden">
-              ${dayEntries.slice(0, 1).map(e => `<div class="text-[8px] truncate bg-slate-950/40 px-1 py-0.5 rounded font-bold">${e.title}</div>`).join('')}
+              ${dayEntries.slice(0, 1).map(e => `<div class="text-[8px] truncate bg-slate-950/40 px-1 py-0.5 rounded font-bold">${escapeHtml(e.title)}</div>`).join('')}
             </div>
           </div>
         `;
@@ -59,7 +59,7 @@
 
       document.getElementById('day-entries-title').textContent = `Registros del ${dateStr}`;
       document.getElementById('day-entries-list').innerHTML = dayEntries.map(entry => `
-        <button onclick="document.getElementById('modal-day-entries').classList.add('hidden'); openCalendarEntryDetails('${entry.id}')" class="w-full text-left p-3 rounded-xl border border-slate-600 bg-slate-900/60 hover:border-cyan-500 transition text-xs">
+        <button data-record-id="${encodeHtmlData(entry.id)}" onclick="document.getElementById('modal-day-entries').classList.add('hidden'); openCalendarDetailsFromButton(this)" class="w-full text-left p-3 rounded-xl border border-slate-600 bg-slate-900/60 hover:border-cyan-500 transition text-xs">
           <span class="font-black">${escapeHtml(entry.title)}</span>
           <p class="text-[10px] opacity-80 font-bold">${escapeHtml(entry.category)} • ${formatMoney(entry.amount, entry.currency || 'USD')}</p>
         </button>
@@ -96,12 +96,13 @@
       }
 
       document.getElementById('calendar-detail-title').textContent = entry.title || 'Mantenimiento';
+      const photo = safeImageSource(entry.photo);
       document.getElementById('calendar-detail-content').innerHTML = `
-        ${entry.photo ? `<button type="button" onclick="openImageViewer('${entry.photo}')" class="block w-20 h-20 overflow-hidden rounded-xl border border-slate-600 cursor-zoom-in"><img src="${entry.photo}" alt="Vista previa" class="w-full h-full object-cover"></button>` : ''}
+        ${photo ? `<button type="button" data-photo="${escapeHtml(photo)}" onclick="openImageViewerFromButton(this)" class="block w-20 h-20 overflow-hidden rounded-xl border border-slate-600 cursor-zoom-in"><img src="${escapeHtml(photo)}" alt="Vista previa" class="w-full h-full object-cover"></button>` : ''}
         <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
           <dt class="font-black opacity-70">CategorÃ­a</dt><dd>${escapeHtml(entry.category || 'Sin categorÃ­a')}</dd>
           <dt class="font-black opacity-70">Fecha</dt><dd>${escapeHtml(entry.date || 'Sin fecha')}</dd>
-          <dt class="font-black opacity-70">Alarma</dt><dd>${entry.alertDate ? `${escapeHtml(entry.alertDate)} ${escapeHtml(entry.alertTime || '')}` : 'No programada'}</dd>
+          <dt class="font-black opacity-70">Aviso</dt><dd>${entry.alertDate ? escapeHtml(entry.alertDate) : 'No programado'}</dd>
           <dt class="font-black opacity-70">Costo</dt><dd>${formatMoney(entry.amount, entry.currency || 'USD')}</dd>
           <dt class="font-black opacity-70">Objetivo</dt><dd>${entry.mileage ? `${formatNumber(entry.mileage)} ${currentUnit.toUpperCase()}` : 'No definido'}</dd>
           <dt class="font-black opacity-70">Proveedor</dt><dd>${escapeHtml(entry.provider || 'No indicado')}</dd>
@@ -113,6 +114,10 @@
         openFormModal(entry.id);
       };
       modal.classList.remove('hidden');
+    }
+
+    function openCalendarDetailsFromButton(button) {
+      openCalendarEntryDetails(decodeHtmlData(button?.dataset.recordId));
     }
 
     function closeCalendarEntryDetails() {

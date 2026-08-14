@@ -11,7 +11,6 @@ const controllerPaths = [
   'src/core/storage.js',
   'src/ui/toasts/controller.js',
   'src/ui/theme/controller.js',
-  'src/services/push/controller.js',
   'src/features/export/controller.js',
   'src/features/dashboard/controller.js',
   'src/features/maintenance/controller.js',
@@ -29,10 +28,9 @@ const ownership = {
   'src/features/maintenance/controller.js': ['repairMaintenanceCategories', 'setupCategoryDropdowns', 'compressMaintenanceImage', 'previewImageFile', 'renderRecords', 'startNewMaintenance', 'openFormModal', 'handleFormSubmit'],
   'src/features/archive/controller.js': ['renderArchiveRecords'],
   'src/features/calendar/controller.js': ['renderCalendar', 'openDayEntriesModal', 'openCalendarEntryDetails', 'changeMonth'],
-  'src/features/alerts/controller.js': ['checkScheduledAlarms', 'startContinuousAlarm', 'renderAlerts'],
+  'src/features/alerts/controller.js': ['maintenanceReminderState', 'showMaintenanceWarnings', 'renderAlerts'],
   'src/features/fuel/controller.js': ['renderFuelModule', 'calculateFuelTrip', 'refreshFuelPrices', 'saveFuelFill'],
   'src/features/export/controller.js': ['buildOavixExportData', 'exportOavixExcel', 'exportOavixPdf'],
-  'src/services/push/controller.js': ['pushSubscription', 'scheduleSync', 'recordsForPush'],
   'src/ui/settings/controller.js': ['toggleSettingsMenu', 'triggerSettingsSync', 'initializeSettingsMenu'],
   'src/ui/navigation/controller.js': ['switchSubTab'],
   'src/ui/theme/controller.js': ['toggleTheme', 'applyCustomTheme'],
@@ -114,7 +112,6 @@ describe('controller architecture', () => {
       'src/ui/theme/view.html',
       'src/ui/settings/view.html',
       'src/features/maintenance/overlays.html',
-      'src/features/alerts/overlays.html',
       'src/ui/toasts/view.html'
     ];
     document.body.innerHTML = fragmentPaths.map(read).join('\n');

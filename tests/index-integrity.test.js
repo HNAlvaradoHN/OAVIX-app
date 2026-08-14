@@ -62,7 +62,7 @@ describe('modular app shell integrity', () => {
     for (const path of syncScripts) expect(html).toContain(`${path}?v=`);
     expect(html).not.toContain('src="oavix-sync.js');
     expect(html).toContain('src/features/fuel/module.js?v=1');
-    expect(html).toContain('src/styles/app.css?v=6');
+    expect(html).toContain('src/styles/app.css?v=7');
     expect(html).not.toContain('oavix-fuel-module.js');
   });
 
@@ -117,7 +117,7 @@ describe('main tab navigation', () => {
       records: 'Mantenimiento',
       calendar: 'Calendario',
       fuel: 'Combustibles',
-      alerts: 'Alertas',
+      alerts: 'Avisos',
       archive: 'Archivos'
     };
 

@@ -108,14 +108,6 @@ div[id^="modal-"] > div {
   border-color: color-mix(in srgb, var(--border-neon) 35%, #94a3b8 65%);
 }
 
-/* La alarma crítica conserva deliberadamente su tratamiento rojo propio. */
-#modal-continuous-alarm > div {
-  background-color: rgba(2, 6, 23, 0.95) !important;
-  background-image: none !important;
-  border-color: rgba(244, 63, 94, 0.9) !important;
-  animation: none !important;
-}
-
 /* Reduce el movimiento si el dispositivo lo solicita. */
 @media (prefers-reduced-motion: reduce) {
   .animated-glass-card,

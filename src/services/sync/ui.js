@@ -3,6 +3,8 @@
 
   const runtime = root.OAVIXSyncInternal;
   const { state } = runtime.context;
+  let deferredInstallPrompt = null;
+  let installEventsBound = false;
 
   function buildLogin() {
     let modal = document.getElementById('modal-login');
@@ -59,7 +61,7 @@
 
     const bannerTag = document.getElementById('banner-username-tag');
     if (bannerTag) {
-      bannerTag.textContent = state.accountEmail ? 'Usuario: ' + state.accountEmail : '';
+      bannerTag.textContent = state.accountEmail ? 'Cuenta conectada' : '';
       if (state.accountEmail) bannerTag.style.display = 'inline-flex';
       const wrapper = bannerTag.parentElement;
       if (wrapper && state.accountEmail && !document.getElementById('oavix-banner-logout')) {
@@ -94,20 +96,20 @@
     if (!document.querySelector('link[rel=manifest]')) {
       const manifest = document.createElement('link');
       manifest.rel = 'manifest';
-      manifest.href = 'manifest.webmanifest?v=5';
+      manifest.href = 'manifest.webmanifest?v=6';
       document.head.appendChild(manifest);
     }
     if (!document.querySelector('link[rel=icon]')) {
       const icon = document.createElement('link');
       icon.rel = 'icon';
-      icon.href = 'icon.svg?v=5';
+      icon.href = 'icon.svg?v=6';
       icon.type = 'image/svg+xml';
       document.head.appendChild(icon);
     }
     if (!document.querySelector('link[rel=apple-touch-icon]')) {
       const appleIcon = document.createElement('link');
       appleIcon.rel = 'apple-touch-icon';
-      appleIcon.href = 'icon.svg?v=5';
+      appleIcon.href = 'icon.svg?v=6';
       document.head.appendChild(appleIcon);
     }
 
@@ -127,8 +129,82 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=18').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=19').catch(() => {});
     }
+    bindInstallInvitation();
+    renderInstallInvitation();
+  }
+
+  function runningInstalled() {
+    return Boolean(root.matchMedia?.('(display-mode: standalone)').matches || root.navigator.standalone === true);
+  }
+
+  function hideInstallInvitation() {
+    document.getElementById('oavix-install-invitation')?.remove();
+  }
+
+  async function requestOavixInstall() {
+    if (runningInstalled()) {
+      hideInstallInvitation();
+      return;
+    }
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      if (choice && choice.outcome === 'accepted') hideInstallInvitation();
+      return;
+    }
+    const apple = /iphone|ipad|ipod/i.test(root.navigator.userAgent || '');
+    root.showToast?.(
+      'Instalar OAVIX',
+      apple ? 'En Safari toca Compartir y luego “Agregar a pantalla de inicio”.' : 'Abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla de inicio”.',
+      'cyan',
+      8000
+    );
+  }
+
+  function renderInstallInvitation() {
+    if (runningInstalled() || sessionStorage.getItem('oavix_install_invitation_closed') === 'true') {
+      hideInstallInvitation();
+      return;
+    }
+    let invitation = document.getElementById('oavix-install-invitation');
+    if (invitation) return;
+    invitation = document.createElement('aside');
+    invitation.id = 'oavix-install-invitation';
+    invitation.className = 'fixed left-3 bottom-20 z-30 flex max-w-[min(22rem,calc(100vw-1.5rem))] items-center gap-3 rounded-2xl border border-cyan-500/50 bg-slate-950/95 p-3 text-white shadow-2xl backdrop-blur-xl';
+    invitation.innerHTML = '<i class="fa-solid fa-mobile-screen-button text-xl text-cyan-300" aria-hidden="true"></i><div class="min-w-0 flex-1"><strong class="block text-xs">Descargar OAVIX</strong><p class="text-[10px] font-bold text-slate-300">Instálala para abrirla desde tu inicio o panel de aplicaciones.</p></div>';
+    const install = document.createElement('button');
+    install.type = 'button';
+    install.className = 'rounded-lg bg-cyan-600 px-2.5 py-1.5 text-[10px] font-black';
+    install.textContent = 'Instalar';
+    install.onclick = requestOavixInstall;
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'rounded-lg px-1.5 py-1 text-sm opacity-70 hover:bg-white/10';
+    close.setAttribute('aria-label', 'Cerrar invitación');
+    close.textContent = '×';
+    close.onclick = () => {
+      sessionStorage.setItem('oavix_install_invitation_closed', 'true');
+      hideInstallInvitation();
+    };
+    invitation.append(install, close);
+    document.body.appendChild(invitation);
+  }
+
+  function bindInstallInvitation() {
+    if (installEventsBound) return;
+    installEventsBound = true;
+    root.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      renderInstallInvitation();
+    });
+    root.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      hideInstallInvitation();
+    });
   }
 
   function initUI() {
@@ -145,5 +221,5 @@
     };
   }
 
-  runtime.ui = { buildLogin, hideLogin, cleanHeader, addSyncStyles, installPwa, initUI };
+  runtime.ui = { buildLogin, hideLogin, cleanHeader, addSyncStyles, installPwa, initUI, renderInstallInvitation, requestOavixInstall };
 })(window);

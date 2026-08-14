@@ -5,8 +5,6 @@
       'Mantenimiento General', 'Cambio de Aceite', 'Llantas / Frenos', 'Combustible', 'Reparaciones'
     ];
     let autoRecords = JSON.parse(localStorage.getItem('oavix_auto_records')) || [];
-    let isAlarmRinging = false;
-    let alarmAudioInterval = null;
     let currentBase64Image = '';
 
     let selectedCalendarMonth = new Date().getMonth();

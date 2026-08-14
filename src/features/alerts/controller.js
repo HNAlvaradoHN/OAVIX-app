@@ -1,191 +1,112 @@
-    async function requestNotificationPermission() {
-      if (!('Notification' in window)) {
-        checkNotifPermissionState();
-        showToast('Notificaciones no disponibles', 'Este navegador no permite avisos del sistema.', 'rose');
-        return 'unsupported';
-      }
+    const MAINTENANCE_WARNING_DAYS = 7;
 
-      let permission = Notification.permission;
-      try {
-        if (permission === 'default') permission = await Notification.requestPermission();
-      } catch (error) {
-        permission = Notification.permission;
-        console.warn('[OAVIX Notifications]', error && error.message);
-      }
-      checkNotifPermissionState();
-
-      if (permission === 'granted') {
-        try {
-          const push = window.OAVIXPush && await window.OAVIXPush.enable();
-          if (push && push.status !== 'not-configured') {
-            showToast('Alertas push activadas', 'Los avisos llegarán aunque OAVIX no esté abierta.', 'emerald');
-            if (typeof closeSettingsMenu === 'function') closeSettingsMenu();
-            checkNotifPermissionState();
-            return permission;
-          }
-        } catch (error) {
-          console.warn('[OAVIX Push]', error && error.message);
-          showToast('Permiso concedido', error.message || 'No se pudo activar el servicio push.', 'amber');
-        }
-        showToast('Alertas activadas', 'Recibirás notificaciones de tus mantenimientos programados.', 'emerald');
-      } else {
-        showToast(
-          'Alertas desactivadas',
-          permission === 'denied'
-            ? 'El navegador las bloqueó. Puedes habilitarlas desde los permisos del sitio.'
-            : 'No se concedió permiso para mostrar notificaciones.',
-          'rose'
-        );
-      }
-      if (typeof closeSettingsMenu === 'function') closeSettingsMenu();
-      return permission;
+    function maintenanceReminderState(record, now = new Date()) {
+      if (!record || record.validated || !/^\d{4}-\d{2}-\d{2}$/.test(String(record.alertDate || ''))) return null;
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const due = new Date(`${record.alertDate}T00:00:00`);
+      if (!Number.isFinite(due.getTime())) return null;
+      const days = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+      if (days < 0) return { level: 'overdue', days, label: `Vencido hace ${Math.abs(days)} día${Math.abs(days) === 1 ? '' : 's'}` };
+      if (days <= MAINTENANCE_WARNING_DAYS) return { level: 'near', days, label: days === 0 ? 'Programado para hoy' : `Faltan ${days} día${days === 1 ? '' : 's'}` };
+      return { level: 'future', days, label: `Faltan ${days} días` };
     }
 
-    function checkNotifPermissionState() {
-      const btn = document.getElementById('btn-notif-perm');
-      if (!btn) return;
-      const supported = 'Notification' in window;
-      const active = supported && Notification.permission === 'granted';
-      const blocked = supported && Notification.permission === 'denied';
-      const icon = document.getElementById('settings-notification-icon');
-      const status = document.getElementById('settings-notification-status');
-      const caption = document.getElementById('settings-notification-caption');
-
-      btn.dataset.state = active ? 'active' : 'inactive';
-      btn.setAttribute('aria-label', active ? 'Notificaciones y alarmas activadas' : 'Notificaciones y alarmas desactivadas');
-      if (icon) icon.innerHTML = `<i class="fa-solid ${active ? 'fa-bell' : 'fa-bell-slash'}" aria-hidden="true"></i>`;
-      if (status) status.textContent = active ? 'Activadas' : 'Desactivadas';
-      if (caption) {
-        caption.textContent = active
-          ? 'Los avisos del sistema están permitidos'
-          : blocked
-            ? 'Habilítalas desde los permisos del sitio'
-            : supported
-              ? 'Toca para permitir los avisos'
-              : 'No disponibles en este navegador';
-      }
+    function warningDismissKey(record, state) {
+      return `oavix_warning_${record.id}_${record.alertDate}_${state.level}`;
     }
 
-    function checkScheduledAlarms() {
-      const now = new Date();
-      const staleAlarmGraceMs = 2 * 60 * 1000;
+    function dismissMaintenanceWarning(button) {
+      const key = button && button.dataset.dismissKey;
+      if (key) sessionStorage.setItem(key, 'true');
+      button?.closest('[data-maintenance-warning]')?.remove();
+    }
 
-      let triggeredAlarms = JSON.parse(localStorage.getItem('oavix_triggered_alarms')) || [];
+    function openReminderFromButton(button) {
+      const id = decodeHtmlData(button && button.dataset.recordId);
+      if (!id) return;
+      switchSubTab('records');
+      revealMaintenanceRecord(id);
+    }
 
-      autoRecords.forEach(r => {
-        if (r.validated || !r.alertDate) return;
-        const alarmKey = `${r.id}_${r.alertDate}_${r.alertTime || '00:00'}`;
-        if (triggeredAlarms.includes(alarmKey)) return;
+    function showMaintenanceWarnings() {
+      document.getElementById('maintenance-warning-stack')?.remove();
+      const warnings = autoRecords
+        .map(record => ({ record, state: maintenanceReminderState(record) }))
+        .filter(item => item.state && item.state.level !== 'future')
+        .filter(item => sessionStorage.getItem(warningDismissKey(item.record, item.state)) !== 'true')
+        .sort((a, b) => a.state.days - b.state.days)
+        .slice(0, 3);
+      if (!warnings.length) return;
 
-        const dueAt = new Date(`${r.alertDate}T${r.alertTime || '00:00'}:00`);
-        if (Number.isNaN(dueAt.getTime()) || dueAt.getTime() > now.getTime()) return;
+      const stack = document.createElement('aside');
+      stack.id = 'maintenance-warning-stack';
+      stack.className = 'fixed right-3 bottom-20 z-40 w-[min(22rem,calc(100vw-1.5rem))] space-y-2';
+      stack.setAttribute('aria-label', 'Avisos de mantenimiento');
+      warnings.forEach(({ record, state }) => {
+        const notice = document.createElement('div');
+        notice.dataset.maintenanceWarning = 'true';
+        notice.className = `rounded-2xl border p-3 shadow-2xl backdrop-blur-xl ${state.level === 'overdue' ? 'border-rose-500/70 bg-rose-950/95' : 'border-amber-500/70 bg-amber-950/95'} text-white`;
 
-        if (now.getTime() - dueAt.getTime() > staleAlarmGraceMs) {
-          triggeredAlarms.push(alarmKey);
-          localStorage.setItem('oavix_triggered_alarms', JSON.stringify(triggeredAlarms));
-          return;
-        }
+        const row = document.createElement('div');
+        row.className = 'flex items-start gap-3';
+        const icon = document.createElement('i');
+        icon.className = `fa-solid ${state.level === 'overdue' ? 'fa-circle-exclamation text-rose-300' : 'fa-triangle-exclamation text-amber-300'} mt-0.5`;
+        const copy = document.createElement('div');
+        copy.className = 'min-w-0 flex-1';
+        const title = document.createElement('strong');
+        title.className = 'block truncate text-xs';
+        title.textContent = record.title || 'Mantenimiento pendiente';
+        const detail = document.createElement('p');
+        detail.className = 'mt-0.5 text-[10px] font-bold opacity-90';
+        detail.textContent = `${state.label} · ${record.alertDate}`;
+        const view = document.createElement('button');
+        view.type = 'button';
+        view.dataset.recordId = String(record.id);
+        view.className = 'mt-2 text-[10px] font-black underline underline-offset-2';
+        view.textContent = 'Ver mantenimiento';
+        view.onclick = () => openReminderFromButton(view);
+        copy.append(title, detail, view);
 
-        if (dueAt.getTime() <= now.getTime()) {
-          triggeredAlarms.push(alarmKey);
-          localStorage.setItem('oavix_triggered_alarms', JSON.stringify(triggeredAlarms));
-
-          startContinuousAlarm(`¡Servicio Pendiente!: ${r.title}`, `Mantenimiento programado para hoy. Categoría: ${r.category}`);
-
-          if ('Notification' in window && Notification.permission === 'granted') {
-            const notification = new Notification(`🔔 OAVIX: ${r.title}`, {
-              body: `Fecha de cita: ${r.alertDate} ${r.alertTime || ''}. Toca para abrir.`,
-              icon: 'https://cdn-icons-png.flaticon.com/512/744/744465.png',
-              requireInteraction: true
-            });
-            notification.onclick = function() {
-              window.focus();
-              notification.close();
-            };
-          }
-        }
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.dataset.dismissKey = warningDismissKey(record, state);
+        close.className = 'shrink-0 rounded-lg px-2 py-1 text-sm opacity-75 hover:bg-white/10 hover:opacity-100';
+        close.setAttribute('aria-label', 'Cerrar aviso');
+        close.textContent = '×';
+        close.onclick = () => dismissMaintenanceWarning(close);
+        row.append(icon, copy, close);
+        notice.appendChild(row);
+        stack.appendChild(notice);
       });
-    }
-
-    function startContinuousAlarm(title, subtitle) {
-      if (isAlarmRinging) return;
-      isAlarmRinging = true;
-
-      document.getElementById('alarm-screen-title').textContent = title;
-      document.getElementById('alarm-screen-subtitle').textContent = subtitle;
-      document.getElementById('modal-continuous-alarm').classList.remove('hidden');
-
-      alarmAudioInterval = setInterval(() => {
-        playAlarmWakeTone();
-      }, 700);
-      playAlarmWakeTone();
-    }
-
-    function playAlarmWakeTone() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!playAlarmWakeTone.ctx) playAlarmWakeTone.ctx = new AudioCtx();
-        const ctx = playAlarmWakeTone.ctx;
-        if (ctx.state === 'suspended') ctx.resume();
-        const playT = (f, start, d) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(f, ctx.currentTime + start);
-          gain.gain.setValueAtTime(0.35, ctx.currentTime + start);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + d);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + start);
-          osc.stop(ctx.currentTime + start + d);
-        };
-        playT(880, 0, 0.15);
-        playT(880, 0.2, 0.15);
-        playT(1174.66, 0.4, 0.25);
-      } catch (e) {}
-    }
-
-    function stopContinuousAlarm() {
-      isAlarmRinging = false;
-      if (alarmAudioInterval) clearInterval(alarmAudioInterval);
-      document.getElementById('modal-continuous-alarm').classList.add('hidden');
-      showToast('Alarma Detenida', 'Has apagado la alerta de servicio.', 'cyan');
+      document.body.appendChild(stack);
     }
 
     function renderAlerts() {
       const container = document.getElementById('alerts-list');
       const navBadge = document.getElementById('nav-alerts-badge');
-      const alerts = autoRecords.filter(r => !r.validated && r.alertDate);
+      if (!container) return;
+      const reminders = autoRecords
+        .filter(record => !record.validated && record.alertDate)
+        .sort((a, b) => String(a.alertDate).localeCompare(String(b.alertDate)));
 
-      if (alerts.length === 0) {
-        container.innerHTML = `
-          <div class="flex flex-col items-center justify-center py-10 opacity-60 text-center">
-            <i class="fa-solid fa-bell-slash text-4xl mb-3"></i>
-            <p class="text-sm font-black">No tienes alarmas ni citas activas</p>
-            <p class="text-[10px] font-bold">Cuando programes un recordatorio, aparecerá aquí.</p>
-          </div>
-        `;
-        if (navBadge) navBadge.classList.add('hidden');
+      if (navBadge) {
+        navBadge.classList.toggle('hidden', reminders.length === 0);
+        navBadge.textContent = reminders.length;
+      }
+      if (!reminders.length) {
+        container.innerHTML = '<div class="py-10 text-center opacity-60"><i class="fa-solid fa-calendar-check mb-3 text-4xl"></i><p class="text-sm font-black">No tienes avisos pendientes</p><p class="text-[10px] font-bold">Puedes elegir una fecha de aviso al crear un mantenimiento.</p></div>';
         return;
       }
 
-      if (navBadge) {
-        navBadge.classList.remove('hidden');
-        navBadge.textContent = alerts.length;
-      }
-
-      container.innerHTML = alerts.map(a => `
-        <div class="p-3 rounded-xl border border-slate-600 bg-slate-900/80 flex justify-between items-center text-xs">
-          <div>
-            <span class="font-black">${a.title}</span>
-            <p class="text-[10px] text-amber-300 font-bold">Fecha: ${a.alertDate} ${a.alertTime || ''}</p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span class="font-black text-cyan-400">${formatMoney(a.amount, a.currency || 'USD')}</span>
-            <button onclick="openFormModal('${a.id}')" class="px-2 py-1 rounded bg-indigo-600/30 text-indigo-300 text-[10px] font-black">Editar</button>
-            <button onclick="toggleValidateRecord('${a.id}')" class="px-2 py-1 rounded bg-emerald-600/30 text-emerald-300 text-[10px] font-black">Validar</button>
-          </div>
-        </div>
-      `).join('');
+      container.innerHTML = reminders.map(record => {
+        const state = maintenanceReminderState(record);
+        const tone = state?.level === 'overdue' ? 'text-rose-300' : state?.level === 'near' ? 'text-amber-300' : 'text-emerald-300';
+        return `
+          <article class="rounded-xl border border-slate-600 bg-slate-900/80 p-3 text-xs">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0"><strong class="block truncate">${escapeHtml(record.title || 'Mantenimiento')}</strong><p class="mt-1 text-[10px] font-bold ${tone}">${escapeHtml(state?.label || record.alertDate)} · ${escapeHtml(record.alertDate)}</p></div>
+              <button type="button" data-record-id="${encodeHtmlData(record.id)}" onclick="openReminderFromButton(this)" class="rounded bg-cyan-600/30 px-2 py-1 text-[10px] font-black text-cyan-200">Ver</button>
+            </div>
+          </article>`;
+      }).join('');
     }

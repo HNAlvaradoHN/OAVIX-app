@@ -36,9 +36,8 @@
       renderCalendar();
       renderAlerts();
       renderArchiveRecords();
-      checkNotifPermissionState();
       initializeSettingsMenu();
-      window.OAVIXPush?.sync().catch(error => console.warn('[OAVIX Push]', error.message));
+      showMaintenanceWarnings();
 
       const savedBg = localStorage.getItem('oavix_custom_bg');
       const savedNeon = localStorage.getItem('oavix_custom_neon');
@@ -55,8 +54,6 @@
         applyCustomThemeColors(savedBg, savedNeon || (savedIsLight ? '#8b5cf6' : '#06b6d4'));
       }
 
-      setInterval(checkScheduledAlarms, 10000);
-      checkScheduledAlarms();
     }
 
     if (document.readyState === 'loading') {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const CACHE = 'oavix-shell-v18';
+const CACHE = 'oavix-shell-v19';
 
 function createCache() {
   const store = new Map();
@@ -59,7 +59,7 @@ beforeEach(async () => {
 
 describe('service worker lifecycle', () => {
   it('registers the install, activate and fetch handlers', () => {
-    expect(Object.keys(listeners).sort()).toEqual(['activate', 'fetch', 'install', 'notificationclick', 'push']);
+    expect(Object.keys(listeners).sort()).toEqual(['activate', 'fetch', 'install']);
   });
 
   it('precaches the app shell and activates immediately on install', async () => {
@@ -72,7 +72,6 @@ describe('service worker lifecycle', () => {
       './',
       './index.html',
       './oavix-sync-config.js',
-      './oavix-push-config.js',
       './src/services/sync/context.js',
       './src/services/sync/merge-engine.js',
       './src/services/sync/account-storage.js',
@@ -93,7 +92,6 @@ describe('service worker lifecycle', () => {
       './src/core/bootstrap.js',
       './src/ui/toasts/controller.js',
       './src/ui/theme/controller.js',
-      './src/services/push/controller.js',
       './src/features/export/controller.js',
       './src/ui/settings/controller.js',
       './src/ui/navigation/controller.js',
@@ -110,7 +108,6 @@ describe('service worker lifecycle', () => {
       './src/features/maintenance/overlays.html',
       './src/features/calendar/view.html',
       './src/features/alerts/view.html',
-      './src/features/alerts/overlays.html',
       './src/features/fuel/view.html',
       './src/features/archive/view.html',
       './src/ui/theme/view.html',
