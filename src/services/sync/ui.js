@@ -68,40 +68,31 @@
     const badge = document.getElementById('user-session-badge');
     if (badge) badge.remove();
 
+    document.getElementById('oavix-banner-logout')?.remove();
+    document.getElementById('oavix-banner-link-google')?.remove();
+
     const bannerTag = document.getElementById('banner-username-tag');
     if (bannerTag) {
-      const wrapper = bannerTag.parentElement;
-      document.getElementById('oavix-banner-logout')?.remove();
-      document.getElementById('oavix-banner-link-google')?.remove();
-
       if (state.accountEmail) {
         bannerTag.textContent = 'Cuenta conectada';
         bannerTag.style.display = 'inline-flex';
-        if (wrapper) {
-          const logout = document.createElement('button');
-          logout.id = 'oavix-banner-logout';
-          logout.type = 'button';
-          logout.className = 'px-2 py-0.5 rounded border border-rose-500/40 bg-rose-500/15 text-rose-300 hover:bg-rose-500/30 text-[10px] font-extrabold transition';
-          logout.textContent = 'Cerrar sesión';
-          logout.onclick = runtime.auth.logoutSession;
-          wrapper.appendChild(logout);
-        }
       } else if (state.guestMode) {
         bannerTag.textContent = 'Modo invitado · solo este dispositivo';
         bannerTag.style.display = 'inline-flex';
-        if (wrapper) {
-          const link = document.createElement('button');
-          link.id = 'oavix-banner-link-google';
-          link.type = 'button';
-          link.className = 'px-2 py-0.5 rounded border border-cyan-500/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/30 text-[10px] font-extrabold transition';
-          link.textContent = 'Vincular Google';
-          link.onclick = runtime.auth.loginWithGoogle;
-          wrapper.appendChild(link);
-        }
       } else {
         bannerTag.textContent = '';
         bannerTag.style.display = 'none';
       }
+    }
+
+    // Gancho invisible de compatibilidad para integraciones antiguas. No forma parte de la interfaz.
+    if (state.accountEmail) {
+      const legacyLogout = document.createElement('span');
+      legacyLogout.id = 'oavix-banner-logout';
+      legacyLogout.hidden = true;
+      legacyLogout.setAttribute('aria-hidden', 'true');
+      legacyLogout.onclick = runtime.auth.logoutSession;
+      document.body.appendChild(legacyLogout);
     }
 
     const driveButton = document.getElementById('oavix-drive-control');
@@ -123,7 +114,7 @@
     if (document.getElementById('oavix-v5-css')) return;
     const style = document.createElement('style');
     style.id = 'oavix-v5-css';
-    style.textContent = '#oavix-banner-logout,#oavix-banner-link-google{white-space:nowrap}';
+    style.textContent = '';
     document.head.appendChild(style);
   }
 

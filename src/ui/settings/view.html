@@ -25,6 +25,41 @@
     <section class="oavix-settings-section" aria-labelledby="settings-account-title">
       <h3 id="settings-account-title">Cuenta</h3>
 
+      <div class="oavix-settings-item" aria-live="polite">
+        <span class="oavix-settings-item-icon oavix-settings-icon-cloud">
+          <i id="settings-account-icon" class="fa-solid fa-user" aria-hidden="true"></i>
+        </span>
+        <span class="oavix-settings-item-copy">
+          <strong id="settings-account-label">Sesión de OAVIX</strong>
+          <small id="settings-account-caption">Comprobando estado de la cuenta…</small>
+        </span>
+        <span id="settings-account-state" class="oavix-settings-state settings-state-ready">Listo</span>
+      </div>
+
+      <div class="oavix-settings-grid">
+        <button id="settings-account-google" type="button"
+          class="oavix-settings-item oavix-settings-item-compact hidden">
+          <span class="oavix-settings-item-icon oavix-settings-icon-cloud">
+            <i class="fa-brands fa-google" aria-hidden="true"></i>
+          </span>
+          <span class="oavix-settings-item-copy">
+            <strong>Vincular Google</strong>
+            <small>Activar respaldo y sincronización</small>
+          </span>
+        </button>
+
+        <button id="settings-account-logout" type="button"
+          class="oavix-settings-item oavix-settings-item-compact hidden">
+          <span class="oavix-settings-item-icon">
+            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+          </span>
+          <span class="oavix-settings-item-copy">
+            <strong>Cerrar sesión</strong>
+            <small>Requiere confirmación</small>
+          </span>
+        </button>
+      </div>
+
       <button id="oavix-drive-control" type="button" class="oavix-settings-item">
         <span class="oavix-settings-item-icon oavix-settings-icon-cloud">
           <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
@@ -35,7 +70,6 @@
         </span>
         <span id="settings-sync-state" class="oavix-settings-state settings-state-ready">Listo</span>
       </button>
-
     </section>
 
     <section class="oavix-settings-section" aria-labelledby="settings-appearance-title">
@@ -94,7 +128,7 @@
 
     <p class="oavix-settings-footnote">
       <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-      Tus datos privados permanecen vinculados a tu cuenta.
+      Tus datos privados permanecen vinculados a tu cuenta o guardados localmente en modo invitado.
     </p>
   </div>
 </div>
